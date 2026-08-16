@@ -1,0 +1,32 @@
+name: sf_daily_recap
+description: Aplikasi pribadi untuk rekap cash & order harian.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_dotenv: ^5.1.0
+  supabase_flutter: ^2.5.6
+  intl: ^0.19.0
+  uuid: ^4.4.0
+  table_calendar: ^3.1.2
+  fl_chart: ^0.68.0
+  flutter_riverpod: ^3.4.2
+  sqflite: ^2.4.3
+  sqflite_common_ffi: ^2.4.2
+  path_provider: ^2.1.6
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
