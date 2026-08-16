@@ -18,6 +18,18 @@ class RecapDetailState {
   final DateTime tanggal;
   final double cashAwal;
   final double saldoAwalApp;
+  final double saldoAwalGrabKredit;
+  final double saldoAwalGrabTunai;
+  final double saldoAwalGrabOvo;
+  final double odoStart;
+  final double odoEnd;
+  final double fuelPricePerLiter;
+  final double kmlParameter;
+  final String status;
+  final double saldoAkhirAppAktual;
+  final double saldoAkhirGrabKreditAktual;
+  final double saldoAkhirGrabTunaiAktual;
+  final double saldoAkhirGrabOvoAktual;
   final double tip;
   final double insentif;
   final List<DailyOrder> orders;
@@ -30,6 +42,18 @@ class RecapDetailState {
     required this.tanggal,
     this.cashAwal = 0,
     this.saldoAwalApp = 0,
+    this.saldoAwalGrabKredit = 0,
+    this.saldoAwalGrabTunai = 0,
+    this.saldoAwalGrabOvo = 0,
+    this.odoStart = 0,
+    this.odoEnd = 0,
+    this.fuelPricePerLiter = 10000,
+    this.kmlParameter = 45.5,
+    this.status = 'open',
+    this.saldoAkhirAppAktual = 0,
+    this.saldoAkhirGrabKreditAktual = 0,
+    this.saldoAkhirGrabTunaiAktual = 0,
+    this.saldoAkhirGrabOvoAktual = 0,
     this.tip = 0,
     this.insentif = 0,
     this.orders = const [],
@@ -43,6 +67,18 @@ class RecapDetailState {
     DateTime? tanggal,
     double? cashAwal,
     double? saldoAwalApp,
+    double? saldoAwalGrabKredit,
+    double? saldoAwalGrabTunai,
+    double? saldoAwalGrabOvo,
+    double? odoStart,
+    double? odoEnd,
+    double? fuelPricePerLiter,
+    double? kmlParameter,
+    String? status,
+    double? saldoAkhirAppAktual,
+    double? saldoAkhirGrabKreditAktual,
+    double? saldoAkhirGrabTunaiAktual,
+    double? saldoAkhirGrabOvoAktual,
     double? tip,
     double? insentif,
     List<DailyOrder>? orders,
@@ -55,6 +91,18 @@ class RecapDetailState {
       tanggal: tanggal ?? this.tanggal,
       cashAwal: cashAwal ?? this.cashAwal,
       saldoAwalApp: saldoAwalApp ?? this.saldoAwalApp,
+      saldoAwalGrabKredit: saldoAwalGrabKredit ?? this.saldoAwalGrabKredit,
+      saldoAwalGrabTunai: saldoAwalGrabTunai ?? this.saldoAwalGrabTunai,
+      saldoAwalGrabOvo: saldoAwalGrabOvo ?? this.saldoAwalGrabOvo,
+      odoStart: odoStart ?? this.odoStart,
+      odoEnd: odoEnd ?? this.odoEnd,
+      fuelPricePerLiter: fuelPricePerLiter ?? this.fuelPricePerLiter,
+      kmlParameter: kmlParameter ?? this.kmlParameter,
+      status: status ?? this.status,
+      saldoAkhirAppAktual: saldoAkhirAppAktual ?? this.saldoAkhirAppAktual,
+      saldoAkhirGrabKreditAktual: saldoAkhirGrabKreditAktual ?? this.saldoAkhirGrabKreditAktual,
+      saldoAkhirGrabTunaiAktual: saldoAkhirGrabTunaiAktual ?? this.saldoAkhirGrabTunaiAktual,
+      saldoAkhirGrabOvoAktual: saldoAkhirGrabOvoAktual ?? this.saldoAkhirGrabOvoAktual,
       tip: tip ?? this.tip,
       insentif: insentif ?? this.insentif,
       orders: orders ?? this.orders,
@@ -107,6 +155,18 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
         tanggal: match.tanggal,
         cashAwal: match.cashAwal,
         saldoAwalApp: match.saldoAwalApp,
+        saldoAwalGrabKredit: match.saldoAwalGrabKredit,
+        saldoAwalGrabTunai: match.saldoAwalGrabTunai,
+        saldoAwalGrabOvo: match.saldoAwalGrabOvo,
+        odoStart: match.odoStart,
+        odoEnd: match.odoEnd,
+        fuelPricePerLiter: match.fuelPricePerLiter,
+        kmlParameter: match.kmlParameter,
+        status: match.status,
+        saldoAkhirAppAktual: match.saldoAkhirAppAktual,
+        saldoAkhirGrabKreditAktual: match.saldoAkhirGrabKreditAktual,
+        saldoAkhirGrabTunaiAktual: match.saldoAkhirGrabTunaiAktual,
+        saldoAkhirGrabOvoAktual: match.saldoAkhirGrabOvoAktual,
         tip: match.tip,
         insentif: match.insentif,
         orders: orders,
@@ -126,6 +186,18 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
           tanggal: todayRecap.tanggal,
           cashAwal: todayRecap.cashAwal,
           saldoAwalApp: todayRecap.saldoAwalApp,
+          saldoAwalGrabKredit: todayRecap.saldoAwalGrabKredit,
+          saldoAwalGrabTunai: todayRecap.saldoAwalGrabTunai,
+          saldoAwalGrabOvo: todayRecap.saldoAwalGrabOvo,
+          odoStart: todayRecap.odoStart,
+          odoEnd: todayRecap.odoEnd,
+          fuelPricePerLiter: todayRecap.fuelPricePerLiter,
+          kmlParameter: todayRecap.kmlParameter,
+          status: todayRecap.status,
+          saldoAkhirAppAktual: todayRecap.saldoAkhirAppAktual,
+          saldoAkhirGrabKreditAktual: todayRecap.saldoAkhirGrabKreditAktual,
+          saldoAkhirGrabTunaiAktual: todayRecap.saldoAkhirGrabTunaiAktual,
+          saldoAkhirGrabOvoAktual: todayRecap.saldoAkhirGrabOvoAktual,
           tip: todayRecap.tip,
           insentif: todayRecap.insentif,
           orders: orders,
@@ -144,6 +216,13 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
   Future<void> saveHeader({
     required double cashAwal,
     required double saldoAwalApp,
+    required double saldoAwalGrabKredit,
+    required double saldoAwalGrabTunai,
+    required double saldoAwalGrabOvo,
+    required double odoStart,
+    required double odoEnd,
+    required double fuelPricePerLiter,
+    required double kmlParameter,
     required double tip,
     required double insentif,
   }) async {
@@ -153,6 +232,18 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
         tanggal: state.tanggal,
         cashAwal: cashAwal,
         saldoAwalApp: saldoAwalApp,
+        saldoAwalGrabKredit: saldoAwalGrabKredit,
+        saldoAwalGrabTunai: saldoAwalGrabTunai,
+        saldoAwalGrabOvo: saldoAwalGrabOvo,
+        odoStart: odoStart,
+        odoEnd: odoEnd,
+        fuelPricePerLiter: fuelPricePerLiter,
+        kmlParameter: kmlParameter,
+        status: state.status,
+        saldoAkhirAppAktual: state.saldoAkhirAppAktual,
+        saldoAkhirGrabKreditAktual: state.saldoAkhirGrabKreditAktual,
+        saldoAkhirGrabTunaiAktual: state.saldoAkhirGrabTunaiAktual,
+        saldoAkhirGrabOvoAktual: state.saldoAkhirGrabOvoAktual,
       );
       state = state.copyWith(recapId: id);
     } else {
@@ -160,9 +251,86 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
         id: id,
         cashAwal: cashAwal,
         saldoAwalApp: saldoAwalApp,
+        saldoAwalGrabKredit: saldoAwalGrabKredit,
+        saldoAwalGrabTunai: saldoAwalGrabTunai,
+        saldoAwalGrabOvo: saldoAwalGrabOvo,
+        odoStart: odoStart,
+        odoEnd: odoEnd,
+        fuelPricePerLiter: fuelPricePerLiter,
+        kmlParameter: kmlParameter,
+        status: state.status,
+        saldoAkhirAppAktual: state.saldoAkhirAppAktual,
+        saldoAkhirGrabKreditAktual: state.saldoAkhirGrabKreditAktual,
+        saldoAkhirGrabTunaiAktual: state.saldoAkhirGrabTunaiAktual,
+        saldoAkhirGrabOvoAktual: state.saldoAkhirGrabOvoAktual,
       );
     }
     await _service.saveExtra(id, tip: tip, insentif: insentif);
+    await refreshSummary();
+    ref.invalidate(recapsProvider);
+  }
+
+  Future<void> closeRecap({
+    required double actualSf,
+    required double actualGrabKredit,
+    required double actualGrabTunai,
+    required double actualGrabOvo,
+  }) async {
+    final id = state.recapId;
+    if (id == null) return;
+    
+    await _service.updateRecapHeader(
+      id: id,
+      cashAwal: state.cashAwal,
+      saldoAwalApp: state.saldoAwalApp,
+      saldoAwalGrabKredit: state.saldoAwalGrabKredit,
+      saldoAwalGrabTunai: state.saldoAwalGrabTunai,
+      saldoAwalGrabOvo: state.saldoAwalGrabOvo,
+      odoStart: state.odoStart,
+      odoEnd: state.odoEnd,
+      fuelPricePerLiter: state.fuelPricePerLiter,
+      kmlParameter: state.kmlParameter,
+      status: 'closed',
+      saldoAkhirAppAktual: actualSf,
+      saldoAkhirGrabKreditAktual: actualGrabKredit,
+      saldoAkhirGrabTunaiAktual: actualGrabTunai,
+      saldoAkhirGrabOvoAktual: actualGrabOvo,
+    );
+
+    state = state.copyWith(
+      status: 'closed',
+      saldoAkhirAppAktual: actualSf,
+      saldoAkhirGrabKreditAktual: actualGrabKredit,
+      saldoAkhirGrabTunaiAktual: actualGrabTunai,
+      saldoAkhirGrabOvoAktual: actualGrabOvo,
+    );
+    await refreshSummary();
+    ref.invalidate(recapsProvider);
+  }
+
+  Future<void> reopenRecap() async {
+    final id = state.recapId;
+    if (id == null) return;
+    
+    await _service.updateRecapHeader(
+      id: id,
+      cashAwal: state.cashAwal,
+      saldoAwalApp: state.saldoAwalApp,
+      saldoAwalGrabKredit: state.saldoAwalGrabKredit,
+      saldoAwalGrabTunai: state.saldoAwalGrabTunai,
+      saldoAwalGrabOvo: state.saldoAwalGrabOvo,
+      odoStart: state.odoStart,
+      odoEnd: state.odoEnd,
+      fuelPricePerLiter: state.fuelPricePerLiter,
+      kmlParameter: state.kmlParameter,
+      status: 'open',
+      saldoAkhirAppAktual: state.saldoAkhirAppAktual,
+      saldoAkhirGrabKreditAktual: state.saldoAkhirGrabKreditAktual,
+      saldoAkhirGrabTunaiAktual: state.saldoAkhirGrabTunaiAktual,
+      saldoAkhirGrabOvoAktual: state.saldoAkhirGrabOvoAktual,
+    );
+
+    state = state.copyWith(status: 'open');
     await refreshSummary();
     ref.invalidate(recapsProvider);
   }

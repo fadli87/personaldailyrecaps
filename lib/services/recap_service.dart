@@ -37,6 +37,18 @@ class RecapService {
     required DateTime tanggal,
     required double cashAwal,
     required double saldoAwalApp,
+    double saldoAwalGrabKredit = 0,
+    double saldoAwalGrabTunai = 0,
+    double saldoAwalGrabOvo = 0,
+    double odoStart = 0,
+    double odoEnd = 0,
+    double fuelPricePerLiter = 10000,
+    double kmlParameter = 45.5,
+    String status = 'open',
+    double saldoAkhirAppAktual = 0,
+    double saldoAkhirGrabKreditAktual = 0,
+    double saldoAkhirGrabTunaiAktual = 0,
+    double saldoAkhirGrabOvoAktual = 0,
     String? catatan,
   }) async {
     final id = const Uuid().v4();
@@ -49,6 +61,18 @@ class RecapService {
       'tanggal': dateStr,
       'cash_awal': cashAwal,
       'saldo_awal_app': saldoAwalApp,
+      'saldo_awal_grab_kredit': saldoAwalGrabKredit,
+      'saldo_awal_grab_tunai': saldoAwalGrabTunai,
+      'saldo_awal_grab_ovo': saldoAwalGrabOvo,
+      'odo_start': odoStart,
+      'odo_end': odoEnd,
+      'fuel_price_per_liter': fuelPricePerLiter,
+      'kml_parameter': kmlParameter,
+      'status': status,
+      'saldo_akhir_app_aktual': saldoAkhirAppAktual,
+      'saldo_akhir_grab_kredit_aktual': saldoAkhirGrabKreditAktual,
+      'saldo_akhir_grab_tunai_aktual': saldoAkhirGrabTunaiAktual,
+      'saldo_akhir_grab_ovo_aktual': saldoAkhirGrabOvoAktual,
       'catatan': catatan,
       'created_at': nowStr,
       'updated_at': nowStr,
@@ -63,6 +87,18 @@ class RecapService {
     required String id,
     required double cashAwal,
     required double saldoAwalApp,
+    double saldoAwalGrabKredit = 0,
+    double saldoAwalGrabTunai = 0,
+    double saldoAwalGrabOvo = 0,
+    double odoStart = 0,
+    double odoEnd = 0,
+    double fuelPricePerLiter = 10000,
+    double kmlParameter = 45.5,
+    String status = 'open',
+    double saldoAkhirAppAktual = 0,
+    double saldoAkhirGrabKreditAktual = 0,
+    double saldoAkhirGrabTunaiAktual = 0,
+    double saldoAkhirGrabOvoAktual = 0,
     String? catatan,
   }) async {
     final db = await LocalDb.instance.database;
@@ -73,6 +109,18 @@ class RecapService {
       {
         'cash_awal': cashAwal,
         'saldo_awal_app': saldoAwalApp,
+        'saldo_awal_grab_kredit': saldoAwalGrabKredit,
+        'saldo_awal_grab_tunai': saldoAwalGrabTunai,
+        'saldo_awal_grab_ovo': saldoAwalGrabOvo,
+        'odo_start': odoStart,
+        'odo_end': odoEnd,
+        'fuel_price_per_liter': fuelPricePerLiter,
+        'kml_parameter': kmlParameter,
+        'status': status,
+        'saldo_akhir_app_aktual': saldoAkhirAppAktual,
+        'saldo_akhir_grab_kredit_aktual': saldoAkhirGrabKreditAktual,
+        'saldo_akhir_grab_tunai_aktual': saldoAkhirGrabTunaiAktual,
+        'saldo_akhir_grab_ovo_aktual': saldoAkhirGrabOvoAktual,
         'catatan': catatan,
         'updated_at': nowStr,
         'is_synced': 0,
@@ -240,5 +288,58 @@ class RecapService {
   void _triggerSync() {
     // Jalankan sinkronisasi secara asynchronous di background
     Future.microtask(() => SyncService.sync());
+  }
+
+  // ---------- Periodic Queries for Reports & Exports ----------
+
+  Future<List<DailyRecap>> getRecapsInPeriod(DateTime start, DateTime end) async {
+    final startStr = start.toIso8601String().split('T').first;
+    final endStr = end.toIso8601String().split('T').first;
+    final db = await LocalDb.instance.database;
+    final data = await db.query(
+      'daily_recap_summary',
+      where: 'tanggal BETWEEN ? AND ?',
+      whereArgs: [startStr, endStr],
+      orderBy: 'tanggal DESC',
+    );
+    return data.map((e) => DailyRecap.fromSummaryMap(e)).toList();
+  }
+
+  Future<Map<String, double>> getPlatformIncomeDistributionInPeriod(DateTime start, DateTime end) async {
+    final startStr = start.toIso8601String().split('T').first;
+    final endStr = end.toIso8601String().split('T').first;
+    final db = await LocalDb.instance.database;
+    final data = await db.rawQuery('''
+      SELECT o.platform, SUM(o.income) as total_income
+      FROM daily_order o
+      INNER JOIN daily_recap r ON o.daily_recap_id = r.id
+      WHERE r.tanggal BETWEEN ? AND ? 
+        AND o.platform IS NOT NULL 
+        AND o.platform != '' 
+        AND o.income > 0
+      GROUP BY o.platform
+      ORDER BY total_income DESC
+    ''', [startStr, endStr]);
+    
+    final result = <String, double>{};
+    for (final row in data) {
+      final platform = row['platform'] as String;
+      final income = (row['total_income'] as num?)?.toDouble() ?? 0.0;
+      result[platform] = income;
+    }
+    return result;
+  }
+
+  Future<List<Map<String, dynamic>>> getRawOrdersInPeriod(DateTime start, DateTime end) async {
+    final startStr = start.toIso8601String().split('T').first;
+    final endStr = end.toIso8601String().split('T').first;
+    final db = await LocalDb.instance.database;
+    return await db.rawQuery('''
+      SELECT o.*, r.tanggal as recap_tanggal
+      FROM daily_order o
+      INNER JOIN daily_recap r ON o.daily_recap_id = r.id
+      WHERE r.tanggal BETWEEN ? AND ?
+      ORDER BY r.tanggal DESC, o.urutan ASC
+    ''', [startStr, endStr]);
   }
 }

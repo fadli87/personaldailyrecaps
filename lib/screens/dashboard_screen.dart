@@ -15,6 +15,7 @@ class DashboardScreen extends ConsumerWidget {
     final platformAsync = ref.watch(platformDistributionProvider);
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(recapsProvider);
@@ -26,97 +27,98 @@ class DashboardScreen extends ConsumerWidget {
         },
         child: recapsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('Gagal memuat data dashboard: $err')),
+          error: (err, stack) => Center(child: Text('Gagal memuat data: $err')),
           data: (recaps) {
             return platformAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Gagal memuat data platform: $err')),
+              error: (err, stack) => Center(child: Text('Gagal memuat platform: $err')),
               data: (platformData) {
                 if (recaps.isEmpty) {
                   return ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: const [
                       SizedBox(height: 100),
-                      Center(child: Text('Belum ada data untuk dianalisis.')),
+                      Center(child: Text('Belum ada data transaksi.')),
                     ],
                   );
                 }
 
-                // Ambil data dalam urutan kronologis (terlama -> terbaru) untuk grafik tren
-                final chronologicalRecaps = recaps.reversed.toList();
-                
-                // Hitung KPI ringkasan
+                // Kalkulasi KPI
                 double totalIncome = 0;
                 double totalExpense = 0;
                 double totalNetEarnings = 0;
-                double totalPettyCash = 0;
+                
+                // Kalkulasi Kendaraan (Akumulasi menggunakan precalculated fields dari DB)
+                double totalJarak = 0;
+                double totalLiterTerpakai = 0;
 
                 for (var r in recaps) {
                   totalIncome += r.totalIncome;
                   totalExpense += r.totalExpense;
                   totalNetEarnings += r.netEarning;
+                  totalJarak += r.jarakTempuh; 
+                  totalLiterTerpakai += r.literTerpakai;
                 }
-                if (recaps.isNotEmpty) {
-                  totalPettyCash = recaps.first.pettyCashTotal; // Petty cash terbaru
-                }
+
+                // Ambil 7 hari TERBARU secara kronologis (terlama -> terbaru) untuk grafik
+                final chartRecaps = recaps.take(7).toList().reversed.toList();
 
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     final isDesktop = constraints.maxWidth > 850;
                     return ListView(
                       padding: const EdgeInsets.all(16),
+                      physics: const AlwaysScrollableScrollPhysics(),
                       children: [
-                        // Section 1: KPI Cards
-                        _buildKpiGrid(
-                          isDesktop: isDesktop,
-                          income: totalIncome,
-                          expense: totalExpense,
-                          earnings: totalNetEarnings,
-                          pettyCash: totalPettyCash,
-                        ),
-                        const SizedBox(height: 24),
+                        // --- SECTION 1: KPI FINANCIAL CARDS ---
+                        _buildFinancialKPIs(isDesktop, totalNetEarnings, totalIncome, totalExpense),
+                        const SizedBox(height: 20),
 
-                        // Section 2: Charts
+                        // --- SECTION 2: VEHICLE TELEMETRY CARD ---
+                        _buildVehicleTelemetry(totalJarak, totalLiterTerpakai),
+                        const SizedBox(height: 20),
+
+                        // --- SECTION 3: CHARTS ---
                         if (isDesktop) ...[
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
                                 flex: 3,
-                                child: _buildChartCard(
+                                child: _buildChartContainer(
                                   title: 'Tren Keuntungan Bersih (7 Hari Terakhir)',
-                                  chart: _buildLineChart(chronologicalRecaps.take(7).toList()),
+                                  child: _buildLoyverseLineChart(chartRecaps),
                                 ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
                                 flex: 2,
-                                child: _buildChartCard(
-                                  title: 'Distribusi Penjualan per Platform',
-                                  chart: _buildPieChart(platformData),
+                                child: _buildChartContainer(
+                                  title: 'Penjualan per Platform',
+                                  child: _buildLoyversePieChart(platformData),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
-                          _buildChartCard(
+                          _buildChartContainer(
                             title: 'Perbandingan Pemasukan vs Pengeluaran Harian',
-                            chart: _buildBarChart(chronologicalRecaps.take(7).toList()),
+                            child: _buildLoyverseBarChart(chartRecaps),
                           ),
                         ] else ...[
-                          _buildChartCard(
+                          _buildChartContainer(
                             title: 'Tren Keuntungan Bersih (7 Hari Terakhir)',
-                            chart: _buildLineChart(chronologicalRecaps.take(7).toList()),
+                            child: _buildLoyverseLineChart(chartRecaps),
                           ),
                           const SizedBox(height: 16),
-                          _buildChartCard(
-                            title: 'Distribusi Penjualan per Platform',
-                            chart: _buildPieChart(platformData),
+                          _buildChartContainer(
+                            title: 'Penjualan per Platform',
+                            child: _buildLoyversePieChart(platformData),
                           ),
                           const SizedBox(height: 16),
-                          _buildChartCard(
+                          _buildChartContainer(
                             title: 'Perbandingan Pemasukan vs Pengeluaran Harian',
-                            chart: _buildBarChart(chronologicalRecaps.take(7).toList()),
+                            child: _buildLoyverseBarChart(chartRecaps),
                           ),
                         ],
                         const SizedBox(height: 40),
@@ -132,145 +134,171 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  // --- UI Widget Helpers ---
+  // ============================================================================
+  // WIDGET BUILDERS
+  // ============================================================================
 
-  Widget _buildKpiGrid({
-    required bool isDesktop,
-    required double income,
-    required double expense,
-    required double earnings,
-    required double pettyCash,
-  }) {
+  Widget _buildFinancialKPIs(bool isDesktop, double net, double income, double expense) {
     final kpis = [
-      _KpiData(
-        title: 'Total Pemasukan',
-        value: income,
-        colors: [const Color(0xFF4CAF50), const Color(0xFF2E7D32)],
-        icon: Icons.trending_up,
-      ),
-      _KpiData(
-        title: 'Total Pengeluaran',
-        value: expense,
-        colors: [const Color(0xFFFF7043), const Color(0xFFD84315)],
-        icon: Icons.trending_down,
-      ),
-      _KpiData(
-        title: 'Keuntungan Bersih',
-        value: earnings,
-        colors: [const Color(0xFF00ACC1), const Color(0xFF006064)],
-        icon: Icons.payments,
-      ),
-      _KpiData(
-        title: 'Petty Cash Terakhir',
-        value: pettyCash,
-        colors: [const Color(0xFF7E57C2), const Color(0xFF4527A0)],
-        icon: Icons.account_balance_wallet,
-      ),
+      _KpiData('Keuntungan Bersih', net, Icons.payments, const Color(0xFF2E7D32)), // Hijau tua
+      _KpiData('Total Pemasukan', income, Icons.arrow_upward, const Color(0xFF4CAF50)), // Hijau muda
+      _KpiData('Total Pengeluaran', expense, Icons.arrow_downward, const Color(0xFFD32F2F)), // Merah
     ];
 
-    if (isDesktop) {
-      return GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 2.2,
-        ),
-        itemCount: kpis.length,
-        itemBuilder: (_, i) => _buildKpiCard(kpis[i]),
-      );
-    } else {
-      return GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.5,
-        ),
-        itemCount: kpis.length,
-        itemBuilder: (_, i) => _buildKpiCard(kpis[i]),
-      );
-    }
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: isDesktop ? 3 : 1,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: isDesktop ? 2.5 : 3.5,
+      ),
+      itemCount: kpis.length,
+      itemBuilder: (_, i) => _buildLoyverseKpiCard(kpis[i]),
+    );
   }
 
-  Widget _buildKpiCard(_KpiData kpi) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: kpi.colors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+  Widget _buildLoyverseKpiCard(_KpiData kpi) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04), // Shadow sangat halus ala Loyverse
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  kpi.title,
-                  style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.bold),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: kpi.color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                Icon(kpi.icon, color: Colors.white70, size: 20),
-              ],
-            ),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                currency.format(kpi.value),
+                child: Icon(kpi.icon, color: kpi.color, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                kpi.title.toUpperCase(),
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
+                  color: Colors.black54,
+                  fontSize: 11,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
               ),
+            ],
+          ),
+          const Spacer(),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              currency.format(kpi.value),
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildChartCard({required String title, required Widget chart}) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  // --- KARTU TELEMETRI KENDARAAN ---
+  Widget _buildVehicleTelemetry(double totalKm, double totalLiter) {
+    double efisiensi = totalLiter > 0 ? (totalKm / totalLiter) : 0.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E293B), Color(0xFF0F172A)], // Cyber/Dark theme
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'PERFORMA KENDARAAN (AKUMULASI)',
+            style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _telemetryItem(Icons.speed, '${totalKm.toStringAsFixed(1)} KM', 'Jarak Tempuh'),
+              _telemetryItem(Icons.local_gas_station, '${totalLiter.toStringAsFixed(1)} L', 'BBM Terpakai'),
+              _telemetryItem(Icons.eco, '${efisiensi.toStringAsFixed(1)} KM/L', 'Efisiensi Rata-rata', color: Colors.greenAccent),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _telemetryItem(IconData icon, String value, String label, {Color color = Colors.white}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: color.withOpacity(0.8), size: 22),
+        const SizedBox(height: 6),
+        Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 2),
+        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+      ],
+    );
+  }
+
+  Widget _buildChartContainer({required String title, required Widget child}) {
+    return Container(
+      height: 320,
       margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 250,
-              child: chart,
-            ),
-          ],
-        ),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.black87)),
+          const SizedBox(height: 20),
+          Expanded(child: child),
+        ],
       ),
     );
   }
 
-  // --- Charts Building ---
+  // ============================================================================
+  // CHARTS (LOYVERSE STYLE)
+  // ============================================================================
 
-  Widget _buildLineChart(List<DailyRecap> recaps) {
+  Widget _buildLoyverseLineChart(List<DailyRecap> recaps) {
     if (recaps.isEmpty) return const Center(child: Text('Tidak cukup data'));
 
     final spots = <FlSpot>[];
@@ -278,9 +306,15 @@ class DashboardScreen extends ConsumerWidget {
       spots.add(FlSpot(i.toDouble(), recaps[i].netEarning));
     }
 
+    const primaryColor = Color(0xFF2E7D32);
+
     return LineChart(
       LineChartData(
-        gridData: const FlGridData(show: true, drawVerticalLine: false),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.withOpacity(0.2), strokeWidth: 1, dashArray: [5, 5]),
+        ),
         titlesData: FlTitlesData(
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
@@ -292,7 +326,7 @@ class DashboardScreen extends ConsumerWidget {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       DateFormat('dd/MM').format(recaps[idx].tanggal),
-                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                      style: const TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.w600),
                     ),
                   );
                 }
@@ -303,11 +337,11 @@ class DashboardScreen extends ConsumerWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 60,
+              reservedSize: 50,
               getTitlesWidget: (value, meta) {
                 return Text(
                   _formatCompactNumber(value),
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  style: const TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.w600),
                 );
               },
             ),
@@ -320,13 +354,17 @@ class DashboardScreen extends ConsumerWidget {
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            color: const Color(0xFF2E7D32),
-            barWidth: 4,
+            color: primaryColor,
+            barWidth: 3,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: true),
             belowBarData: BarAreaData(
               show: true,
-              color: const Color(0x262E7D32),
+              gradient: LinearGradient(
+                colors: [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.0)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
             ),
           ),
         ],
@@ -334,77 +372,79 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPieChart(Map<String, double> data) {
-    if (data.isEmpty) return const Center(child: Text('Belum ada data penjualan platform'));
+  Widget _buildLoyversePieChart(Map<String, double> data) {
+    if (data.isEmpty) return const Center(child: Text('Data tidak tersedia'));
 
     final colors = [
-      const Color(0xFF2E7D32),
-      const Color(0xFF1565C0),
-      const Color(0xFFD84315),
-      const Color(0xFFAD1457),
-      const Color(0xFFF9A825),
-      const Color(0xFF4527A0),
-      const Color(0xFF00838F),
+      const Color(0xFF2E7D32), // Hijau
+      const Color(0xFF1565C0), // Biru
+      const Color(0xFFF9A825), // Kuning
+      const Color(0xFFD84315), // Jingga
+      const Color(0xFFAD1457), // Pink
+      const Color(0xFF4527A0), // Ungu
     ];
+
+    final totalSales = data.values.fold(0.0, (a, b) => a + b);
 
     int colorIdx = 0;
     final sections = data.entries.map((entry) {
       final color = colors[colorIdx % colors.length];
       colorIdx++;
+      final pct = totalSales > 0 ? (entry.value / totalSales * 100) : 0.0;
       return PieChartSectionData(
         color: color,
         value: entry.value,
-        title: entry.key,
-        radius: 65,
-        titleStyle: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-          shadows: [Shadow(color: Colors.black38, blurRadius: 4)],
-        ),
+        title: '${pct.toStringAsFixed(0)}%',
+        radius: 50,
+        titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
       );
     }).toList();
 
     return Row(
       children: [
         Expanded(
+          flex: 1,
           child: PieChart(
             PieChartData(
-              sectionsSpace: 3,
-              centerSpaceRadius: 40,
+              sectionsSpace: 2,
+              centerSpaceRadius: 35,
               sections: sections,
             ),
           ),
         ),
-        const SizedBox(width: 8),
-        // Legend
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: data.entries.toList().asMap().entries.map((item) {
-            final idx = item.key;
-            final entry = item.value;
-            final color = colors[idx % colors.length];
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4.0),
-              child: Row(
-                children: [
-                  Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${entry.key}: ${_formatCompactNumber(entry.value)}',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 1,
+          child: Scrollbar(
+            child: ListView(
+              shrinkWrap: true,
+              children: data.entries.toList().asMap().entries.map((item) {
+                final color = colors[item.key % colors.length];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Row(
+                    children: [
+                      Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '${item.value.key}: ${currency.format(item.value.value)}',
+                          style: const TextStyle(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }).toList(),
+                );
+              }).toList(),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildBarChart(List<DailyRecap> recaps) {
+  Widget _buildLoyverseBarChart(List<DailyRecap> recaps) {
     if (recaps.isEmpty) return const Center(child: Text('Tidak cukup data'));
 
     final groups = <BarChartGroupData>[];
@@ -416,14 +456,14 @@ class DashboardScreen extends ConsumerWidget {
             BarChartRodData(
               toY: recaps[i].totalIncome,
               color: const Color(0xFF4CAF50),
-              width: 10,
-              borderRadius: BorderRadius.circular(4),
+              width: 8,
+              borderRadius: BorderRadius.circular(2),
             ),
             BarChartRodData(
               toY: recaps[i].totalExpense,
               color: const Color(0xFFFF7043),
-              width: 10,
-              borderRadius: BorderRadius.circular(4),
+              width: 8,
+              borderRadius: BorderRadius.circular(2),
             ),
           ],
         ),
@@ -432,7 +472,11 @@ class DashboardScreen extends ConsumerWidget {
 
     return BarChart(
       BarChartData(
-        gridData: const FlGridData(show: true, drawVerticalLine: false),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.withOpacity(0.2), strokeWidth: 1, dashArray: [5, 5]),
+        ),
         titlesData: FlTitlesData(
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
@@ -444,7 +488,7 @@ class DashboardScreen extends ConsumerWidget {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       DateFormat('dd/MM').format(recaps[idx].tanggal),
-                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                      style: const TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.w600),
                     ),
                   );
                 }
@@ -455,11 +499,11 @@ class DashboardScreen extends ConsumerWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 60,
+              reservedSize: 50,
               getTitlesWidget: (value, meta) {
                 return Text(
                   _formatCompactNumber(value),
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  style: const TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.w600),
                 );
               },
             ),
@@ -473,14 +517,9 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  // --- Math/Helpers ---
-
   static String _formatCompactNumber(double value) {
-    if (value >= 1000000) {
-      return '${(value / 1000000).toStringAsFixed(1)}M';
-    } else if (value >= 1000) {
-      return '${(value / 1000).toStringAsFixed(0)}k';
-    }
+    if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(1)}M';
+    if (value >= 1000) return '${(value / 1000).toStringAsFixed(0)}k';
     return value.toStringAsFixed(0);
   }
 }
@@ -488,13 +527,8 @@ class DashboardScreen extends ConsumerWidget {
 class _KpiData {
   final String title;
   final double value;
-  final List<Color> colors;
   final IconData icon;
+  final Color color;
 
-  _KpiData({
-    required this.title,
-    required this.value,
-    required this.colors,
-    required this.icon,
-  });
+  _KpiData(this.title, this.value, this.icon, this.color);
 }

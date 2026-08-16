@@ -61,6 +61,9 @@ class SyncService {
       final orders = await db.query('daily_order', where: 'is_synced = 0');
       for (final o in orders) {
         final data = Map<String, dynamic>.from(o)..remove('is_synced');
+        if (data['is_fuel_expense'] != null) {
+          data['is_fuel_expense'] = data['is_fuel_expense'] == 1;
+        }
         try {
           await _client.from('daily_order').upsert(data);
           await db.update('daily_order', {'is_synced': 1}, where: 'id = ?', whereArgs: [o['id']]);
@@ -121,11 +124,17 @@ class SyncService {
         final local = await db.query('daily_order', where: 'id = ?', whereArgs: [ro['id']]);
         if (local.isEmpty) {
           final data = Map<String, dynamic>.from(ro)..['is_synced'] = 1;
+          if (data['is_fuel_expense'] != null) {
+            data['is_fuel_expense'] = (data['is_fuel_expense'] as bool) ? 1 : 0;
+          }
           await db.insert('daily_order', data);
         } else {
           final localIsSynced = local.first['is_synced'] as int;
           if (localIsSynced == 1) {
             final data = Map<String, dynamic>.from(ro)..['is_synced'] = 1;
+            if (data['is_fuel_expense'] != null) {
+              data['is_fuel_expense'] = (data['is_fuel_expense'] as bool) ? 1 : 0;
+            }
             await db.update('daily_order', data, where: 'id = ?', whereArgs: [ro['id']]);
           }
         }

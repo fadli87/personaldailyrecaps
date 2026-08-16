@@ -11,7 +11,19 @@ create table if not exists daily_recap (
   id uuid primary key default gen_random_uuid(),
   tanggal date not null unique,
   cash_awal numeric(14,2) not null default 0,
-  saldo_awal_app numeric(14,2) not null default 0,
+  saldo_awal_app numeric(14,2) not null default 0, -- ShopeeFood
+  saldo_awal_grab_kredit numeric(14,2) not null default 0,
+  saldo_awal_grab_tunai numeric(14,2) not null default 0,
+  saldo_awal_grab_ovo numeric(14,2) not null default 0,
+  odo_start numeric(14,2) not null default 0,
+  odo_end numeric(14,2) not null default 0,
+  fuel_price_per_liter numeric(14,2) not null default 10000,
+  kml_parameter numeric(10,2) not null default 45.5,
+  status text not null default 'open',
+  saldo_akhir_app_aktual numeric(14,2) not null default 0, -- ShopeeFood
+  saldo_akhir_grab_kredit_aktual numeric(14,2) not null default 0,
+  saldo_akhir_grab_tunai_aktual numeric(14,2) not null default 0,
+  saldo_akhir_grab_ovo_aktual numeric(14,2) not null default 0,
   catatan text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -30,6 +42,8 @@ create table if not exists daily_order (
   cust_change numeric(14,2) not null default 0,
   saldo_top_up numeric(14,2) not null default 0,
   expense numeric(14,2) not null default 0,
+  is_fuel_expense boolean not null default false,
+  wallet_type text not null default 'shopeefood',
   remark text,
   created_at timestamptz not null default now()
 );
@@ -52,7 +66,6 @@ create table if not exists daily_extra (
 
 -- =========================================================
 -- View rekap otomatis: saldo akhir, net earning, dsb
--- (menggantikan rumus Excel Cash Akhir / Net Earning / Saldo Akhir App)
 -- =========================================================
 create or replace view daily_recap_summary as
 select
@@ -60,6 +73,18 @@ select
   dr.tanggal,
   dr.cash_awal,
   dr.saldo_awal_app,
+  dr.saldo_awal_grab_kredit,
+  dr.saldo_awal_grab_tunai,
+  dr.saldo_awal_grab_ovo,
+  dr.odo_start,
+  dr.odo_end,
+  dr.fuel_price_per_liter,
+  dr.kml_parameter,
+  dr.status,
+  dr.saldo_akhir_app_aktual,
+  dr.saldo_akhir_grab_kredit_aktual,
+  dr.saldo_akhir_grab_tunai_aktual,
+  dr.saldo_akhir_grab_ovo_aktual,
   coalesce(o.total_income, 0)          as total_income,
   coalesce(o.total_deduct_cash_app, 0) as total_deduct_cash_app,
   coalesce(o.total_cust_pay, 0)        as total_cust_pay,
@@ -69,12 +94,30 @@ select
   coalesce(pc.grand_total, 0)          as petty_cash_total,
   coalesce(de.tip, 0)                  as tip,
   coalesce(de.insentif, 0)             as insentif,
-  -- Saldo Akhir App = Saldo Awal App + Income - Expense (mengikuti pola file contoh)
-  dr.saldo_awal_app + coalesce(o.total_income, 0) - coalesce(o.total_expense, 0) as saldo_akhir_app,
-  -- Cash Akhir = Cash Awal + Cust Pay - Cust Change - Saldo Top Up (uang tunai yang berpindah)
+  -- Saldo akhir buku per wallet
+  dr.saldo_awal_app + coalesce(o.inc_sf, 0) - coalesce(o.exp_sf, 0) - coalesce(o.ded_sf, 0) + coalesce(o.top_sf, 0) as saldo_akhir_app,
+  dr.saldo_awal_grab_kredit + coalesce(o.inc_gk, 0) - coalesce(o.exp_gk, 0) - coalesce(o.ded_gk, 0) + coalesce(o.top_gk, 0) as saldo_akhir_grab_kredit,
+  dr.saldo_awal_grab_tunai + coalesce(o.inc_gt, 0) - coalesce(o.exp_gt, 0) - coalesce(o.ded_gt, 0) + coalesce(o.top_gt, 0) as saldo_akhir_grab_tunai,
+  dr.saldo_awal_grab_ovo + coalesce(o.inc_go, 0) - coalesce(o.exp_go, 0) - coalesce(o.ded_go, 0) + coalesce(o.top_go, 0) as saldo_akhir_grab_ovo,
+  -- Kas akhir buku (Tunai)
   dr.cash_awal + coalesce(o.total_cust_pay, 0) - coalesce(o.total_cust_change, 0) - coalesce(o.total_saldo_top_up, 0) as cash_akhir,
-  -- Net Earning = Income - Expense
-  coalesce(o.total_income, 0) - coalesce(o.total_expense, 0) as net_earning
+  -- Net earning global
+  coalesce(o.total_income, 0) - coalesce(o.total_expense, 0) as net_earning,
+  -- Telemetry & BBM
+  (dr.odo_end - dr.odo_start) as jarak_tempuh,
+  coalesce(f.total_fuel_expense, 0) as total_fuel_expense,
+  case when dr.fuel_price_per_liter > 0
+       then coalesce(f.total_fuel_expense, 0) / dr.fuel_price_per_liter
+       else 0 end as liter_masuk,
+  case when dr.kml_parameter > 0
+       then (dr.odo_end - dr.odo_start) / dr.kml_parameter
+       else 0 end as liter_terpakai,
+  -- Discrepancies
+  (coalesce(pc.grand_total, 0) - (dr.cash_awal + coalesce(o.total_cust_pay, 0) - coalesce(o.total_cust_change, 0) - coalesce(o.total_saldo_top_up, 0))) as cash_discrepancy,
+  dr.saldo_akhir_app_aktual - (dr.saldo_awal_app + coalesce(o.inc_sf, 0) - coalesce(o.exp_sf, 0) - coalesce(o.ded_sf, 0) + coalesce(o.top_sf, 0)) as app_discrepancy,
+  dr.saldo_akhir_grab_kredit_aktual - (dr.saldo_awal_grab_kredit + coalesce(o.inc_gk, 0) - coalesce(o.exp_gk, 0) - coalesce(o.ded_gk, 0) + coalesce(o.top_gk, 0)) as grab_kredit_discrepancy,
+  dr.saldo_akhir_grab_tunai_aktual - (dr.saldo_awal_grab_tunai + coalesce(o.inc_gt, 0) - coalesce(o.exp_gt, 0) - coalesce(o.ded_gt, 0) + coalesce(o.top_gt, 0)) as grab_tunai_discrepancy,
+  dr.saldo_akhir_grab_ovo_aktual - (dr.saldo_awal_grab_ovo + coalesce(o.inc_go, 0) - coalesce(o.exp_go, 0) - coalesce(o.ded_go, 0) + coalesce(o.top_go, 0)) as grab_ovo_discrepancy
 from daily_recap dr
 left join (
   select
@@ -84,10 +127,36 @@ left join (
     sum(cust_pay) as total_cust_pay,
     sum(cust_change) as total_cust_change,
     sum(saldo_top_up) as total_saldo_top_up,
-    sum(expense) as total_expense
+    sum(expense) as total_expense,
+    -- shopeefood
+    sum(case when wallet_type = 'shopeefood' then income else 0 end) as inc_sf,
+    sum(case when wallet_type = 'shopeefood' then expense else 0 end) as exp_sf,
+    sum(case when wallet_type = 'shopeefood' then deduct_cash_app else 0 end) as ded_sf,
+    sum(case when wallet_type = 'shopeefood' then saldo_top_up else 0 end) as top_sf,
+    -- grab_kredit
+    sum(case when wallet_type = 'grab_kredit' then income else 0 end) as inc_gk,
+    sum(case when wallet_type = 'grab_kredit' then expense else 0 end) as exp_gk,
+    sum(case when wallet_type = 'grab_kredit' then deduct_cash_app else 0 end) as ded_gk,
+    sum(case when wallet_type = 'grab_kredit' then saldo_top_up else 0 end) as top_gk,
+    -- grab_tunai
+    sum(case when wallet_type = 'grab_tunai' then income else 0 end) as inc_gt,
+    sum(case when wallet_type = 'grab_tunai' then expense else 0 end) as exp_gt,
+    sum(case when wallet_type = 'grab_tunai' then deduct_cash_app else 0 end) as ded_gt,
+    sum(case when wallet_type = 'grab_tunai' then saldo_top_up else 0 end) as top_gt,
+    -- grab_ovo
+    sum(case when wallet_type = 'grab_ovo' then income else 0 end) as inc_go,
+    sum(case when wallet_type = 'grab_ovo' then expense else 0 end) as exp_go,
+    sum(case when wallet_type = 'grab_ovo' then deduct_cash_app else 0 end) as ded_go,
+    sum(case when wallet_type = 'grab_ovo' then saldo_top_up else 0 end) as top_go
   from daily_order
   group by daily_recap_id
 ) o on o.daily_recap_id = dr.id
+left join (
+  select daily_recap_id, sum(expense) as total_fuel_expense
+  from daily_order
+  where is_fuel_expense = true
+  group by daily_recap_id
+) f on f.daily_recap_id = dr.id
 left join (
   select daily_recap_id, sum(denom::text::numeric * qty) as grand_total
   from petty_cash_item

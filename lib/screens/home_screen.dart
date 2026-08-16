@@ -5,6 +5,7 @@ import '../providers/recap_providers.dart';
 import '../services/sync_service.dart';
 import 'daily_recap_detail_screen.dart';
 import 'dashboard_screen.dart';
+import 'report_screen.dart';
 
 final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 final dateFmt = DateFormat('EEEE, d MMM yyyy', 'id_ID');
@@ -24,7 +25,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final recapsAsync = ref.watch(recapsProvider);
 
     final List<Widget> pages = [
-      // Halaman 0: Daftar Rekap Harian
+      // Halaman 0: Dashboard Eksekutif
+      const DashboardScreen(),
+      // Halaman 1: Daftar Rekap Harian
       RefreshIndicator(
         onRefresh: () async {
           await SyncService.sync();
@@ -95,14 +98,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
         ),
       ),
-      // Halaman 1: Dashboard Eksekutif
-      const DashboardScreen(),
+      // Halaman 2: Laporan Periodik & Ekspor
+      const ReportScreen(),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentIndex == 0 ? 'SF Daily Recap' : 'Dashboard Eksekutif'),
-        actions: _currentIndex == 1
+        title: Text(_currentIndex == 0 
+            ? 'Dashboard Eksekutif' 
+            : (_currentIndex == 1 ? 'SF Daily Recap' : 'Laporan Bulanan & Ekspor')),
+        actions: _currentIndex == 0
             ? [
                 IconButton(
                   icon: const Icon(Icons.refresh),
@@ -127,18 +132,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         },
         items: const [
           BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.list_alt_outlined),
             activeIcon: Icon(Icons.list_alt),
             label: 'Rekap Harian',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
+            icon: Icon(Icons.assessment_outlined),
+            activeIcon: Icon(Icons.assessment),
+            label: 'Laporan',
           ),
         ],
       ),
-      floatingActionButton: _currentIndex == 0
+      floatingActionButton: _currentIndex == 1
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.add),
               label: const Text('Rekap Hari Ini'),

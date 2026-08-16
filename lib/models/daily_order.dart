@@ -10,6 +10,8 @@ class DailyOrder {
   final double custChange;
   final double saldoTopUp;
   final double expense;
+  final bool isFuelExpense;
+  final String walletType;
   final String? remark;
 
   DailyOrder({
@@ -24,11 +26,22 @@ class DailyOrder {
     this.custChange = 0,
     this.saldoTopUp = 0,
     this.expense = 0,
+    this.isFuelExpense = false,
+    this.walletType = 'shopeefood',
     this.remark,
   });
 
   factory DailyOrder.fromMap(Map<String, dynamic> map) {
     double d(dynamic v) => (v as num?)?.toDouble() ?? 0;
+    
+    final rawFuel = map['is_fuel_expense'];
+    bool isFuel = false;
+    if (rawFuel is bool) {
+      isFuel = rawFuel;
+    } else if (rawFuel is int) {
+      isFuel = rawFuel == 1;
+    }
+
     return DailyOrder(
       id: map['id'] as String?,
       dailyRecapId: map['daily_recap_id'] as String,
@@ -41,6 +54,8 @@ class DailyOrder {
       custChange: d(map['cust_change']),
       saldoTopUp: d(map['saldo_top_up']),
       expense: d(map['expense']),
+      isFuelExpense: isFuel,
+      walletType: map['wallet_type'] as String? ?? 'shopeefood',
       remark: map['remark'] as String?,
     );
   }
@@ -56,6 +71,8 @@ class DailyOrder {
         'cust_change': custChange,
         'saldo_top_up': saldoTopUp,
         'expense': expense,
+        'is_fuel_expense': isFuelExpense ? 1 : 0,
+        'wallet_type': walletType,
         'remark': remark,
       };
 }
