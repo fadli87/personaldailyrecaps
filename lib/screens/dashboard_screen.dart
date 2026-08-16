@@ -218,7 +218,7 @@ class DashboardScreen extends ConsumerWidget {
               'Ringkasan data operasional harian terupdate.',
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.slate.shade500,
+                color: Colors.blueGrey.shade500,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -432,7 +432,7 @@ class DashboardScreen extends ConsumerWidget {
 
     // Menentukan kategori kesehatan efisiensi BBM
     String efficiencyStatus = 'Tidak Terdeteksi';
-    Color efficiencyColor = Colors.slate.shade400;
+    Color efficiencyColor = Colors.blueGrey.shade400;
     if (efisiensi > 0) {
       if (efisiensi >= 40) {
         efficiencyStatus = 'Sangat Irit';
@@ -535,7 +535,7 @@ class DashboardScreen extends ConsumerWidget {
                   child: Text(
                     'Performa dihitung berdasarkan odometer harian dibagi liter BBM terisi.',
                     style: TextStyle(
-                      color: Colors.slate.shade400,
+                      color: Colors.blueGrey.shade400,
                       fontSize: 10,
                     ),
                   ),
@@ -638,7 +638,7 @@ class DashboardScreen extends ConsumerWidget {
             subtitle,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.slate.shade400,
+              color: Colors.blueGrey.shade400,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -669,7 +669,7 @@ class DashboardScreen extends ConsumerWidget {
           show: true,
           drawVerticalLine: false,
           getDrawingHorizontalLine: (value) => FlLine(
-            color: Colors.slate.shade100,
+            color: Colors.blueGrey.shade100,
             strokeWidth: 1,
           ),
         ),
@@ -686,7 +686,7 @@ class DashboardScreen extends ConsumerWidget {
                       DateFormat('dd/MM').format(recaps[idx].tanggal),
                       style: TextStyle(
                         fontSize: 9,
-                        color: Colors.slate.shade400,
+                        color: Colors.blueGrey.shade400,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -705,7 +705,7 @@ class DashboardScreen extends ConsumerWidget {
                   _formatCompactNumber(value),
                   style: TextStyle(
                     fontSize: 9,
-                    color: Colors.slate.shade400,
+                    color: Colors.blueGrey.shade400,
                     fontWeight: FontWeight.w700,
                   ),
                 );
@@ -720,14 +720,11 @@ class DashboardScreen extends ConsumerWidget {
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            curveMode: CurveMode.cubic,
-            preventCurveOverShooting: true,
             color: primaryColor,
             barWidth: 3.5,
             isStrokeCapRound: true,
             dotData: const FlDotData(
               show: true,
-              showNavigator: false,
             ),
             belowBarData: BarAreaData(
               show: true,
@@ -810,7 +807,7 @@ class DashboardScreen extends ConsumerWidget {
                           '${item.value.key.toUpperCase()}\n${currency.format(item.value.value)}',
                           style: TextStyle(
                             fontSize: 10,
-                            color: Colors.slate.shade700,
+                            color: Colors.blueGrey.shade700,
                             fontWeight: FontWeight.w700,
                             height: 1.2,
                           ),
@@ -866,7 +863,7 @@ class DashboardScreen extends ConsumerWidget {
           show: true,
           drawVerticalLine: false,
           getDrawingHorizontalLine: (value) => FlLine(
-            color: Colors.slate.shade100,
+            color: Colors.blueGrey.shade100,
             strokeWidth: 1,
           ),
         ),
@@ -883,7 +880,7 @@ class DashboardScreen extends ConsumerWidget {
                       DateFormat('dd/MM').format(recaps[idx].tanggal),
                       style: TextStyle(
                         fontSize: 9,
-                        color: Colors.slate.shade400,
+                        color: Colors.blueGrey.shade400,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -902,7 +899,7 @@ class DashboardScreen extends ConsumerWidget {
                   _formatCompactNumber(value),
                   style: TextStyle(
                     fontSize: 9,
-                    color: Colors.slate.shade400,
+                    color: Colors.blueGrey.shade400,
                     fontWeight: FontWeight.w700,
                   ),
                 );
