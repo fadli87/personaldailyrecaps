@@ -42,18 +42,18 @@ Future<void> main() async {
 
   runApp(
     const ProviderScope(
-      child: SFDailyRecapApp(),
+      child: PersonalFinanceTrackingApp(),
     ),
   );
 }
 
-class SFDailyRecapApp extends StatelessWidget {
-  const SFDailyRecapApp({super.key});
+class PersonalFinanceTrackingApp extends StatelessWidget {
+  const PersonalFinanceTrackingApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SF Daily Recap',
+      title: 'Personal Finance Tracking Apps',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
