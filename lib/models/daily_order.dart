@@ -12,6 +12,7 @@ class DailyOrder {
   final double expense;
   final bool isFuelExpense;
   final String walletType;
+  final String topupSource;
   final String? remark;
 
   DailyOrder({
@@ -28,6 +29,7 @@ class DailyOrder {
     this.expense = 0,
     this.isFuelExpense = false,
     this.walletType = 'shopeefood',
+    this.topupSource = 'cash',
     this.remark,
   });
 
@@ -56,6 +58,7 @@ class DailyOrder {
       expense: d(map['expense']),
       isFuelExpense: isFuel,
       walletType: map['wallet_type'] as String? ?? 'shopeefood',
+      topupSource: map['topup_source'] as String? ?? 'cash',
       remark: map['remark'] as String?,
     );
   }
@@ -73,6 +76,7 @@ class DailyOrder {
         'expense': expense,
         'is_fuel_expense': isFuelExpense ? 1 : 0,
         'wallet_type': walletType,
+        'topup_source': topupSource,
         'remark': remark,
       };
 }

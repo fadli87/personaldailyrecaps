@@ -6,6 +6,8 @@ class DailyRecap {
   final double saldoAwalGrabKredit;
   final double saldoAwalGrabTunai;
   final double saldoAwalGrabOvo;
+  final double saldoAwalMandiri;
+  final double saldoAwalBca;
   final double odoStart;
   final double odoEnd;
   final double fuelPricePerLiter;
@@ -15,6 +17,8 @@ class DailyRecap {
   final double saldoAkhirGrabKreditAktual;
   final double saldoAkhirGrabTunaiAktual;
   final double saldoAkhirGrabOvoAktual;
+  final double saldoAkhirMandiriAktual;
+  final double saldoAkhirBcaAktual;
   final String? catatan;
 
   // Fields below come from the `daily_recap_summary` view (auto-calculated).
@@ -30,6 +34,8 @@ class DailyRecap {
   final double saldoAkhirGrabKredit;
   final double saldoAkhirGrabTunai;
   final double saldoAkhirGrabOvo;
+  final double saldoAkhirMandiri;
+  final double saldoAkhirBca;
   final double cashAkhir;
   final double netEarning;
   final double jarakTempuh;
@@ -41,6 +47,8 @@ class DailyRecap {
   final double grabKreditDiscrepancy;
   final double grabTunaiDiscrepancy;
   final double grabOvoDiscrepancy;
+  final double mandiriDiscrepancy;
+  final double bcaDiscrepancy;
 
   DailyRecap({
     required this.id,
@@ -50,6 +58,8 @@ class DailyRecap {
     this.saldoAwalGrabKredit = 0,
     this.saldoAwalGrabTunai = 0,
     this.saldoAwalGrabOvo = 0,
+    this.saldoAwalMandiri = 0,
+    this.saldoAwalBca = 0,
     this.odoStart = 0,
     this.odoEnd = 0,
     this.fuelPricePerLiter = 10000,
@@ -59,6 +69,8 @@ class DailyRecap {
     this.saldoAkhirGrabKreditAktual = 0,
     this.saldoAkhirGrabTunaiAktual = 0,
     this.saldoAkhirGrabOvoAktual = 0,
+    this.saldoAkhirMandiriAktual = 0,
+    this.saldoAkhirBcaAktual = 0,
     this.catatan,
     this.totalIncome = 0,
     this.totalExpense = 0,
@@ -72,6 +84,8 @@ class DailyRecap {
     this.saldoAkhirGrabKredit = 0,
     this.saldoAkhirGrabTunai = 0,
     this.saldoAkhirGrabOvo = 0,
+    this.saldoAkhirMandiri = 0,
+    this.saldoAkhirBca = 0,
     this.cashAkhir = 0,
     this.netEarning = 0,
     this.jarakTempuh = 0,
@@ -83,6 +97,8 @@ class DailyRecap {
     this.grabKreditDiscrepancy = 0,
     this.grabTunaiDiscrepancy = 0,
     this.grabOvoDiscrepancy = 0,
+    this.mandiriDiscrepancy = 0,
+    this.bcaDiscrepancy = 0,
   });
 
   factory DailyRecap.fromSummaryMap(Map<String, dynamic> map) {
@@ -95,6 +111,8 @@ class DailyRecap {
       saldoAwalGrabKredit: d(map['saldo_awal_grab_kredit']),
       saldoAwalGrabTunai: d(map['saldo_awal_grab_tunai']),
       saldoAwalGrabOvo: d(map['saldo_awal_grab_ovo']),
+      saldoAwalMandiri: d(map['saldo_awal_mandiri']),
+      saldoAwalBca: d(map['saldo_awal_bca']),
       odoStart: d(map['odo_start']),
       odoEnd: d(map['odo_end']),
       fuelPricePerLiter: d(map['fuel_price_per_liter']),
@@ -104,6 +122,8 @@ class DailyRecap {
       saldoAkhirGrabKreditAktual: d(map['saldo_akhir_grab_kredit_aktual']),
       saldoAkhirGrabTunaiAktual: d(map['saldo_akhir_grab_tunai_aktual']),
       saldoAkhirGrabOvoAktual: d(map['saldo_akhir_grab_ovo_aktual']),
+      saldoAkhirMandiriAktual: d(map['saldo_akhir_mandiri_aktual']),
+      saldoAkhirBcaAktual: d(map['saldo_akhir_bca_aktual']),
       catatan: map['catatan'] as String?,
       totalIncome: d(map['total_income']),
       totalExpense: d(map['total_expense']),
@@ -117,6 +137,8 @@ class DailyRecap {
       saldoAkhirGrabKredit: d(map['saldo_akhir_grab_kredit']),
       saldoAkhirGrabTunai: d(map['saldo_akhir_grab_tunai']),
       saldoAkhirGrabOvo: d(map['saldo_akhir_grab_ovo']),
+      saldoAkhirMandiri: d(map['saldo_akhir_mandiri']),
+      saldoAkhirBca: d(map['saldo_akhir_bca']),
       cashAkhir: d(map['cash_akhir']),
       netEarning: d(map['net_earning']),
       jarakTempuh: d(map['jarak_tempuh']),
@@ -128,6 +150,8 @@ class DailyRecap {
       grabKreditDiscrepancy: d(map['grab_kredit_discrepancy']),
       grabTunaiDiscrepancy: d(map['grab_tunai_discrepancy']),
       grabOvoDiscrepancy: d(map['grab_ovo_discrepancy']),
+      mandiriDiscrepancy: d(map['mandiri_discrepancy']),
+      bcaDiscrepancy: d(map['bca_discrepancy']),
     );
   }
 
@@ -138,6 +162,8 @@ class DailyRecap {
         'saldo_awal_grab_kredit': saldoAwalGrabKredit,
         'saldo_awal_grab_tunai': saldoAwalGrabTunai,
         'saldo_awal_grab_ovo': saldoAwalGrabOvo,
+        'saldo_awal_mandiri': saldoAwalMandiri,
+        'saldo_awal_bca': saldoAwalBca,
         'odo_start': odoStart,
         'odo_end': odoEnd,
         'fuel_price_per_liter': fuelPricePerLiter,
@@ -147,6 +173,8 @@ class DailyRecap {
         'saldo_akhir_grab_kredit_aktual': saldoAkhirGrabKreditAktual,
         'saldo_akhir_grab_tunai_aktual': saldoAkhirGrabTunaiAktual,
         'saldo_akhir_grab_ovo_aktual': saldoAkhirGrabOvoAktual,
+        'saldo_akhir_mandiri_aktual': saldoAkhirMandiriAktual,
+        'saldo_akhir_bca_aktual': saldoAkhirBcaAktual,
         'catatan': catatan,
       };
 }

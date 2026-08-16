@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import '../providers/recap_providers.dart';
 import '../models/daily_recap.dart';
+import '../models/saldo_mutation.dart';
 import 'home_screen.dart' show currency;
 
 class ReportScreen extends ConsumerStatefulWidget {
@@ -24,13 +25,16 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   Map<String, double> _platformData = {};
   String? _error;
 
+  int _activeTab = 0;
+  String _selectedAccount = 'cash';
+  List<SaldoMutation> _mutations = [];
+
   @override
   void initState() {
     super.initState();
-    // Default: awal bulan ini hingga hari ini
     final now = DateTime.now();
     _startDate = DateTime(now.year, now.month, 1);
-    _endDate = DateTime(now.year, now.month + 1, 0); // akhir bulan ini
+    _endDate = DateTime(now.year, now.month + 1, 0);
     
     Future.microtask(() => _loadData());
   }
@@ -44,9 +48,11 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       final service = ref.read(recapServiceProvider);
       final recaps = await service.getRecapsInPeriod(_startDate, _endDate);
       final platform = await service.getPlatformIncomeDistributionInPeriod(_startDate, _endDate);
+      final mutations = await service.getWalletMutations(_selectedAccount, _startDate, _endDate);
       setState(() {
         _recaps = recaps;
         _platformData = platform;
+        _mutations = mutations;
         _isLoading = false;
       });
     } catch (e) {
@@ -195,7 +201,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     buffer.writeln('Konsumsi BBM     : ${totalLiter.toStringAsFixed(1)} L');
     buffer.writeln('Efisiensi Rata2  : ${efisiensi.toStringAsFixed(1)} KM/L');
     buffer.writeln('----------------------------------');
-    buffer.writeln('Kontribusi Penjualan Platform:');
+    buffer.writeln('Kontribusi Pendapatan Platform/Rekening:');
     
     final totalSales = _platformData.values.fold(0.0, (a, b) => a + b);
     _platformData.forEach((platform, amount) {
@@ -225,7 +231,6 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                   builder: (context, constraints) {
                     final isDesktop = constraints.maxWidth > 850;
 
-                    // Hitung kalkulasi periodik
                     double totalIncome = 0;
                     double totalExpense = 0;
                     double totalNet = 0;
@@ -296,72 +301,329 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // --- FINANCIAL KPI SUMMARY ---
-                        _buildFinancialGrid(isDesktop, totalNet, totalIncome, totalExpense),
-                        const SizedBox(height: 20),
-
-                        // --- VEHICLE FUEL METRICS ---
-                        _buildVehicleCard(totalKm, totalLiter, efisiensi),
-                        const SizedBox(height: 20),
-
-                        // --- PLATFORM ANALYSIS SECTION ---
-                        _buildPlatformCard(),
-                        const SizedBox(height: 20),
-
-                        // --- REPORT ACTIONS ---
-                        Card(
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Ekspor & Bagikan Laporan',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        icon: const Icon(Icons.copy),
-                                        onPressed: () => _copyToClipboard(totalNet, totalIncome, totalExpense, totalKm, totalLiter, efisiensi),
-                                        label: const Text('Salin Ringkasan WA'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.green.shade700,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(vertical: 14),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        icon: const Icon(Icons.table_view_outlined),
-                                        onPressed: _exportToCSV,
-                                        label: const Text('Ekspor CSV (Excel)'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.blue.shade700,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(vertical: 14),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                        // --- TAB SELECTOR ---
+                        Center(
+                          child: SegmentedButton<int>(
+                            segments: const [
+                              ButtonSegment<int>(
+                                value: 0,
+                                label: Text('Ringkasan Kinerja'),
+                                icon: Icon(Icons.analytics_outlined),
+                              ),
+                              ButtonSegment<int>(
+                                value: 1,
+                                label: Text('Mutasi Rekening'),
+                                icon: Icon(Icons.receipt_long_outlined),
+                              ),
+                            ],
+                            selected: {_activeTab},
+                            onSelectionChanged: (set) {
+                              setState(() {
+                                _activeTab = set.first;
+                              });
+                            },
                           ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 20),
+
+                        if (_activeTab == 0) ...[
+                          // --- FINANCIAL KPI SUMMARY ---
+                          _buildFinancialGrid(isDesktop, totalNet, totalIncome, totalExpense),
+                          const SizedBox(height: 20),
+
+                          // --- VEHICLE FUEL METRICS ---
+                          _buildVehicleCard(totalKm, totalLiter, efisiensi),
+                          const SizedBox(height: 20),
+
+                          // --- PLATFORM ANALYSIS SECTION ---
+                          _buildPlatformCard(),
+                          const SizedBox(height: 20),
+
+                          // --- REPORT ACTIONS ---
+                          Card(
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Ekspor & Bagikan Laporan',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          icon: const Icon(Icons.copy),
+                                          onPressed: () => _copyToClipboard(totalNet, totalIncome, totalExpense, totalKm, totalLiter, efisiensi),
+                                          label: const Text('Salin Ringkasan WA'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.green.shade700,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          icon: const Icon(Icons.table_view_outlined),
+                                          onPressed: _exportToCSV,
+                                          label: const Text('Ekspor CSV (Excel)'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.blue.shade700,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                        ] else ...[
+                          _buildMutationTab(isDesktop),
+                          const SizedBox(height: 40),
+                        ],
                       ],
                     );
                   },
                 ),
+    );
+  }
+
+  Widget _buildMutationTab(bool isDesktop) {
+    final accountOptions = [
+      {'value': 'cash', 'label': 'Kas Tunai'},
+      {'value': 'shopeefood', 'label': 'ShopeeFood'},
+      {'value': 'grab_tunai', 'label': 'Grab Tunai'},
+      {'value': 'grab_kredit', 'label': 'Grab Kredit'},
+      {'value': 'grab_ovo', 'label': 'Grab OVO'},
+      {'value': 'mandiri', 'label': 'Bank Mandiri'},
+      {'value': 'bca', 'label': 'Bank BCA'},
+    ];
+
+    double saldoAwal = 0.0;
+    double totalMasuk = 0.0;
+    double totalKeluar = 0.0;
+    double saldoAkhir = 0.0;
+
+    if (_mutations.isNotEmpty) {
+      final first = _mutations.firstWhere(
+        (m) => m.keterangan == 'Saldo Awal',
+        orElse: () => _mutations.first,
+      );
+      saldoAwal = first.runningBalance;
+      
+      for (final m in _mutations) {
+        if (m.keterangan != 'Saldo Awal') {
+          totalMasuk += m.kredit;
+          totalKeluar += m.debit;
+        }
+      }
+      saldoAkhir = _mutations.last.runningBalance;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const Text(
+                  'Akun Keuangan:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedAccount,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: accountOptions.map((opt) {
+                      return DropdownMenuItem<String>(
+                        value: opt['value'],
+                        child: Text(opt['label']!),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _selectedAccount = val;
+                        });
+                        _loadData();
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final double cardWidth = isDesktop ? 200 : (constraints.maxWidth - 12) / 2;
+            Widget itemBox(String label, double val, Color col) {
+              return Container(
+                width: cardWidth,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 6),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        currency.format(val),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: col),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                itemBox('Saldo Awal Periode', saldoAwal, Colors.black87),
+                itemBox('Total Mutasi Masuk', totalMasuk, Colors.green.shade700),
+                itemBox('Total Mutasi Keluar', totalKeluar, Colors.red.shade700),
+                itemBox('Saldo Akhir Periode', saldoAkhir, const Color(0xFF2E7D32)),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 20),
+
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Riwayat Mutasi Saldo',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy_all_outlined),
+                      tooltip: 'Salin Mutasi ke Clipboard',
+                      onPressed: () {
+                        final buffer = StringBuffer();
+                        buffer.writeln('MUTASI REKENING - $_selectedAccount');
+                        buffer.writeln('Periode: ${DateFormat('yyyy-MM-dd').format(_startDate)} s.d. ${DateFormat('yyyy-MM-dd').format(_endDate)}');
+                        buffer.writeln('--------------------------------------------------');
+                        buffer.writeln('Tanggal\tKeterangan\tKeluar (Debit)\tMasuk (Kredit)\tSaldo');
+                        for (final m in _mutations) {
+                          buffer.writeln('${DateFormat('yyyy-MM-dd').format(m.tanggal)}\t${m.keterangan}\t${m.debit}\t${m.kredit}\t${m.runningBalance}');
+                        }
+                        Clipboard.setData(ClipboardData(text: buffer.toString()));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Mutasi rekening disalin ke clipboard!')),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const Divider(),
+                if (_mutations.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Text('Tidak ada mutasi saldo dalam periode ini.'),
+                    ),
+                  )
+                else
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minWidth: isDesktop ? 800 : 500),
+                      child: DataTable(
+                        columnSpacing: 16,
+                        columns: const [
+                          DataColumn(label: Text('Tanggal', style: TextStyle(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Keterangan', style: TextStyle(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Debit (Keluar)', style: TextStyle(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Kredit (Masuk)', style: TextStyle(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text('Saldo Berjalan', style: TextStyle(fontWeight: FontWeight.bold))),
+                        ],
+                        rows: _mutations.map((m) {
+                          final isStart = m.keterangan == 'Saldo Awal';
+                          return DataRow(
+                            cells: [
+                              DataCell(Text(DateFormat('dd MMM yyyy', 'id_ID').format(m.tanggal))),
+                              DataCell(Text(m.keterangan)),
+                              DataCell(
+                                isStart
+                                    ? const Text('-')
+                                    : Text(
+                                        m.debit > 0 ? currency.format(m.debit) : '-',
+                                        style: TextStyle(
+                                          color: m.debit > 0 ? Colors.red.shade700 : null,
+                                          fontWeight: m.debit > 0 ? FontWeight.bold : null,
+                                        ),
+                                      ),
+                              ),
+                              DataCell(
+                                isStart
+                                    ? const Text('-')
+                                    : Text(
+                                        m.kredit > 0 ? currency.format(m.kredit) : '-',
+                                        style: TextStyle(
+                                          color: m.kredit > 0 ? Colors.green.shade700 : null,
+                                          fontWeight: m.kredit > 0 ? FontWeight.bold : null,
+                                        ),
+                                      ),
+                              ),
+                              DataCell(
+                                Text(
+                                  currency.format(m.runningBalance),
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -507,7 +769,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Kontribusi Penjualan per Platform',
+              'Kontribusi Pendapatan per Platform / Rekening',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
             ),
             const SizedBox(height: 16),
@@ -515,7 +777,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               const Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Text('Tidak ada penjualan platform pada periode ini.'),
+                  child: Text('Tidak ada pendapatan platform pada periode ini.'),
                 ),
               )
             else

@@ -24,6 +24,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
   late bool _isFuelExpense;
   late String _platformSelected;
   late String _walletTypeSelected;
+  late String _topupSourceSelected;
   late TextEditingController _keterangan;
   late TextEditingController _income;
   late TextEditingController _deductCashApp;
@@ -42,8 +43,13 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
     if (e != null) {
       _isFuelExpense = e.isFuelExpense;
       _walletTypeSelected = e.walletType;
+      _topupSourceSelected = e.topupSource;
       if (e.walletType.startsWith('grab_') || (e.platform?.toLowerCase().contains('grab') ?? false)) {
         _platformSelected = 'Grab';
+      } else if (e.walletType == 'mandiri' || (e.platform?.toLowerCase().contains('mandiri') ?? false)) {
+        _platformSelected = 'Mandiri';
+      } else if (e.walletType == 'bca' || (e.platform?.toLowerCase().contains('bca') ?? false)) {
+        _platformSelected = 'BCA';
       } else {
         _platformSelected = 'ShopeeFood';
       }
@@ -60,6 +66,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
       _isFuelExpense = false;
       _platformSelected = 'ShopeeFood';
       _walletTypeSelected = 'shopeefood';
+      _topupSourceSelected = 'cash';
     }
 
     _keterangan = TextEditingController(text: e?.keterangan ?? '');
@@ -116,6 +123,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
       expense: expense,
       isFuelExpense: isFuel,
       walletType: _walletTypeSelected,
+      topupSource: _topupSourceSelected,
       remark: _remark.text.trim().isEmpty ? null : _remark.text.trim(),
     );
     Navigator.pop(context, order);
@@ -143,41 +151,79 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
             ),
             const SizedBox(height: 16),
 
-            // Dropdown Pilihan Platform Utama (ShopeeFood vs Grab)
+            // Dropdown Pilihan Platform Utama (ShopeeFood, Grab, Mandiri, BCA)
             const Text(
-              'Layanan / Platform',
+              'Layanan / Platform / Rekening',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black54),
             ),
             const SizedBox(height: 6),
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(
-                    value: 'ShopeeFood',
-                    label: Text('ShopeeFood'),
-                    icon: Icon(Icons.fastfood_outlined, size: 18),
+            DropdownButtonFormField<String>(
+              initialValue: _platformSelected,
+              decoration: const InputDecoration(
+                labelText: 'Platform / Akun Keuangan',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: 'ShopeeFood',
+                  child: Row(
+                    children: [
+                      Icon(Icons.fastfood_outlined, color: Colors.orange, size: 20),
+                      SizedBox(width: 8),
+                      Text('ShopeeFood'),
+                    ],
                   ),
-                  ButtonSegment(
-                    value: 'Grab',
-                    label: Text('Grab'),
-                    icon: Icon(Icons.local_taxi_outlined, size: 18),
+                ),
+                DropdownMenuItem(
+                  value: 'Grab',
+                  child: Row(
+                    children: [
+                      Icon(Icons.local_taxi_outlined, color: Colors.green, size: 20),
+                      SizedBox(width: 8),
+                      Text('Grab'),
+                    ],
                   ),
-                ],
-                selected: {_platformSelected},
-                onSelectionChanged: widget.isClosed
-                    ? null
-                    : (newVal) {
+                ),
+                DropdownMenuItem(
+                  value: 'Mandiri',
+                  child: Row(
+                    children: [
+                      Icon(Icons.account_balance_wallet_outlined, color: Colors.blue, size: 20),
+                      SizedBox(width: 8),
+                      Text('Bank Mandiri'),
+                    ],
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'BCA',
+                  child: Row(
+                    children: [
+                      Icon(Icons.account_balance_outlined, color: Colors.indigo, size: 20),
+                      SizedBox(width: 8),
+                      Text('Bank BCA'),
+                    ],
+                  ),
+                ),
+              ],
+              onChanged: widget.isClosed
+                  ? null
+                  : (newVal) {
+                      if (newVal != null) {
                         setState(() {
-                          _platformSelected = newVal.first;
+                          _platformSelected = newVal;
                           if (_platformSelected == 'ShopeeFood') {
                             _walletTypeSelected = 'shopeefood';
-                          } else {
+                          } else if (_platformSelected == 'Grab') {
                             _walletTypeSelected = 'grab_kredit';
+                          } else if (_platformSelected == 'Mandiri') {
+                            _walletTypeSelected = 'mandiri';
+                          } else if (_platformSelected == 'BCA') {
+                            _walletTypeSelected = 'bca';
                           }
                         });
-                      },
-              ),
+                      }
+                    },
             ),
             
             // Dropdown Pilihan Wallet Grab jika Grab terpilih
@@ -281,6 +327,56 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                   labelText: 'Keterangan Top Up (misal: Top Up OVO, ShopeePay)',
                   border: OutlineInputBorder(),
                 ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _topupSourceSelected,
+                decoration: const InputDecoration(
+                  labelText: 'Sumber Dana Top Up',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'cash',
+                    child: Row(
+                      children: [
+                        Icon(Icons.money_outlined, color: Colors.green, size: 20),
+                        SizedBox(width: 8),
+                        Text('Uang Tunai / Alfamart / Indomaret'),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'mandiri',
+                    child: Row(
+                      children: [
+                        Icon(Icons.account_balance_wallet_outlined, color: Colors.blue, size: 20),
+                        SizedBox(width: 8),
+                        Text('Bank Mandiri (M-Banking/Transfer)'),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'bca',
+                    child: Row(
+                      children: [
+                        Icon(Icons.account_balance_outlined, color: Colors.indigo, size: 20),
+                        SizedBox(width: 8),
+                        Text('Bank BCA (M-Banking/Transfer)'),
+                      ],
+                    ),
+                  ),
+                ],
+                onChanged: widget.isClosed
+                    ? null
+                    : (val) {
+                        if (val != null) {
+                          setState(() {
+                            _topupSourceSelected = val;
+                          });
+                        }
+                      },
               ),
               const SizedBox(height: 12),
               Row(

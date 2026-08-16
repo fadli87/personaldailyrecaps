@@ -117,6 +117,10 @@ class DashboardScreen extends ConsumerWidget {
                         _buildFinancialKPIs(isDesktop, totalNetEarnings, totalIncome, totalExpense),
                         const SizedBox(height: 24),
 
+                        // --- SECTION 1B: STATUS SALDO AKUN & REKENING ---
+                        _buildAccountBalances(context, recaps.first),
+                        const SizedBox(height: 24),
+
                         // --- SECTION 2: VEHICLE TELEMETRY CARD (MODERN GLASSMORPHISM EFFECT) ---
                         _buildVehicleTelemetry(totalJarak, totalLiterTerpakai),
                         const SizedBox(height: 24),
@@ -201,29 +205,36 @@ class DashboardScreen extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$greeting, Pak Fadli!',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
-                letterSpacing: -0.5,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$greeting, Pak Fadli!',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.5,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Ringkasan data operasional harian terupdate.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.blueGrey.shade500,
-                fontWeight: FontWeight.w500,
+              const SizedBox(height: 4),
+              Text(
+                'Ringkasan data operasional harian terupdate.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.blueGrey.shade500,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        const SizedBox(width: 12),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
@@ -920,4 +931,103 @@ class DashboardScreen extends ConsumerWidget {
     if (value >= 1000) return '${(value / 1000).toStringAsFixed(0)}rb';
     return value.toStringAsFixed(0);
   }
+
+  Widget _buildAccountBalances(BuildContext context, DailyRecap latest) {
+    final wallets = [
+      _WalletBalanceItem('Kas Tunai', latest.cashAkhir, Icons.money_outlined, Colors.teal),
+      _WalletBalanceItem('ShopeeFood', latest.saldoAkhirApp, Icons.fastfood_outlined, Colors.orange),
+      _WalletBalanceItem('Grab Tunai', latest.saldoAkhirGrabTunai, Icons.account_balance_wallet_outlined, Colors.green),
+      _WalletBalanceItem('Grab Kredit', latest.saldoAkhirGrabKredit, Icons.local_taxi_outlined, Colors.lightGreen),
+      _WalletBalanceItem('Grab OVO', latest.saldoAkhirGrabOvo, Icons.phone_android_outlined, Colors.purple),
+      _WalletBalanceItem('Bank Mandiri', latest.saldoAkhirMandiri, Icons.account_balance_wallet_outlined, Colors.blue),
+      _WalletBalanceItem('Bank BCA', latest.saldoAkhirBca, Icons.account_balance_outlined, Colors.indigo),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Status Saldo Akun & Rekening',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 80,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: wallets.length,
+            itemBuilder: (context, index) {
+              final w = wallets[index];
+              return Container(
+                width: 175,
+                margin: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                  border: Border.all(color: Colors.grey.shade100),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(w.icon, color: w.color, size: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            w.name,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black54,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        currency.format(w.balance),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: w.balance < 0 ? Colors.red.shade700 : Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WalletBalanceItem {
+  final String name;
+  final double balance;
+  final IconData icon;
+  final Color color;
+
+  _WalletBalanceItem(this.name, this.balance, this.icon, this.color);
 }

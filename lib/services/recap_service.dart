@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../models/daily_recap.dart';
 import '../models/daily_order.dart';
 import '../models/petty_cash_item.dart';
+import '../models/saldo_mutation.dart';
 import 'local_db.dart';
 import 'sync_service.dart';
 
@@ -40,6 +41,8 @@ class RecapService {
     double saldoAwalGrabKredit = 0,
     double saldoAwalGrabTunai = 0,
     double saldoAwalGrabOvo = 0,
+    double saldoAwalMandiri = 0,
+    double saldoAwalBca = 0,
     double odoStart = 0,
     double odoEnd = 0,
     double fuelPricePerLiter = 10000,
@@ -49,6 +52,8 @@ class RecapService {
     double saldoAkhirGrabKreditAktual = 0,
     double saldoAkhirGrabTunaiAktual = 0,
     double saldoAkhirGrabOvoAktual = 0,
+    double saldoAkhirMandiriAktual = 0,
+    double saldoAkhirBcaAktual = 0,
     String? catatan,
   }) async {
     final id = const Uuid().v4();
@@ -64,6 +69,8 @@ class RecapService {
       'saldo_awal_grab_kredit': saldoAwalGrabKredit,
       'saldo_awal_grab_tunai': saldoAwalGrabTunai,
       'saldo_awal_grab_ovo': saldoAwalGrabOvo,
+      'saldo_awal_mandiri': saldoAwalMandiri,
+      'saldo_awal_bca': saldoAwalBca,
       'odo_start': odoStart,
       'odo_end': odoEnd,
       'fuel_price_per_liter': fuelPricePerLiter,
@@ -73,6 +80,8 @@ class RecapService {
       'saldo_akhir_grab_kredit_aktual': saldoAkhirGrabKreditAktual,
       'saldo_akhir_grab_tunai_aktual': saldoAkhirGrabTunaiAktual,
       'saldo_akhir_grab_ovo_aktual': saldoAkhirGrabOvoAktual,
+      'saldo_akhir_mandiri_aktual': saldoAkhirMandiriAktual,
+      'saldo_akhir_bca_aktual': saldoAkhirBcaAktual,
       'catatan': catatan,
       'created_at': nowStr,
       'updated_at': nowStr,
@@ -90,6 +99,8 @@ class RecapService {
     double saldoAwalGrabKredit = 0,
     double saldoAwalGrabTunai = 0,
     double saldoAwalGrabOvo = 0,
+    double saldoAwalMandiri = 0,
+    double saldoAwalBca = 0,
     double odoStart = 0,
     double odoEnd = 0,
     double fuelPricePerLiter = 10000,
@@ -99,6 +110,8 @@ class RecapService {
     double saldoAkhirGrabKreditAktual = 0,
     double saldoAkhirGrabTunaiAktual = 0,
     double saldoAkhirGrabOvoAktual = 0,
+    double saldoAkhirMandiriAktual = 0,
+    double saldoAkhirBcaAktual = 0,
     String? catatan,
   }) async {
     final db = await LocalDb.instance.database;
@@ -112,6 +125,8 @@ class RecapService {
         'saldo_awal_grab_kredit': saldoAwalGrabKredit,
         'saldo_awal_grab_tunai': saldoAwalGrabTunai,
         'saldo_awal_grab_ovo': saldoAwalGrabOvo,
+        'saldo_awal_mandiri': saldoAwalMandiri,
+        'saldo_awal_bca': saldoAwalBca,
         'odo_start': odoStart,
         'odo_end': odoEnd,
         'fuel_price_per_liter': fuelPricePerLiter,
@@ -121,6 +136,8 @@ class RecapService {
         'saldo_akhir_grab_kredit_aktual': saldoAkhirGrabKreditAktual,
         'saldo_akhir_grab_tunai_aktual': saldoAkhirGrabTunaiAktual,
         'saldo_akhir_grab_ovo_aktual': saldoAkhirGrabOvoAktual,
+        'saldo_akhir_mandiri_aktual': saldoAkhirMandiriAktual,
+        'saldo_akhir_bca_aktual': saldoAkhirBcaAktual,
         'catatan': catatan,
         'updated_at': nowStr,
         'is_synced': 0,
@@ -341,5 +358,139 @@ class RecapService {
       WHERE r.tanggal BETWEEN ? AND ?
       ORDER BY r.tanggal DESC, o.urutan ASC
     ''', [startStr, endStr]);
+  }
+
+  Future<List<SaldoMutation>> getWalletMutations(String walletType, DateTime start, DateTime end) async {
+    final startStr = start.toIso8601String().split('T').first;
+    final endStr = end.toIso8601String().split('T').first;
+    final db = await LocalDb.instance.database;
+
+    final recapsData = await db.query(
+      'daily_recap_summary',
+      where: 'tanggal BETWEEN ? AND ?',
+      whereArgs: [startStr, endStr],
+      orderBy: 'tanggal ASC',
+    );
+    final recaps = recapsData.map((e) => DailyRecap.fromSummaryMap(e)).toList();
+
+    final ordersData = await db.rawQuery('''
+      SELECT o.*, r.tanggal as recap_tanggal
+      FROM daily_order o
+      INNER JOIN daily_recap r ON o.daily_recap_id = r.id
+      WHERE r.tanggal BETWEEN ? AND ?
+      ORDER BY r.tanggal ASC, o.urutan ASC
+    ''', [startStr, endStr]);
+    final orders = ordersData.map((e) => DailyOrder.fromMap(e)).toList();
+
+    final List<SaldoMutation> mutations = [];
+    if (recaps.isEmpty) return mutations;
+
+    final firstRecap = recaps.first;
+    double currentBalance = 0;
+    
+    if (walletType == 'cash') {
+      currentBalance = firstRecap.cashAwal;
+    } else if (walletType == 'shopeefood') {
+      currentBalance = firstRecap.saldoAwalApp;
+    } else if (walletType == 'grab_kredit') {
+      currentBalance = firstRecap.saldoAwalGrabKredit;
+    } else if (walletType == 'grab_tunai') {
+      currentBalance = firstRecap.saldoAwalGrabTunai;
+    } else if (walletType == 'grab_ovo') {
+      currentBalance = firstRecap.saldoAwalGrabOvo;
+    } else if (walletType == 'mandiri') {
+      currentBalance = firstRecap.saldoAwalMandiri;
+    } else if (walletType == 'bca') {
+      currentBalance = firstRecap.saldoAwalBca;
+    }
+
+    for (final recap in recaps) {
+      if (recap.id != firstRecap.id) {
+        double dayStartBalance = 0;
+        if (walletType == 'cash') {
+          dayStartBalance = recap.cashAwal;
+        } else if (walletType == 'shopeefood') {
+          dayStartBalance = recap.saldoAwalApp;
+        } else if (walletType == 'grab_kredit') {
+          dayStartBalance = recap.saldoAwalGrabKredit;
+        } else if (walletType == 'grab_tunai') {
+          dayStartBalance = recap.saldoAwalGrabTunai;
+        } else if (walletType == 'grab_ovo') {
+          dayStartBalance = recap.saldoAwalGrabOvo;
+        } else if (walletType == 'mandiri') {
+          dayStartBalance = recap.saldoAwalMandiri;
+        } else if (walletType == 'bca') {
+          dayStartBalance = recap.saldoAwalBca;
+        }
+        
+        if (currentBalance != dayStartBalance) {
+          mutations.add(SaldoMutation(
+            tanggal: recap.tanggal,
+            keterangan: 'Penyesuaian Saldo Awal Hari',
+            debit: currentBalance > dayStartBalance ? (currentBalance - dayStartBalance) : 0,
+            kredit: dayStartBalance > currentBalance ? (dayStartBalance - currentBalance) : 0,
+            runningBalance: dayStartBalance,
+          ));
+          currentBalance = dayStartBalance;
+        }
+      } else {
+        mutations.add(SaldoMutation(
+          tanggal: recap.tanggal,
+          keterangan: 'Saldo Awal',
+          debit: 0,
+          kredit: 0,
+          runningBalance: currentBalance,
+        ));
+      }
+
+      final dayOrders = orders.where((o) => o.dailyRecapId == recap.id).toList();
+
+      for (final o in dayOrders) {
+        double credit = 0;
+        double debit = 0;
+
+        if (walletType == 'cash') {
+          credit = o.custPay;
+          debit = o.custChange + (o.topupSource == 'cash' ? o.saldoTopUp : 0);
+        } else {
+          if (o.walletType == walletType) {
+            credit = o.income + o.saldoTopUp;
+            debit = o.expense + o.deductCashApp;
+          }
+          if (o.topupSource == walletType) {
+            debit += o.saldoTopUp;
+          }
+        }
+
+        if (credit > 0 || debit > 0) {
+          currentBalance += credit - debit;
+          
+          String ket = '';
+          if (o.platform != null && o.platform!.isNotEmpty) {
+            ket = '${o.platform} (Order ${o.urutan})';
+          } else if (o.keterangan != null && o.keterangan!.isNotEmpty) {
+            ket = o.keterangan!;
+          } else if (o.income > 0) {
+            ket = 'Pemasukan (Order ${o.urutan})';
+          } else if (o.expense > 0) {
+            ket = 'Pengeluaran (Order ${o.urutan})';
+          } else if (o.saldoTopUp > 0) {
+            ket = 'Top Up';
+          } else {
+            ket = 'Transaksi ${o.urutan}';
+          }
+
+          mutations.add(SaldoMutation(
+            tanggal: recap.tanggal,
+            keterangan: ket,
+            debit: debit,
+            kredit: credit,
+            runningBalance: currentBalance,
+          ));
+        }
+      }
+    }
+
+    return mutations;
   }
 }

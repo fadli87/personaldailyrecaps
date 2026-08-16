@@ -19,7 +19,7 @@ class LocalDb {
     final dbPath = join(docsDir.path, 'sf_daily_recap.db');
     return await openDatabase(
       dbPath,
-      version: 4,
+      version: 6,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE daily_recap (
@@ -30,6 +30,8 @@ class LocalDb {
             saldo_awal_grab_kredit REAL NOT NULL DEFAULT 0,
             saldo_awal_grab_tunai REAL NOT NULL DEFAULT 0,
             saldo_awal_grab_ovo REAL NOT NULL DEFAULT 0,
+            saldo_awal_mandiri REAL NOT NULL DEFAULT 0,
+            saldo_awal_bca REAL NOT NULL DEFAULT 0,
             odo_start REAL NOT NULL DEFAULT 0,
             odo_end REAL NOT NULL DEFAULT 0,
             fuel_price_per_liter REAL NOT NULL DEFAULT 10000,
@@ -39,6 +41,8 @@ class LocalDb {
             saldo_akhir_grab_kredit_aktual REAL NOT NULL DEFAULT 0,
             saldo_akhir_grab_tunai_aktual REAL NOT NULL DEFAULT 0,
             saldo_akhir_grab_ovo_aktual REAL NOT NULL DEFAULT 0,
+            saldo_akhir_mandiri_aktual REAL NOT NULL DEFAULT 0,
+            saldo_akhir_bca_aktual REAL NOT NULL DEFAULT 0,
             catatan TEXT,
             created_at TEXT,
             updated_at TEXT,
@@ -61,6 +65,7 @@ class LocalDb {
             expense REAL NOT NULL DEFAULT 0,
             is_fuel_expense INTEGER NOT NULL DEFAULT 0,
             wallet_type TEXT NOT NULL DEFAULT 'shopeefood',
+            topup_source TEXT NOT NULL DEFAULT 'cash',
             remark TEXT,
             created_at TEXT,
             is_synced INTEGER NOT NULL DEFAULT 0
@@ -121,6 +126,17 @@ class LocalDb {
           await db.execute("ALTER TABLE daily_order ADD COLUMN wallet_type TEXT NOT NULL DEFAULT 'shopeefood'");
         }
 
+        if (oldVersion < 5) {
+          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_awal_mandiri REAL NOT NULL DEFAULT 0');
+          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_awal_bca REAL NOT NULL DEFAULT 0');
+          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_akhir_mandiri_aktual REAL NOT NULL DEFAULT 0');
+          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_akhir_bca_aktual REAL NOT NULL DEFAULT 0');
+        }
+
+        if (oldVersion < 6) {
+          await db.execute("ALTER TABLE daily_order ADD COLUMN topup_source TEXT NOT NULL DEFAULT 'cash'");
+        }
+
         // Selalu re-create view di onUpgrade untuk memastikan rumus terbaru terpakai
         await db.execute('DROP VIEW IF EXISTS daily_recap_summary');
         await _createSummaryView(db);
@@ -139,6 +155,8 @@ class LocalDb {
         dr.saldo_awal_grab_kredit,
         dr.saldo_awal_grab_tunai,
         dr.saldo_awal_grab_ovo,
+        dr.saldo_awal_mandiri,
+        dr.saldo_awal_bca,
         dr.odo_start,
         dr.odo_end,
         dr.fuel_price_per_liter,
@@ -148,6 +166,8 @@ class LocalDb {
         dr.saldo_akhir_grab_kredit_aktual,
         dr.saldo_akhir_grab_tunai_aktual,
         dr.saldo_akhir_grab_ovo_aktual,
+        dr.saldo_akhir_mandiri_aktual,
+        dr.saldo_akhir_bca_aktual,
         COALESCE(o.total_income, 0) AS total_income,
         COALESCE(o.total_deduct_cash_app, 0) AS total_deduct_cash_app,
         COALESCE(o.total_cust_pay, 0) AS total_cust_pay,
@@ -157,13 +177,15 @@ class LocalDb {
         COALESCE(pc.grand_total, 0) AS petty_cash_total,
         COALESCE(de.tip, 0) AS tip,
         COALESCE(de.insentif, 0) AS insentif,
-        -- Saldo akhir buku per wallet
-        dr.saldo_awal_app + COALESCE(o.inc_sf, 0) - COALESCE(o.exp_sf, 0) - COALESCE(o.ded_sf, 0) + COALESCE(o.top_sf, 0) AS saldo_akhir_app,
-        dr.saldo_awal_grab_kredit + COALESCE(o.inc_gk, 0) - COALESCE(o.exp_gk, 0) - COALESCE(o.ded_gk, 0) + COALESCE(o.top_gk, 0) AS saldo_akhir_grab_kredit,
-        dr.saldo_awal_grab_tunai + COALESCE(o.inc_gt, 0) - COALESCE(o.exp_gt, 0) - COALESCE(o.ded_gt, 0) + COALESCE(o.top_gt, 0) AS saldo_akhir_grab_tunai,
-        dr.saldo_awal_grab_ovo + COALESCE(o.inc_go, 0) - COALESCE(o.exp_go, 0) - COALESCE(o.ded_go, 0) + COALESCE(o.top_go, 0) AS saldo_akhir_grab_ovo,
-        -- Kas akhir buku (Tunai)
-        dr.cash_awal + COALESCE(o.total_cust_pay, 0) - COALESCE(o.total_cust_change, 0) - COALESCE(o.total_saldo_top_up, 0) AS cash_akhir,
+        -- Saldo akhir buku per wallet (Top Up dikurangi dari source wallet dan ditambah ke target wallet)
+        dr.saldo_awal_app + COALESCE(o.inc_sf, 0) - COALESCE(o.exp_sf, 0) - COALESCE(o.ded_sf, 0) + COALESCE(o.top_sf, 0) - COALESCE(o.top_from_sf, 0) AS saldo_akhir_app,
+        dr.saldo_awal_grab_kredit + COALESCE(o.inc_gk, 0) - COALESCE(o.exp_gk, 0) - COALESCE(o.ded_gk, 0) + COALESCE(o.top_gk, 0) - COALESCE(o.top_from_gk, 0) AS saldo_akhir_grab_kredit,
+        dr.saldo_awal_grab_tunai + COALESCE(o.inc_gt, 0) - COALESCE(o.exp_gt, 0) - COALESCE(o.ded_gt, 0) + COALESCE(o.top_gt, 0) - COALESCE(o.top_from_gt, 0) AS saldo_akhir_grab_tunai,
+        dr.saldo_awal_grab_ovo + COALESCE(o.inc_go, 0) - COALESCE(o.exp_go, 0) - COALESCE(o.ded_go, 0) + COALESCE(o.top_go, 0) - COALESCE(o.top_from_go, 0) AS saldo_akhir_grab_ovo,
+        dr.saldo_awal_mandiri + COALESCE(o.inc_mandiri, 0) - COALESCE(o.exp_mandiri, 0) - COALESCE(o.ded_mandiri, 0) + COALESCE(o.top_mandiri, 0) - COALESCE(o.top_from_mandiri, 0) AS saldo_akhir_mandiri,
+        dr.saldo_awal_bca + COALESCE(o.inc_bca, 0) - COALESCE(o.exp_bca, 0) - COALESCE(o.ded_bca, 0) + COALESCE(o.top_bca, 0) - COALESCE(o.top_from_bca, 0) AS saldo_akhir_bca,
+        -- Kas akhir buku (Tunai) - hanya dikurangi top-up yang bersumber dari Cash (Alfamart/Indomaret/Tunai)
+        dr.cash_awal + COALESCE(o.total_cust_pay, 0) - COALESCE(o.total_cust_change, 0) - COALESCE(o.top_from_cash, 0) AS cash_akhir,
         -- Net earning global
         COALESCE(o.total_income, 0) - COALESCE(o.total_expense, 0) AS net_earning,
         -- Telemetry
@@ -176,11 +198,13 @@ class LocalDb {
              THEN (dr.odo_end - dr.odo_start) / dr.kml_parameter
              ELSE 0 END AS liter_terpakai,
         -- Discrepancies
-        COALESCE(pc.grand_total, 0) - (dr.cash_awal + COALESCE(o.total_cust_pay, 0) - COALESCE(o.total_cust_change, 0) - COALESCE(o.total_saldo_top_up, 0)) AS cash_discrepancy,
-        dr.saldo_akhir_app_aktual - (dr.saldo_awal_app + COALESCE(o.inc_sf, 0) - COALESCE(o.exp_sf, 0) - COALESCE(o.ded_sf, 0) + COALESCE(o.top_sf, 0)) AS app_discrepancy,
-        dr.saldo_akhir_grab_kredit_aktual - (dr.saldo_awal_grab_kredit + COALESCE(o.inc_gk, 0) - COALESCE(o.exp_gk, 0) - COALESCE(o.ded_gk, 0) + COALESCE(o.top_gk, 0)) AS grab_kredit_discrepancy,
-        dr.saldo_akhir_grab_tunai_aktual - (dr.saldo_awal_grab_tunai + COALESCE(o.inc_gt, 0) - COALESCE(o.exp_gt, 0) - COALESCE(o.ded_gt, 0) + COALESCE(o.top_gt, 0)) AS grab_tunai_discrepancy,
-        dr.saldo_akhir_grab_ovo_aktual - (dr.saldo_awal_grab_ovo + COALESCE(o.inc_go, 0) - COALESCE(o.exp_go, 0) - COALESCE(o.ded_go, 0) + COALESCE(o.top_go, 0)) AS grab_ovo_discrepancy
+        COALESCE(pc.grand_total, 0) - (dr.cash_awal + COALESCE(o.total_cust_pay, 0) - COALESCE(o.total_cust_change, 0) - COALESCE(o.top_from_cash, 0)) AS cash_discrepancy,
+        dr.saldo_akhir_app_aktual - (dr.saldo_awal_app + COALESCE(o.inc_sf, 0) - COALESCE(o.exp_sf, 0) - COALESCE(o.ded_sf, 0) + COALESCE(o.top_sf, 0) - COALESCE(o.top_from_sf, 0)) AS app_discrepancy,
+        dr.saldo_akhir_grab_kredit_aktual - (dr.saldo_awal_grab_kredit + COALESCE(o.inc_gk, 0) - COALESCE(o.exp_gk, 0) - COALESCE(o.ded_gk, 0) + COALESCE(o.top_gk, 0) - COALESCE(o.top_from_gk, 0)) AS grab_kredit_discrepancy,
+        dr.saldo_akhir_grab_tunai_aktual - (dr.saldo_awal_grab_tunai + COALESCE(o.inc_gt, 0) - COALESCE(o.exp_gt, 0) - COALESCE(o.ded_gt, 0) + COALESCE(o.top_gt, 0) - COALESCE(o.top_from_gt, 0)) AS grab_tunai_discrepancy,
+        dr.saldo_akhir_grab_ovo_aktual - (dr.saldo_awal_grab_ovo + COALESCE(o.inc_go, 0) - COALESCE(o.exp_go, 0) - COALESCE(o.ded_go, 0) + COALESCE(o.top_go, 0) - COALESCE(o.top_from_go, 0)) AS grab_ovo_discrepancy,
+        dr.saldo_akhir_mandiri_aktual - (dr.saldo_awal_mandiri + COALESCE(o.inc_mandiri, 0) - COALESCE(o.exp_mandiri, 0) - COALESCE(o.ded_mandiri, 0) + COALESCE(o.top_mandiri, 0) - COALESCE(o.top_from_mandiri, 0)) AS mandiri_discrepancy,
+        dr.saldo_akhir_bca_aktual - (dr.saldo_awal_bca + COALESCE(o.inc_bca, 0) - COALESCE(o.exp_bca, 0) - COALESCE(o.ded_bca, 0) + COALESCE(o.top_bca, 0) - COALESCE(o.top_from_bca, 0)) AS bca_discrepancy
       FROM daily_recap dr
       LEFT JOIN (
         SELECT
@@ -210,7 +234,25 @@ class LocalDb {
           SUM(CASE WHEN wallet_type = 'grab_ovo' THEN income ELSE 0 END) AS inc_go,
           SUM(CASE WHEN wallet_type = 'grab_ovo' THEN expense ELSE 0 END) AS exp_go,
           SUM(CASE WHEN wallet_type = 'grab_ovo' THEN deduct_cash_app ELSE 0 END) AS ded_go,
-          SUM(CASE WHEN wallet_type = 'grab_ovo' THEN saldo_top_up ELSE 0 END) AS top_go
+          SUM(CASE WHEN wallet_type = 'grab_ovo' THEN saldo_top_up ELSE 0 END) AS top_go,
+          -- mandiri
+          SUM(CASE WHEN wallet_type = 'mandiri' THEN income ELSE 0 END) AS inc_mandiri,
+          SUM(CASE WHEN wallet_type = 'mandiri' THEN expense ELSE 0 END) AS exp_mandiri,
+          SUM(CASE WHEN wallet_type = 'mandiri' THEN deduct_cash_app ELSE 0 END) AS ded_mandiri,
+          SUM(CASE WHEN wallet_type = 'mandiri' THEN saldo_top_up ELSE 0 END) AS top_mandiri,
+          -- bca
+          SUM(CASE WHEN wallet_type = 'bca' THEN income ELSE 0 END) AS inc_bca,
+          SUM(CASE WHEN wallet_type = 'bca' THEN expense ELSE 0 END) AS exp_bca,
+          SUM(CASE WHEN wallet_type = 'bca' THEN deduct_cash_app ELSE 0 END) AS ded_bca,
+          SUM(CASE WHEN wallet_type = 'bca' THEN saldo_top_up ELSE 0 END) AS top_bca,
+          -- top up sources
+          SUM(CASE WHEN topup_source = 'cash' THEN saldo_top_up ELSE 0 END) AS top_from_cash,
+          SUM(CASE WHEN topup_source = 'shopeefood' THEN saldo_top_up ELSE 0 END) AS top_from_sf,
+          SUM(CASE WHEN topup_source = 'grab_kredit' THEN saldo_top_up ELSE 0 END) AS top_from_gk,
+          SUM(CASE WHEN topup_source = 'grab_tunai' THEN saldo_top_up ELSE 0 END) AS top_from_gt,
+          SUM(CASE WHEN topup_source = 'grab_ovo' THEN saldo_top_up ELSE 0 END) AS top_from_go,
+          SUM(CASE WHEN topup_source = 'mandiri' THEN saldo_top_up ELSE 0 END) AS top_from_mandiri,
+          SUM(CASE WHEN topup_source = 'bca' THEN saldo_top_up ELSE 0 END) AS top_from_bca
         FROM daily_order
         GROUP BY daily_recap_id
       ) o ON o.daily_recap_id = dr.id

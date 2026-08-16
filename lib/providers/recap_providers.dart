@@ -21,6 +21,8 @@ class RecapDetailState {
   final double saldoAwalGrabKredit;
   final double saldoAwalGrabTunai;
   final double saldoAwalGrabOvo;
+  final double saldoAwalMandiri;
+  final double saldoAwalBca;
   final double odoStart;
   final double odoEnd;
   final double fuelPricePerLiter;
@@ -30,6 +32,8 @@ class RecapDetailState {
   final double saldoAkhirGrabKreditAktual;
   final double saldoAkhirGrabTunaiAktual;
   final double saldoAkhirGrabOvoAktual;
+  final double saldoAkhirMandiriAktual;
+  final double saldoAkhirBcaAktual;
   final double tip;
   final double insentif;
   final List<DailyOrder> orders;
@@ -45,6 +49,8 @@ class RecapDetailState {
     this.saldoAwalGrabKredit = 0,
     this.saldoAwalGrabTunai = 0,
     this.saldoAwalGrabOvo = 0,
+    this.saldoAwalMandiri = 0,
+    this.saldoAwalBca = 0,
     this.odoStart = 0,
     this.odoEnd = 0,
     this.fuelPricePerLiter = 10000,
@@ -54,6 +60,8 @@ class RecapDetailState {
     this.saldoAkhirGrabKreditAktual = 0,
     this.saldoAkhirGrabTunaiAktual = 0,
     this.saldoAkhirGrabOvoAktual = 0,
+    this.saldoAkhirMandiriAktual = 0,
+    this.saldoAkhirBcaAktual = 0,
     this.tip = 0,
     this.insentif = 0,
     this.orders = const [],
@@ -70,6 +78,8 @@ class RecapDetailState {
     double? saldoAwalGrabKredit,
     double? saldoAwalGrabTunai,
     double? saldoAwalGrabOvo,
+    double? saldoAwalMandiri,
+    double? saldoAwalBca,
     double? odoStart,
     double? odoEnd,
     double? fuelPricePerLiter,
@@ -79,6 +89,8 @@ class RecapDetailState {
     double? saldoAkhirGrabKreditAktual,
     double? saldoAkhirGrabTunaiAktual,
     double? saldoAkhirGrabOvoAktual,
+    double? saldoAkhirMandiriAktual,
+    double? saldoAkhirBcaAktual,
     double? tip,
     double? insentif,
     List<DailyOrder>? orders,
@@ -94,6 +106,8 @@ class RecapDetailState {
       saldoAwalGrabKredit: saldoAwalGrabKredit ?? this.saldoAwalGrabKredit,
       saldoAwalGrabTunai: saldoAwalGrabTunai ?? this.saldoAwalGrabTunai,
       saldoAwalGrabOvo: saldoAwalGrabOvo ?? this.saldoAwalGrabOvo,
+      saldoAwalMandiri: saldoAwalMandiri ?? this.saldoAwalMandiri,
+      saldoAwalBca: saldoAwalBca ?? this.saldoAwalBca,
       odoStart: odoStart ?? this.odoStart,
       odoEnd: odoEnd ?? this.odoEnd,
       fuelPricePerLiter: fuelPricePerLiter ?? this.fuelPricePerLiter,
@@ -103,6 +117,8 @@ class RecapDetailState {
       saldoAkhirGrabKreditAktual: saldoAkhirGrabKreditAktual ?? this.saldoAkhirGrabKreditAktual,
       saldoAkhirGrabTunaiAktual: saldoAkhirGrabTunaiAktual ?? this.saldoAkhirGrabTunaiAktual,
       saldoAkhirGrabOvoAktual: saldoAkhirGrabOvoAktual ?? this.saldoAkhirGrabOvoAktual,
+      saldoAkhirMandiriAktual: saldoAkhirMandiriAktual ?? this.saldoAkhirMandiriAktual,
+      saldoAkhirBcaAktual: saldoAkhirBcaAktual ?? this.saldoAkhirBcaAktual,
       tip: tip ?? this.tip,
       insentif: insentif ?? this.insentif,
       orders: orders ?? this.orders,
@@ -158,6 +174,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
         saldoAwalGrabKredit: match.saldoAwalGrabKredit,
         saldoAwalGrabTunai: match.saldoAwalGrabTunai,
         saldoAwalGrabOvo: match.saldoAwalGrabOvo,
+        saldoAwalMandiri: match.saldoAwalMandiri,
+        saldoAwalBca: match.saldoAwalBca,
         odoStart: match.odoStart,
         odoEnd: match.odoEnd,
         fuelPricePerLiter: match.fuelPricePerLiter,
@@ -167,6 +185,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
         saldoAkhirGrabKreditAktual: match.saldoAkhirGrabKreditAktual,
         saldoAkhirGrabTunaiAktual: match.saldoAkhirGrabTunaiAktual,
         saldoAkhirGrabOvoAktual: match.saldoAkhirGrabOvoAktual,
+        saldoAkhirMandiriAktual: match.saldoAkhirMandiriAktual,
+        saldoAkhirBcaAktual: match.saldoAkhirBcaAktual,
         tip: match.tip,
         insentif: match.insentif,
         orders: orders,
@@ -189,6 +209,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
           saldoAwalGrabKredit: todayRecap.saldoAwalGrabKredit,
           saldoAwalGrabTunai: todayRecap.saldoAwalGrabTunai,
           saldoAwalGrabOvo: todayRecap.saldoAwalGrabOvo,
+          saldoAwalMandiri: todayRecap.saldoAwalMandiri,
+          saldoAwalBca: todayRecap.saldoAwalBca,
           odoStart: todayRecap.odoStart,
           odoEnd: todayRecap.odoEnd,
           fuelPricePerLiter: todayRecap.fuelPricePerLiter,
@@ -198,6 +220,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
           saldoAkhirGrabKreditAktual: todayRecap.saldoAkhirGrabKreditAktual,
           saldoAkhirGrabTunaiAktual: todayRecap.saldoAkhirGrabTunaiAktual,
           saldoAkhirGrabOvoAktual: todayRecap.saldoAkhirGrabOvoAktual,
+          saldoAkhirMandiriAktual: todayRecap.saldoAkhirMandiriAktual,
+          saldoAkhirBcaAktual: todayRecap.saldoAkhirBcaAktual,
           tip: todayRecap.tip,
           insentif: todayRecap.insentif,
           orders: orders,
@@ -219,6 +243,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
     required double saldoAwalGrabKredit,
     required double saldoAwalGrabTunai,
     required double saldoAwalGrabOvo,
+    required double saldoAwalMandiri,
+    required double saldoAwalBca,
     required double odoStart,
     required double odoEnd,
     required double fuelPricePerLiter,
@@ -235,6 +261,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
         saldoAwalGrabKredit: saldoAwalGrabKredit,
         saldoAwalGrabTunai: saldoAwalGrabTunai,
         saldoAwalGrabOvo: saldoAwalGrabOvo,
+        saldoAwalMandiri: saldoAwalMandiri,
+        saldoAwalBca: saldoAwalBca,
         odoStart: odoStart,
         odoEnd: odoEnd,
         fuelPricePerLiter: fuelPricePerLiter,
@@ -244,6 +272,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
         saldoAkhirGrabKreditAktual: state.saldoAkhirGrabKreditAktual,
         saldoAkhirGrabTunaiAktual: state.saldoAkhirGrabTunaiAktual,
         saldoAkhirGrabOvoAktual: state.saldoAkhirGrabOvoAktual,
+        saldoAkhirMandiriAktual: state.saldoAkhirMandiriAktual,
+        saldoAkhirBcaAktual: state.saldoAkhirBcaAktual,
       );
       state = state.copyWith(recapId: id);
     } else {
@@ -254,6 +284,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
         saldoAwalGrabKredit: saldoAwalGrabKredit,
         saldoAwalGrabTunai: saldoAwalGrabTunai,
         saldoAwalGrabOvo: saldoAwalGrabOvo,
+        saldoAwalMandiri: saldoAwalMandiri,
+        saldoAwalBca: saldoAwalBca,
         odoStart: odoStart,
         odoEnd: odoEnd,
         fuelPricePerLiter: fuelPricePerLiter,
@@ -263,6 +295,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
         saldoAkhirGrabKreditAktual: state.saldoAkhirGrabKreditAktual,
         saldoAkhirGrabTunaiAktual: state.saldoAkhirGrabTunaiAktual,
         saldoAkhirGrabOvoAktual: state.saldoAkhirGrabOvoAktual,
+        saldoAkhirMandiriAktual: state.saldoAkhirMandiriAktual,
+        saldoAkhirBcaAktual: state.saldoAkhirBcaAktual,
       );
     }
     await _service.saveExtra(id, tip: tip, insentif: insentif);
@@ -275,6 +309,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
     required double actualGrabKredit,
     required double actualGrabTunai,
     required double actualGrabOvo,
+    required double actualMandiri,
+    required double actualBca,
   }) async {
     final id = state.recapId;
     if (id == null) return;
@@ -286,6 +322,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
       saldoAwalGrabKredit: state.saldoAwalGrabKredit,
       saldoAwalGrabTunai: state.saldoAwalGrabTunai,
       saldoAwalGrabOvo: state.saldoAwalGrabOvo,
+      saldoAwalMandiri: state.saldoAwalMandiri,
+      saldoAwalBca: state.saldoAwalBca,
       odoStart: state.odoStart,
       odoEnd: state.odoEnd,
       fuelPricePerLiter: state.fuelPricePerLiter,
@@ -295,6 +333,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
       saldoAkhirGrabKreditAktual: actualGrabKredit,
       saldoAkhirGrabTunaiAktual: actualGrabTunai,
       saldoAkhirGrabOvoAktual: actualGrabOvo,
+      saldoAkhirMandiriAktual: actualMandiri,
+      saldoAkhirBcaAktual: actualBca,
     );
 
     state = state.copyWith(
@@ -303,6 +343,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
       saldoAkhirGrabKreditAktual: actualGrabKredit,
       saldoAkhirGrabTunaiAktual: actualGrabTunai,
       saldoAkhirGrabOvoAktual: actualGrabOvo,
+      saldoAkhirMandiriAktual: actualMandiri,
+      saldoAkhirBcaAktual: actualBca,
     );
     await refreshSummary();
     ref.invalidate(recapsProvider);
@@ -319,6 +361,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
       saldoAwalGrabKredit: state.saldoAwalGrabKredit,
       saldoAwalGrabTunai: state.saldoAwalGrabTunai,
       saldoAwalGrabOvo: state.saldoAwalGrabOvo,
+      saldoAwalMandiri: state.saldoAwalMandiri,
+      saldoAwalBca: state.saldoAwalBca,
       odoStart: state.odoStart,
       odoEnd: state.odoEnd,
       fuelPricePerLiter: state.fuelPricePerLiter,
@@ -328,6 +372,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
       saldoAkhirGrabKreditAktual: state.saldoAkhirGrabKreditAktual,
       saldoAkhirGrabTunaiAktual: state.saldoAkhirGrabTunaiAktual,
       saldoAkhirGrabOvoAktual: state.saldoAkhirGrabOvoAktual,
+      saldoAkhirMandiriAktual: state.saldoAkhirMandiriAktual,
+      saldoAkhirBcaAktual: state.saldoAkhirBcaAktual,
     );
 
     state = state.copyWith(status: 'open');
