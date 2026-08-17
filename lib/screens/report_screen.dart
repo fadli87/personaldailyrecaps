@@ -26,7 +26,6 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   String? _error;
 
   int _activeTab = 0;
-  String _selectedAccount = 'cash';
   List<SaldoMutation> _mutations = [];
 
   @override
@@ -48,7 +47,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       final service = ref.read(recapServiceProvider);
       final recaps = await service.getRecapsInPeriod(_startDate, _endDate);
       final platform = await service.getPlatformIncomeDistributionInPeriod(_startDate, _endDate);
-      final mutations = await service.getWalletMutations(_selectedAccount, _startDate, _endDate);
+      final selectedAcc = ref.read(selectedAccountProvider);
+      final mutations = await service.getWalletMutations(selectedAcc, _startDate, _endDate);
       setState(() {
         _recaps = recaps;
         _platformData = platform;
@@ -220,14 +220,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   Widget build(BuildContext context) {
     // Listen to changes in tab or account to reload data
     ref.listen<int>(reportTabProvider, (prev, next) {
-      if (next != null) {
-        _loadData();
-      }
+      _loadData();
     });
     ref.listen<String>(selectedAccountProvider, (prev, next) {
-      if (next != null) {
-        _loadData();
-      }
+      _loadData();
     });
 
     final activeTab = ref.watch(reportTabProvider);

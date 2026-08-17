@@ -99,16 +99,24 @@ class DashboardScreen extends ConsumerWidget {
                 double totalExpense = 0;
                 double totalNetEarnings = 0;
                 
-                // Kalkulasi Kendaraan
-                double totalJarak = 0;
-                double totalLiterTerpakai = 0;
+
 
                 for (var r in recaps) {
                   totalIncome += r.totalIncome;
                   totalExpense += r.totalExpense;
                   totalNetEarnings += r.netEarning;
-                  totalJarak += r.jarakTempuh; 
-                  totalLiterTerpakai += r.literTerpakai;
+                }
+
+                // Kalkulasi Kendaraan 7 Hari Terakhir (Siklus Mingguan)
+                double weeklyJarak = 0;
+                double weeklyLiterTerpakai = 0;
+                double weeklyLiterMasuk = 0;
+
+                final weeklyRecaps = recaps.take(7).toList();
+                for (var r in weeklyRecaps) {
+                  weeklyJarak += r.jarakTempuh;
+                  weeklyLiterTerpakai += r.literTerpakai;
+                  weeklyLiterMasuk += r.literMasuk;
                 }
 
                 // Ambil 7 hari TERBARU secara kronologis (terlama -> terbaru) untuk grafik
@@ -134,7 +142,7 @@ class DashboardScreen extends ConsumerWidget {
                         const SizedBox(height: 24),
 
                         // --- SECTION 2: VEHICLE TELEMETRY CARD (MODERN GLASSMORPHISM EFFECT) ---
-                        _buildVehicleTelemetry(totalJarak, totalLiterTerpakai, ref),
+                        _buildVehicleTelemetry(weeklyJarak, weeklyLiterTerpakai, weeklyLiterMasuk, ref),
                         const SizedBox(height: 24),
 
                         // --- SECTION 3: CHARTS ---
@@ -637,9 +645,9 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  // --- KARTU TELEMETRI KENDARAAN (GLASSMORPHISM / NEUMORPHIC CARD) ---
-  Widget _buildVehicleTelemetry(double totalKm, double totalLiter, WidgetRef ref) {
-    double efisiensi = totalLiter > 0 ? (totalKm / totalLiter) : 0.0;
+  Widget _buildVehicleTelemetry(double weeklyKm, double weeklyLiter, double weeklyLiterMasuk, WidgetRef ref) {
+    double efisiensi = weeklyLiter > 0 ? (weeklyKm / weeklyLiter) : 0.0;
+    double surplusDefisit = weeklyLiterMasuk - weeklyLiter;
 
     // Menentukan kategori kesehatan efisiensi BBM
     String efficiencyStatus = 'Tidak Terdeteksi';
@@ -687,7 +695,7 @@ class DashboardScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'AKUMULASI TELEMETRI KENDARAAN',
+                      'TELEMETRI & BBM 7 HARI TERAKHIR',
                       style: TextStyle(
                         color: Color(0xFF94A3B8), // Slate 400
                         fontSize: 10,
@@ -715,74 +723,65 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'EFISIENSI RATA-RATA',
-                            style: TextStyle(
-                              color: Colors.blueGrey.shade400,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            efisiensi > 0 ? '${efisiensi.toStringAsFixed(1)} KM/L' : '0.0 KM/L',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
+                    _telemetryItem(
+                      Icons.alt_route_rounded,
+                      weeklyKm.toStringAsFixed(1),
+                      'KM',
+                      'Jarak Tempuh',
+                      const Color(0xFF38BDF8), // Light Blue
                     ),
-                    Container(height: 35, width: 1, color: Colors.blueGrey.shade800),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'TOTAL KONSUMSI BBM',
-                            style: TextStyle(
-                              color: Colors.blueGrey.shade400,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${totalLiter.toStringAsFixed(1)} LITER',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
+                    Container(width: 1, height: 40, color: Colors.white10),
+                    _telemetryItem(
+                      Icons.local_gas_station_rounded,
+                      weeklyLiter.toStringAsFixed(1),
+                      'Liter',
+                      'BBM Terpakai',
+                      const Color(0xFFFB923C), // Orange
+                    ),
+                    Container(width: 1, height: 40, color: Colors.white10),
+                    _telemetryItem(
+                      Icons.eco_rounded,
+                      efisiensi.toStringAsFixed(1),
+                      'KM/L',
+                      'Efisiensi',
+                      const Color(0xFF4ADE80), // Light Green
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                const Divider(color: Colors.white10, height: 1),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Icon(Icons.directions_car_outlined, size: 12, color: Colors.blueGrey.shade400),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Berdasarkan total jarak tempuh ${totalKm.toStringAsFixed(0)} KM',
-                      style: TextStyle(
-                        color: Colors.blueGrey.shade400,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
+                    Icon(
+                      surplusDefisit >= 0 ? Icons.battery_charging_full : Icons.battery_alert,
+                      color: surplusDefisit >= 0 ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(fontSize: 11, color: Colors.white70),
+                          children: [
+                            const TextSpan(text: 'Estimasi Tangki Mingguan: '),
+                            TextSpan(
+                              text: '${surplusDefisit >= 0 ? '+' : ''}${surplusDefisit.toStringAsFixed(1)} Liter ',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: surplusDefisit >= 0 ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                              ),
+                            ),
+                            TextSpan(
+                              text: surplusDefisit >= 0 ? '(Surplus Bensin)' : '(Defisit Bensin)',
+                              style: const TextStyle(color: Colors.white38),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -791,6 +790,57 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _telemetryItem(
+    IconData icon,
+    String value,
+    String unit,
+    String label,
+    Color iconColor,
+  ) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: iconColor, size: 22),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Text(
+                unit,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF64748B), // Slate 500
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -6,12 +6,14 @@ class OrderFormSheet extends StatefulWidget {
   final DailyOrder? existing;
   final int nextUrutan;
   final bool isClosed;
+  final double lastOdometer;
 
   const OrderFormSheet({
     super.key,
     required this.dailyRecapId,
     required this.existing,
     required this.nextUrutan,
+    required this.lastOdometer,
     this.isClosed = false,
   });
 
@@ -33,6 +35,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
   late TextEditingController _saldoTopUp;
   late TextEditingController _expense;
   late TextEditingController _remark;
+  late TextEditingController _odometer;
 
   @override
   void initState() {
@@ -50,6 +53,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
         _platformSelected = 'Mandiri';
       } else if (e.walletType == 'bca' || (e.platform?.toLowerCase().contains('bca') ?? false)) {
         _platformSelected = 'BCA';
+      } else if (e.walletType == 'cash' || (e.platform?.toLowerCase().contains('cash') ?? false)) {
+        _platformSelected = 'Cash';
       } else {
         _platformSelected = 'ShopeeFood';
       }
@@ -77,6 +82,23 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
     _saldoTopUp = TextEditingController(text: (e?.saldoTopUp ?? 0).toStringAsFixed(0));
     _expense = TextEditingController(text: (e?.expense ?? 0).toStringAsFixed(0));
     _remark = TextEditingController(text: e?.remark ?? '');
+
+    final initialOdometer = e?.odometer ?? (widget.lastOdometer > 0 ? widget.lastOdometer : null);
+    _odometer = TextEditingController(text: initialOdometer != null ? initialOdometer.toStringAsFixed(0) : '');
+  }
+
+  @override
+  void dispose() {
+    _keterangan.dispose();
+    _income.dispose();
+    _deductCashApp.dispose();
+    _custPay.dispose();
+    _custChange.dispose();
+    _saldoTopUp.dispose();
+    _expense.dispose();
+    _remark.dispose();
+    _odometer.dispose();
+    super.dispose();
   }
 
   double _n(TextEditingController c) => double.tryParse(c.text) ?? 0;
@@ -91,14 +113,37 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
     double saldoTopUp = 0;
     double expense = 0;
     bool isFuel = false;
+    double? odometer;
 
     if (_type == 'order') {
+      final odoText = _odometer.text.trim();
+      if (odoText.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Wajib mengisi Odometer (KM) saat pengantaran berakhir!')),
+        );
+        return;
+      }
+      final odoVal = double.tryParse(odoText) ?? 0;
+      if (odoVal <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Odometer (KM) harus lebih besar dari 0!')),
+        );
+        return;
+      }
+      if (odoVal < widget.lastOdometer) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Odometer (KM) tidak boleh lebih kecil dari KM sebelumnya (${widget.lastOdometer.toStringAsFixed(0)} KM)!')),
+        );
+        return;
+      }
+      
       income = _n(_income);
       expense = _n(_expense);
       custPay = _n(_custPay);
       custChange = _n(_custChange);
       deductCashApp = _n(_deductCashApp);
       isFuel = _isFuelExpense;
+      odometer = odoVal;
     } else if (_type == 'topup') {
       keterangan = _keterangan.text.trim().isEmpty ? null : _keterangan.text.trim();
       saldoTopUp = _n(_saldoTopUp);
@@ -125,6 +170,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
       walletType: _walletTypeSelected,
       topupSource: _topupSourceSelected,
       remark: _remark.text.trim().isEmpty ? null : _remark.text.trim(),
+      odometer: odometer,
     );
     Navigator.pop(context, order);
   }
@@ -205,6 +251,16 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                     ],
                   ),
                 ),
+                DropdownMenuItem(
+                  value: 'Cash',
+                  child: Row(
+                    children: [
+                      Icon(Icons.money_outlined, color: Colors.teal, size: 20),
+                      SizedBox(width: 8),
+                      Text('Cash / Tunai'),
+                    ],
+                  ),
+                ),
               ],
               onChanged: widget.isClosed
                   ? null
@@ -220,6 +276,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                             _walletTypeSelected = 'mandiri';
                           } else if (_platformSelected == 'BCA') {
                             _walletTypeSelected = 'bca';
+                          } else if (_platformSelected == 'Cash') {
+                            _walletTypeSelected = 'cash';
                           }
                         });
                       }
@@ -305,6 +363,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
               ),
               const SizedBox(height: 12),
               _num('Deduct Cash App (Potong Saldo App)', _deductCashApp),
+              const SizedBox(height: 12),
+              _num('Odometer Pengantaran Akhir (KM) *', _odometer),
               const SizedBox(height: 8),
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,

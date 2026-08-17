@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
-        android:label="sf_daily_recap"
+        android:label="Personal Finance Tracker"
         android:name="${applicationName}"
         android:icon="@mipmap/yes">
         <activity

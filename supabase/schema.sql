@@ -50,6 +50,7 @@ create table if not exists daily_order (
   wallet_type text not null default 'shopeefood',
   topup_source text not null default 'cash',
   remark text,
+  odometer numeric(14,2),
   created_at timestamptz not null default now()
 );
 
@@ -66,7 +67,9 @@ create table if not exists petty_cash_item (
 create table if not exists daily_extra (
   daily_recap_id uuid primary key references daily_recap(id) on delete cascade,
   tip numeric(14,2) not null default 0,
-  insentif numeric(14,2) not null default 0
+  insentif numeric(14,2) not null default 0,
+  tip_wallet_type text,
+  insentif_wallet_type text
 );
 
 -- =========================================================
@@ -103,17 +106,19 @@ select
   coalesce(pc.grand_total, 0)          as petty_cash_total,
   coalesce(de.tip, 0)                  as tip,
   coalesce(de.insentif, 0)             as insentif,
+  de.tip_wallet_type,
+  de.insentif_wallet_type,
   -- Saldo akhir buku per wallet
-  dr.saldo_awal_app + coalesce(o.inc_sf, 0) - coalesce(o.exp_sf, 0) - coalesce(o.ded_sf, 0) + coalesce(o.top_sf, 0) - coalesce(o.top_from_sf, 0) as saldo_akhir_app,
-  dr.saldo_awal_grab_kredit + coalesce(o.inc_gk, 0) - coalesce(o.exp_gk, 0) - coalesce(o.ded_gk, 0) + coalesce(o.top_gk, 0) - coalesce(o.top_from_gk, 0) as saldo_akhir_grab_kredit,
-  dr.saldo_awal_grab_tunai + coalesce(o.inc_gt, 0) - coalesce(o.exp_gt, 0) - coalesce(o.ded_gt, 0) + coalesce(o.top_gt, 0) - coalesce(o.top_from_gt, 0) as saldo_akhir_grab_tunai,
-  dr.saldo_awal_grab_ovo + coalesce(o.inc_go, 0) - coalesce(o.exp_go, 0) - coalesce(o.ded_go, 0) + coalesce(o.top_go, 0) - coalesce(o.top_from_go, 0) as saldo_akhir_grab_ovo,
-  dr.saldo_awal_mandiri + coalesce(o.inc_mandiri, 0) - coalesce(o.exp_mandiri, 0) - coalesce(o.ded_mandiri, 0) + coalesce(o.top_mandiri, 0) - coalesce(o.top_from_mandiri, 0) as saldo_akhir_mandiri,
-  dr.saldo_awal_bca + coalesce(o.inc_bca, 0) - coalesce(o.exp_bca, 0) - coalesce(o.ded_bca, 0) + coalesce(o.top_bca, 0) - coalesce(o.top_from_bca, 0) as saldo_akhir_bca,
+  dr.saldo_awal_app + coalesce(o.inc_sf, 0) - coalesce(o.exp_sf, 0) - coalesce(o.ded_sf, 0) + coalesce(o.top_sf, 0) - coalesce(o.top_from_sf, 0) + (case when de.tip_wallet_type = 'shopeefood' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'shopeefood' then de.insentif else 0 end) as saldo_akhir_app,
+  dr.saldo_awal_grab_kredit + coalesce(o.inc_gk, 0) - coalesce(o.exp_gk, 0) - coalesce(o.ded_gk, 0) + coalesce(o.top_gk, 0) - coalesce(o.top_from_gk, 0) + (case when de.tip_wallet_type = 'grab_kredit' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'grab_kredit' then de.insentif else 0 end) as saldo_akhir_grab_kredit,
+  dr.saldo_awal_grab_tunai + coalesce(o.inc_gt, 0) - coalesce(o.exp_gt, 0) - coalesce(o.ded_gt, 0) + coalesce(o.top_gt, 0) - coalesce(o.top_from_gt, 0) + (case when de.tip_wallet_type = 'grab_tunai' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'grab_tunai' then de.insentif else 0 end) as saldo_akhir_grab_tunai,
+  dr.saldo_awal_grab_ovo + coalesce(o.inc_go, 0) - coalesce(o.exp_go, 0) - coalesce(o.ded_go, 0) + coalesce(o.top_go, 0) - coalesce(o.top_from_go, 0) + (case when de.tip_wallet_type = 'grab_ovo' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'grab_ovo' then de.insentif else 0 end) as saldo_akhir_grab_ovo,
+  dr.saldo_awal_mandiri + coalesce(o.inc_mandiri, 0) - coalesce(o.exp_mandiri, 0) - coalesce(o.ded_mandiri, 0) + coalesce(o.top_mandiri, 0) - coalesce(o.top_from_mandiri, 0) + (case when de.tip_wallet_type = 'mandiri' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'mandiri' then de.insentif else 0 end) as saldo_akhir_mandiri,
+  dr.saldo_awal_bca + coalesce(o.inc_bca, 0) - coalesce(o.exp_bca, 0) - coalesce(o.ded_bca, 0) + coalesce(o.top_bca, 0) - coalesce(o.top_from_bca, 0) + (case when de.tip_wallet_type = 'bca' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'bca' then de.insentif else 0 end) as saldo_akhir_bca,
   -- Kas akhir buku (Tunai) - hanya dikurangi top-up yang bersumber dari Cash
-  dr.cash_awal + coalesce(o.total_cust_pay, 0) - coalesce(o.total_cust_change, 0) - coalesce(o.top_from_cash, 0) as cash_akhir,
+  dr.cash_awal + coalesce(o.total_cust_pay, 0) - coalesce(o.total_cust_change, 0) - coalesce(o.top_from_cash, 0) + coalesce(o.inc_cash, 0) - coalesce(o.exp_cash, 0) + (case when de.tip_wallet_type = 'cash' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'cash' then de.insentif else 0 end) as cash_akhir,
   -- Net earning global
-  coalesce(o.total_income, 0) - coalesce(o.total_expense, 0) as net_earning,
+  coalesce(o.total_income, 0) - coalesce(o.total_expense, 0) + coalesce(de.tip, 0) + coalesce(de.insentif, 0) as net_earning,
   -- Telemetry & BBM
   (dr.odo_end - dr.odo_start) as jarak_tempuh,
   coalesce(f.total_fuel_expense, 0) as total_fuel_expense,
@@ -124,13 +129,13 @@ select
        then (dr.odo_end - dr.odo_start) / dr.kml_parameter
        else 0 end as liter_terpakai,
   -- Discrepancies
-  (coalesce(pc.grand_total, 0) - (dr.cash_awal + coalesce(o.total_cust_pay, 0) - coalesce(o.total_cust_change, 0) - coalesce(o.top_from_cash, 0))) as cash_discrepancy,
-  dr.saldo_akhir_app_aktual - (dr.saldo_awal_app + coalesce(o.inc_sf, 0) - coalesce(o.exp_sf, 0) - coalesce(o.ded_sf, 0) + coalesce(o.top_sf, 0) - coalesce(o.top_from_sf, 0)) as app_discrepancy,
-  dr.saldo_akhir_grab_kredit_aktual - (dr.saldo_awal_grab_kredit + coalesce(o.inc_gk, 0) - coalesce(o.exp_gk, 0) - coalesce(o.ded_gk, 0) + coalesce(o.top_gk, 0) - coalesce(o.top_from_gk, 0)) as grab_kredit_discrepancy,
-  dr.saldo_akhir_grab_tunai_aktual - (dr.saldo_awal_grab_tunai + coalesce(o.inc_gt, 0) - coalesce(o.exp_gt, 0) - coalesce(o.ded_gt, 0) + coalesce(o.top_gt, 0) - coalesce(o.top_from_gt, 0)) as grab_tunai_discrepancy,
-  dr.saldo_akhir_grab_ovo_aktual - (dr.saldo_awal_grab_ovo + coalesce(o.inc_go, 0) - coalesce(o.exp_go, 0) - coalesce(o.ded_go, 0) + coalesce(o.top_go, 0) - coalesce(o.top_from_go, 0)) as grab_ovo_discrepancy,
-  dr.saldo_akhir_mandiri_aktual - (dr.saldo_awal_mandiri + coalesce(o.inc_mandiri, 0) - coalesce(o.exp_mandiri, 0) - coalesce(o.ded_mandiri, 0) + coalesce(o.top_mandiri, 0) - coalesce(o.top_from_mandiri, 0)) as mandiri_discrepancy,
-  dr.saldo_akhir_bca_aktual - (dr.saldo_awal_bca + coalesce(o.inc_bca, 0) - coalesce(o.exp_bca, 0) - coalesce(o.ded_bca, 0) + coalesce(o.top_bca, 0) - coalesce(o.top_from_bca, 0)) as bca_discrepancy
+  (coalesce(pc.grand_total, 0) - (dr.cash_awal + coalesce(o.total_cust_pay, 0) - coalesce(o.total_cust_change, 0) - coalesce(o.top_from_cash, 0) + coalesce(o.inc_cash, 0) - coalesce(o.exp_cash, 0) + (case when de.tip_wallet_type = 'cash' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'cash' then de.insentif else 0 end))) as cash_discrepancy,
+  dr.saldo_akhir_app_aktual - (dr.saldo_awal_app + coalesce(o.inc_sf, 0) - coalesce(o.exp_sf, 0) - coalesce(o.ded_sf, 0) + coalesce(o.top_sf, 0) - coalesce(o.top_from_sf, 0) + (case when de.tip_wallet_type = 'shopeefood' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'shopeefood' then de.insentif else 0 end)) as app_discrepancy,
+  dr.saldo_akhir_grab_kredit_aktual - (dr.saldo_awal_grab_kredit + coalesce(o.inc_gk, 0) - coalesce(o.exp_gk, 0) - coalesce(o.ded_gk, 0) + coalesce(o.top_gk, 0) - coalesce(o.top_from_gk, 0) + (case when de.tip_wallet_type = 'grab_kredit' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'grab_kredit' then de.insentif else 0 end)) as grab_kredit_discrepancy,
+  dr.saldo_akhir_grab_tunai_aktual - (dr.saldo_awal_grab_tunai + coalesce(o.inc_gt, 0) - coalesce(o.exp_gt, 0) - coalesce(o.ded_gt, 0) + coalesce(o.top_gt, 0) - coalesce(o.top_from_gt, 0) + (case when de.tip_wallet_type = 'grab_tunai' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'grab_tunai' then de.insentif else 0 end)) as grab_tunai_discrepancy,
+  dr.saldo_akhir_grab_ovo_aktual - (dr.saldo_awal_grab_ovo + coalesce(o.inc_go, 0) - coalesce(o.exp_go, 0) - coalesce(o.ded_go, 0) + coalesce(o.top_go, 0) - coalesce(o.top_from_go, 0) + (case when de.tip_wallet_type = 'grab_ovo' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'grab_ovo' then de.insentif else 0 end)) as grab_ovo_discrepancy,
+  dr.saldo_akhir_mandiri_aktual - (dr.saldo_awal_mandiri + coalesce(o.inc_mandiri, 0) - coalesce(o.exp_mandiri, 0) - coalesce(o.ded_mandiri, 0) + coalesce(o.top_mandiri, 0) - coalesce(o.top_from_mandiri, 0) + (case when de.tip_wallet_type = 'mandiri' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'mandiri' then de.insentif else 0 end)) as mandiri_discrepancy,
+  dr.saldo_akhir_bca_aktual - (dr.saldo_awal_bca + coalesce(o.inc_bca, 0) - coalesce(o.exp_bca, 0) - coalesce(o.ded_bca, 0) + coalesce(o.top_bca, 0) - coalesce(o.top_from_bca, 0) + (case when de.tip_wallet_type = 'bca' then de.tip else 0 end) + (case when de.insentif_wallet_type = 'bca' then de.insentif else 0 end)) as bca_discrepancy
 from daily_recap dr
 left join (
   select
@@ -141,6 +146,9 @@ left join (
     sum(cust_change) as total_cust_change,
     sum(saldo_top_up) as total_saldo_top_up,
     sum(expense) as total_expense,
+    -- cash
+    sum(case when wallet_type = 'cash' then income else 0 end) as inc_cash,
+    sum(case when wallet_type = 'cash' then expense else 0 end) as exp_cash,
     -- shopeefood
     sum(case when wallet_type = 'shopeefood' then income else 0 end) as inc_sf,
     sum(case when wallet_type = 'shopeefood' then expense else 0 end) as exp_sf,

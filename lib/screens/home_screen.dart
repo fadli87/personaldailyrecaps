@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/recap_providers.dart';
 import '../services/sync_service.dart';
 import 'daily_recap_detail_screen.dart';
 import 'dashboard_screen.dart';
 import 'report_screen.dart';
+import 'profile_screen.dart';
+import 'pin_lock_screen.dart';
 
 final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 final dateFmt = DateFormat('EEEE, d MMM yyyy', 'id_ID');
@@ -17,7 +20,52 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
+  bool _isLockScreenShowing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkAndShowPinLock();
+    }
+  }
+
+  Future<void> _checkAndShowPinLock() async {
+    if (_isLockScreenShowing) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final isPinEnabled = prefs.getBool('pin_lock_enabled') ?? false;
+    final hasPin = prefs.getString('app_pin') != null;
+
+    if (isPinEnabled && hasPin) {
+      setState(() {
+        _isLockScreenShowing = true;
+      });
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const PinLockScreen(mode: PinMode.normalLock),
+        ),
+      );
+      setState(() {
+        _isLockScreenShowing = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(homeTabProvider);
@@ -99,20 +147,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       // Halaman 2: Laporan Periodik & Ekspor
       const ReportScreen(),
+      // Halaman 3: Profil & Keamanan
+      const ProfileScreen(),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(currentIndex == 0 
-            ? 'Dashboard Eksekutif' 
-            : (currentIndex == 1 ? 'Personal Finance & Recap' : 'Laporan Bulanan & Ekspor')),
+        title: Text(
+          currentIndex == 0
+              ? 'Dashboard Eksekutif'
+              : (currentIndex == 1
+                  ? 'Personal Finance & Recap'
+                  : (currentIndex == 2 ? 'Laporan Bulanan & Ekspor' : 'Profil & Keamanan')),
+        ),
         actions: currentIndex == 0
             ? [
                 IconButton(
                   icon: const Icon(Icons.refresh),
-                  onPressed: () {
-                    ref.invalidate(recapsProvider);
-                    ref.invalidate(platformDistributionProvider);
+                  onPressed: () async {
+                    if (!context.mounted) return;
+                    final scaffold = ScaffoldMessenger.of(context);
+                    scaffold.showSnackBar(
+                      const SnackBar(content: Text('Sinkronisasi data sedang berjalan...')),
+                    );
+                    try {
+                      await SyncService.sync();
+                      ref.invalidate(recapsProvider);
+                      ref.invalidate(platformDistributionProvider);
+                      scaffold.showSnackBar(
+                        const SnackBar(content: Text('Sinkronisasi data sukses!')),
+                      );
+                    } catch (e) {
+                      scaffold.showSnackBar(
+                        SnackBar(content: Text('Sinkronisasi gagal: $e')),
+                      );
+                    }
                   },
                 )
               ]
@@ -120,6 +189,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: pages[currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: currentIndex,
         onTap: (index) {
           ref.read(homeTabProvider.notifier).change(index);
@@ -142,6 +212,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             icon: Icon(Icons.assessment_outlined),
             activeIcon: Icon(Icons.assessment),
             label: 'Laporan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profil',
           ),
         ],
       ),

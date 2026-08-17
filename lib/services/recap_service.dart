@@ -262,7 +262,13 @@ class RecapService {
 
   // ---------- Tip & Insentif ----------
 
-  Future<void> saveExtra(String dailyRecapId, {required double tip, required double insentif}) async {
+  Future<void> saveExtra(
+    String dailyRecapId, {
+    required double tip,
+    required double insentif,
+    String? tipWalletType,
+    String? insentifWalletType,
+  }) async {
     final db = await LocalDb.instance.database;
 
     await db.insert(
@@ -271,6 +277,8 @@ class RecapService {
         'daily_recap_id': dailyRecapId,
         'tip': tip,
         'insentif': insentif,
+        'tip_wallet_type': tipWalletType,
+        'insentif_wallet_type': insentifWalletType,
         'is_synced': 0,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
@@ -450,8 +458,8 @@ class RecapService {
         double debit = 0;
 
         if (walletType == 'cash') {
-          credit = o.custPay;
-          debit = o.custChange + (o.topupSource == 'cash' ? o.saldoTopUp : 0);
+          credit = o.custPay + (o.walletType == 'cash' ? o.income : 0);
+          debit = o.custChange + (o.topupSource == 'cash' ? o.saldoTopUp : 0) + (o.walletType == 'cash' ? o.expense : 0);
         } else {
           if (o.walletType == walletType) {
             credit = o.income + o.saldoTopUp;
@@ -488,6 +496,30 @@ class RecapService {
             runningBalance: currentBalance,
           ));
         }
+      }
+
+      // Add tip mutation if it matches the current wallet type
+      if (recap.tip > 0 && recap.tipWalletType == walletType) {
+        currentBalance += recap.tip;
+        mutations.add(SaldoMutation(
+          tanggal: recap.tanggal,
+          keterangan: 'Tip Harian',
+          debit: 0,
+          kredit: recap.tip,
+          runningBalance: currentBalance,
+        ));
+      }
+
+      // Add insentif mutation if it matches the current wallet type
+      if (recap.insentif > 0 && recap.insentifWalletType == walletType) {
+        currentBalance += recap.insentif;
+        mutations.add(SaldoMutation(
+          tanggal: recap.tanggal,
+          keterangan: 'Insentif / Bonus Harian',
+          debit: 0,
+          kredit: recap.insentif,
+          runningBalance: currentBalance,
+        ));
       }
     }
 

@@ -27,19 +27,10 @@ Future<void> main() async {
     publishableKey: dotenv.get('SUPABASE_ANON_KEY'),
   );
 
-  // Sign-in anonim supaya app bisa langsung dipakai tanpa layar login.
-  // Pastikan "Allow anonymous sign-ins" sudah diaktifkan di
-  // Supabase Dashboard -> Authentication -> Sign In / Providers.
-  if (Supabase.instance.client.auth.currentSession == null) {
-    try {
-      await Supabase.instance.client.auth.signInAnonymously();
-    } catch (e) {
-      debugPrint('Failed to sign in anonymously (offline): $e');
-    }
+  // Jalankan sinkronisasi awal di background secara async jika sesi aktif ada
+  if (Supabase.instance.client.auth.currentSession != null) {
+    Future.microtask(() => SyncService.sync());
   }
-
-  // Jalankan sinkronisasi awal di background secara async
-  Future.microtask(() => SyncService.sync());
 
   runApp(
     const ProviderScope(

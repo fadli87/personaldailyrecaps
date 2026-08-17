@@ -36,6 +36,8 @@ class RecapDetailState {
   final double saldoAkhirBcaAktual;
   final double tip;
   final double insentif;
+  final String? tipWalletType;
+  final String? insentifWalletType;
   final List<DailyOrder> orders;
   final List<PettyCashItem> pettyCash;
   final DailyRecap? summary;
@@ -64,6 +66,8 @@ class RecapDetailState {
     this.saldoAkhirBcaAktual = 0,
     this.tip = 0,
     this.insentif = 0,
+    this.tipWalletType,
+    this.insentifWalletType,
     this.orders = const [],
     this.pettyCash = const [],
     this.summary,
@@ -93,6 +97,8 @@ class RecapDetailState {
     double? saldoAkhirBcaAktual,
     double? tip,
     double? insentif,
+    String? tipWalletType,
+    String? insentifWalletType,
     List<DailyOrder>? orders,
     List<PettyCashItem>? pettyCash,
     DailyRecap? summary,
@@ -121,6 +127,8 @@ class RecapDetailState {
       saldoAkhirBcaAktual: saldoAkhirBcaAktual ?? this.saldoAkhirBcaAktual,
       tip: tip ?? this.tip,
       insentif: insentif ?? this.insentif,
+      tipWalletType: tipWalletType ?? this.tipWalletType,
+      insentifWalletType: insentifWalletType ?? this.insentifWalletType,
       orders: orders ?? this.orders,
       pettyCash: pettyCash ?? this.pettyCash,
       summary: summary ?? this.summary,
@@ -224,6 +232,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
           saldoAkhirBcaAktual: todayRecap.saldoAkhirBcaAktual,
           tip: todayRecap.tip,
           insentif: todayRecap.insentif,
+          tipWalletType: todayRecap.tipWalletType,
+          insentifWalletType: todayRecap.insentifWalletType,
           orders: orders,
           pettyCash: petty,
           isLoading: false,
@@ -251,6 +261,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
     required double kmlParameter,
     required double tip,
     required double insentif,
+    String? tipWalletType,
+    String? insentifWalletType,
   }) async {
     String? id = state.recapId;
     if (id == null) {
@@ -299,7 +311,13 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
         saldoAkhirBcaAktual: state.saldoAkhirBcaAktual,
       );
     }
-    await _service.saveExtra(id, tip: tip, insentif: insentif);
+    await _service.saveExtra(
+      id,
+      tip: tip,
+      insentif: insentif,
+      tipWalletType: tipWalletType,
+      insentifWalletType: insentifWalletType,
+    );
     await refreshSummary();
     ref.invalidate(recapsProvider);
   }
@@ -388,22 +406,109 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
     final match = all.where((r) => r.id == id).toList();
     final orders = await _service.getOrders(id);
     final petty = await _service.getPettyCash(id);
+    final matchRecap = match.isNotEmpty ? match.first : state.summary;
     state = state.copyWith(
-      summary: match.isNotEmpty ? match.first : state.summary,
+      summary: matchRecap,
       orders: orders,
       pettyCash: petty,
+      tipWalletType: matchRecap?.tipWalletType ?? state.tipWalletType,
+      insentifWalletType: matchRecap?.insentifWalletType ?? state.insentifWalletType,
     );
     ref.invalidate(recapsProvider);
   }
 
   Future<void> upsertOrder(DailyOrder order) async {
     await _service.upsertOrder(order);
+    
+    final id = state.recapId;
+    if (id != null) {
+      final orders = await _service.getOrders(id);
+      double maxOdo = state.odoStart;
+      for (final o in orders) {
+        if (o.odometer != null && o.odometer! > maxOdo) {
+          maxOdo = o.odometer!;
+        }
+      }
+
+      bool shouldUpdate = false;
+      if (maxOdo > state.odoEnd) {
+        shouldUpdate = true;
+      } else if (order.id != null) {
+        final previousOrder = state.orders.firstWhere((o) => o.id == order.id, orElse: () => order);
+        if (previousOrder.odometer == state.odoEnd && maxOdo < state.odoEnd) {
+          shouldUpdate = true;
+        }
+      }
+
+      if (shouldUpdate) {
+        await _service.updateRecapHeader(
+          id: id,
+          cashAwal: state.cashAwal,
+          saldoAwalApp: state.saldoAwalApp,
+          saldoAwalGrabKredit: state.saldoAwalGrabKredit,
+          saldoAwalGrabTunai: state.saldoAwalGrabTunai,
+          saldoAwalGrabOvo: state.saldoAwalGrabOvo,
+          saldoAwalMandiri: state.saldoAwalMandiri,
+          saldoAwalBca: state.saldoAwalBca,
+          odoStart: state.odoStart,
+          odoEnd: maxOdo,
+          fuelPricePerLiter: state.fuelPricePerLiter,
+          kmlParameter: state.kmlParameter,
+          status: state.status,
+          saldoAkhirAppAktual: state.saldoAkhirAppAktual,
+          saldoAkhirGrabKreditAktual: state.saldoAkhirGrabKreditAktual,
+          saldoAkhirGrabTunaiAktual: state.saldoAkhirGrabTunaiAktual,
+          saldoAkhirGrabOvoAktual: state.saldoAkhirGrabOvoAktual,
+          saldoAkhirMandiriAktual: state.saldoAkhirMandiriAktual,
+          saldoAkhirBcaAktual: state.saldoAkhirBcaAktual,
+        );
+        state = state.copyWith(odoEnd: maxOdo);
+      }
+    }
+
     await refreshSummary();
   }
 
   Future<void> deleteOrder(DailyOrder o) async {
     if (o.id == null) return;
     await _service.deleteOrder(o.id!);
+    
+    final id = state.recapId;
+    if (id != null) {
+      final orders = await _service.getOrders(id);
+      double maxOdo = state.odoStart;
+      for (final order in orders) {
+        if (order.odometer != null && order.odometer! > maxOdo) {
+          maxOdo = order.odometer!;
+        }
+      }
+
+      if (o.odometer == state.odoEnd && maxOdo < state.odoEnd) {
+        await _service.updateRecapHeader(
+          id: id,
+          cashAwal: state.cashAwal,
+          saldoAwalApp: state.saldoAwalApp,
+          saldoAwalGrabKredit: state.saldoAwalGrabKredit,
+          saldoAwalGrabTunai: state.saldoAwalGrabTunai,
+          saldoAwalGrabOvo: state.saldoAwalGrabOvo,
+          saldoAwalMandiri: state.saldoAwalMandiri,
+          saldoAwalBca: state.saldoAwalBca,
+          odoStart: state.odoStart,
+          odoEnd: maxOdo,
+          fuelPricePerLiter: state.fuelPricePerLiter,
+          kmlParameter: state.kmlParameter,
+          status: state.status,
+          saldoAkhirAppAktual: state.saldoAkhirAppAktual,
+          saldoAkhirGrabKreditAktual: state.saldoAkhirGrabKreditAktual,
+          saldoAkhirGrabTunaiAktual: state.saldoAkhirGrabTunaiAktual,
+          saldoAkhirGrabOvoAktual: state.saldoAkhirGrabOvoAktual,
+          saldoAkhirMandiriAktual: state.saldoAkhirMandiriAktual,
+          saldoAkhirBcaAktual: state.saldoAkhirBcaAktual,
+        );
+        state = state.copyWith(odoEnd: maxOdo);
+      }
+    }
+
     await refreshSummary();
   }
 

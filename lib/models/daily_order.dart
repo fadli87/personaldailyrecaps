@@ -14,6 +14,7 @@ class DailyOrder {
   final String walletType;
   final String topupSource;
   final String? remark;
+  final double? odometer;
 
   DailyOrder({
     this.id,
@@ -31,6 +32,7 @@ class DailyOrder {
     this.walletType = 'shopeefood',
     this.topupSource = 'cash',
     this.remark,
+    this.odometer,
   });
 
   factory DailyOrder.fromMap(Map<String, dynamic> map) {
@@ -60,6 +62,7 @@ class DailyOrder {
       walletType: map['wallet_type'] as String? ?? 'shopeefood',
       topupSource: map['topup_source'] as String? ?? 'cash',
       remark: map['remark'] as String?,
+      odometer: map['odometer'] != null ? d(map['odometer']) : null,
     );
   }
 
@@ -78,5 +81,6 @@ class DailyOrder {
         'wallet_type': walletType,
         'topup_source': topupSource,
         'remark': remark,
+        'odometer': odometer,
       };
 }

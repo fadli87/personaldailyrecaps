@@ -20,6 +20,8 @@ class DailyRecap {
   final double saldoAkhirMandiriAktual;
   final double saldoAkhirBcaAktual;
   final String? catatan;
+  final String? tipWalletType;
+  final String? insentifWalletType;
 
   // Fields below come from the `daily_recap_summary` view (auto-calculated).
   final double totalIncome;
@@ -72,6 +74,8 @@ class DailyRecap {
     this.saldoAkhirMandiriAktual = 0,
     this.saldoAkhirBcaAktual = 0,
     this.catatan,
+    this.tipWalletType,
+    this.insentifWalletType,
     this.totalIncome = 0,
     this.totalExpense = 0,
     this.totalCustPay = 0,
@@ -125,6 +129,8 @@ class DailyRecap {
       saldoAkhirMandiriAktual: d(map['saldo_akhir_mandiri_aktual']),
       saldoAkhirBcaAktual: d(map['saldo_akhir_bca_aktual']),
       catatan: map['catatan'] as String?,
+      tipWalletType: map['tip_wallet_type'] as String?,
+      insentifWalletType: map['insentif_wallet_type'] as String?,
       totalIncome: d(map['total_income']),
       totalExpense: d(map['total_expense']),
       totalCustPay: d(map['total_cust_pay']),

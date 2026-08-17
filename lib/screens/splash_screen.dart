@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'home_screen.dart';
+import 'pin_lock_screen.dart';
+import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -35,19 +39,59 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // Transisi ke HomeScreen setelah 2.5 detik
-    Future.delayed(const Duration(milliseconds: 2500), () {
+    // Transisi setelah 2.5 detik
+    Future.delayed(const Duration(milliseconds: 2500), () async {
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const HomeScreen(),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 500),
-          ),
-        );
+        final session = Supabase.instance.client.auth.currentSession;
+        
+        if (session == null) {
+          // Belum login sama sekali, arahkan ke LoginScreen
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 500),
+            ),
+          );
+        } else {
+          // Sesi ada (sudah login email atau anonim)
+          final prefs = await SharedPreferences.getInstance();
+          final isPinEnabled = prefs.getBool('pin_lock_enabled') ?? false;
+          final hasPin = prefs.getString('app_pin') != null;
+
+          if (isPinEnabled && hasPin) {
+            if (!mounted) return;
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => const PinLockScreen(
+                  mode: PinMode.normalLock,
+                  isInitialLaunch: true,
+                ),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                transitionDuration: const Duration(milliseconds: 500),
+              ),
+            );
+          } else {
+            if (!mounted) return;
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => const HomeScreen(),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                transitionDuration: const Duration(milliseconds: 500),
+              ),
+            );
+          }
+        }
       }
     });
   }

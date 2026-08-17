@@ -41,6 +41,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
   List<PettyCashItem> _localPettyCash = [];
   bool _initialized = false;
   int _selectedSection = 0;
+  String? _tipWalletSelected;
+  String? _insentifWalletSelected;
 
   @override
   void dispose() {
@@ -95,6 +97,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
           kmlParameter: kmlParam,
           tip: tip,
           insentif: insentif,
+          tipWalletType: _tipWalletSelected,
+          insentifWalletType: _insentifWalletSelected,
         );
   }
 
@@ -108,6 +112,14 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     if (activeId == null) return;
     if (!mounted) return;
 
+    double lastOdometer = state.odoStart;
+    if (state.orders.isNotEmpty) {
+      final odoOrders = state.orders.where((o) => o.id != existing?.id && o.odometer != null && o.odometer! > 0).toList();
+      if (odoOrders.isNotEmpty) {
+        lastOdometer = odoOrders.map((o) => o.odometer!).reduce((a, b) => a > b ? a : b);
+      }
+    }
+
     final result = await showModalBottomSheet<DailyOrder>(
       context: context,
       isScrollControlled: true,
@@ -116,6 +128,7 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
         existing: existing,
         nextUrutan: state.orders.length + 1,
         isClosed: state.status == 'closed',
+        lastOdometer: lastOdometer,
       ),
     );
     if (result != null) {
@@ -174,6 +187,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
       _actualBcaCtrl.text = state.saldoAkhirBcaAktual.toStringAsFixed(0);
       _tipCtrl.text = state.tip.toStringAsFixed(0);
       _insentifCtrl.text = state.insentif.toStringAsFixed(0);
+      _tipWalletSelected = state.tipWalletType ?? 'cash';
+      _insentifWalletSelected = state.insentifWalletType ?? 'shopeefood';
       _localPettyCash = List<PettyCashItem>.from(state.pettyCash);
       _initialized = true;
     }
@@ -192,7 +207,9 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
       (double.tryParse(_fuelPriceCtrl.text) ?? 0) != state.fuelPricePerLiter ||
       (double.tryParse(_kmlParamCtrl.text) ?? 0) != state.kmlParameter ||
       (double.tryParse(_tipCtrl.text) ?? 0) != state.tip ||
-      (double.tryParse(_insentifCtrl.text) ?? 0) != state.insentif
+      (double.tryParse(_insentifCtrl.text) ?? 0) != state.insentif ||
+      _tipWalletSelected != (state.tipWalletType ?? 'cash') ||
+      _insentifWalletSelected != (state.insentifWalletType ?? 'shopeefood')
     );
 
     return LayoutBuilder(
@@ -202,9 +219,19 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
         final appBarWidget = AppBar(
           leading: const BackButton(),
           title: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(dateFmt.format(state.tanggal)),
-              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  dateFmt.format(state.tanggal),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -213,7 +240,7 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                 ),
                 child: Text(
                   isClosed ? 'TERKUNCI' : 'AKTIF',
-                  style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -511,11 +538,49 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
               elevation: 1,
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(child: _numField('Tip', _tipCtrl, enabled: !isClosed)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _numField('Insentif', _insentifCtrl, enabled: !isClosed)),
+                    Row(
+                      children: [
+                        Expanded(child: _numField('Tip', _tipCtrl, enabled: !isClosed)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _numField('Insentif', _insentifCtrl, enabled: !isClosed)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _walletDropdown(
+                            'Tujuan Tip',
+                            _tipWalletSelected,
+                            isClosed,
+                            (val) {
+                              if (val != null) {
+                                setState(() {
+                                  _tipWalletSelected = val;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _walletDropdown(
+                            'Tujuan Insentif / Bonus',
+                            _insentifWalletSelected,
+                            isClosed,
+                            (val) {
+                              if (val != null) {
+                                setState(() {
+                                  _insentifWalletSelected = val;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -700,6 +765,7 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
       if (o.deductCashApp > 0) 'Deduct Cash: ${currency.format(o.deductCashApp)}',
       if (o.custPay > 0) 'Cust Pay: ${currency.format(o.custPay)}',
       if (o.custChange > 0) 'Cust Change: ${currency.format(o.custChange)}',
+      if (o.odometer != null && o.odometer! > 0) 'KM: ${o.odometer!.toStringAsFixed(0)}',
     ];
 
     final subtitle = subtitleParts.isNotEmpty 
@@ -1360,6 +1426,27 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _walletDropdown(String label, String? value, bool isClosed, ValueChanged<String?> onChanged) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        isDense: true,
+      ),
+      items: const [
+        DropdownMenuItem(value: 'cash', child: Text('Uang Tunai / Cash')),
+        DropdownMenuItem(value: 'shopeefood', child: Text('ShopeeFood')),
+        DropdownMenuItem(value: 'grab_kredit', child: Text('Grab Kredit')),
+        DropdownMenuItem(value: 'grab_tunai', child: Text('Grab Tunai')),
+        DropdownMenuItem(value: 'grab_ovo', child: Text('Grab OVO')),
+        DropdownMenuItem(value: 'mandiri', child: Text('Mandiri')),
+        DropdownMenuItem(value: 'bca', child: Text('BCA')),
+      ],
+      onChanged: isClosed ? null : onChanged,
     );
   }
 }
