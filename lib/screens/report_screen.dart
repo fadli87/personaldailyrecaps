@@ -218,6 +218,21 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to changes in tab or account to reload data
+    ref.listen<int>(reportTabProvider, (prev, next) {
+      if (next != null) {
+        _loadData();
+      }
+    });
+    ref.listen<String>(selectedAccountProvider, (prev, next) {
+      if (next != null) {
+        _loadData();
+      }
+    });
+
+    final activeTab = ref.watch(reportTabProvider);
+    final selectedAccount = ref.watch(selectedAccountProvider);
+    
     final startStr = DateFormat('dd MMM yyyy', 'id_ID').format(_startDate);
     final endStr = DateFormat('dd MMM yyyy', 'id_ID').format(_endDate);
 
@@ -316,17 +331,15 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                                 icon: Icon(Icons.receipt_long_outlined),
                               ),
                             ],
-                            selected: {_activeTab},
+                            selected: {activeTab},
                             onSelectionChanged: (set) {
-                              setState(() {
-                                _activeTab = set.first;
-                              });
+                              ref.read(reportTabProvider.notifier).change(set.first);
                             },
                           ),
                         ),
                         const SizedBox(height: 20),
 
-                        if (_activeTab == 0) ...[
+                        if (activeTab == 0) ...[
                           // --- FINANCIAL KPI SUMMARY ---
                           _buildFinancialGrid(isDesktop, totalNet, totalIncome, totalExpense),
                           const SizedBox(height: 20),
@@ -388,11 +401,21 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 40),
                         ] else ...[
-                          _buildMutationTab(isDesktop),
-                          const SizedBox(height: 40),
+                          _buildMutationTab(isDesktop, selectedAccount),
                         ],
+                        const SizedBox(height: 24),
+                        Center(
+                          child: Text(
+                            '© 2026 D\'Azhars Studio. All Rights Reserved.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.blueGrey.shade300,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
                       ],
                     );
                   },
@@ -400,7 +423,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     );
   }
 
-  Widget _buildMutationTab(bool isDesktop) {
+  Widget _buildMutationTab(bool isDesktop, String selectedAccount) {
     final accountOptions = [
       {'value': 'cash', 'label': 'Kas Tunai'},
       {'value': 'shopeefood', 'label': 'ShopeeFood'},
@@ -449,7 +472,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    initialValue: _selectedAccount,
+                    value: selectedAccount,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -462,9 +485,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                     }).toList(),
                     onChanged: (val) {
                       if (val != null) {
-                        setState(() {
-                          _selectedAccount = val;
-                        });
+                        ref.read(selectedAccountProvider.notifier).change(val);
                         _loadData();
                       }
                     },
@@ -542,7 +563,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                       tooltip: 'Salin Mutasi ke Clipboard',
                       onPressed: () {
                         final buffer = StringBuffer();
-                        buffer.writeln('MUTASI REKENING - $_selectedAccount');
+                        buffer.writeln('MUTASI REKENING - $selectedAccount');
                         buffer.writeln('Periode: ${DateFormat('yyyy-MM-dd').format(_startDate)} s.d. ${DateFormat('yyyy-MM-dd').format(_endDate)}');
                         buffer.writeln('--------------------------------------------------');
                         buffer.writeln('Tanggal\tKeterangan\tKeluar (Debit)\tMasuk (Kredit)\tSaldo');

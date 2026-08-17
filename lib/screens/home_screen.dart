@@ -18,10 +18,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _currentIndex = 0;
-
   @override
   Widget build(BuildContext context) {
+    final currentIndex = ref.watch(homeTabProvider);
     final recapsAsync = ref.watch(recapsProvider);
 
     final List<Widget> pages = [
@@ -104,10 +103,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentIndex == 0 
+        title: Text(currentIndex == 0 
             ? 'Dashboard Eksekutif' 
-            : (_currentIndex == 1 ? 'SF Daily Recap' : 'Laporan Bulanan & Ekspor')),
-        actions: _currentIndex == 0
+            : (currentIndex == 1 ? 'Personal Finance & Recap' : 'Laporan Bulanan & Ekspor')),
+        actions: currentIndex == 0
             ? [
                 IconButton(
                   icon: const Icon(Icons.refresh),
@@ -119,13 +118,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ]
             : null,
       ),
-      body: pages[_currentIndex],
+      body: pages[currentIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
+        currentIndex: currentIndex,
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          ref.read(homeTabProvider.notifier).change(index);
           // Segarkan data saat ganti tab agar dashboard selalu up-to-date
           ref.invalidate(recapsProvider);
           ref.invalidate(platformDistributionProvider);
@@ -148,7 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: _currentIndex == 1
+      floatingActionButton: currentIndex == 1
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.add),
               label: const Text('Rekap Hari Ini'),

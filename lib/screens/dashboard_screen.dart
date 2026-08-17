@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../providers/recap_providers.dart';
 import '../models/daily_recap.dart';
+import '../services/sync_service.dart';
 import 'home_screen.dart' show currency;
 
 class DashboardScreen extends ConsumerWidget {
@@ -60,9 +61,9 @@ class DashboardScreen extends ConsumerWidget {
                 if (recaps.isEmpty) {
                   return ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
-                      SizedBox(height: 180),
-                      Center(
+                    children: [
+                      const SizedBox(height: 180),
+                      const Center(
                         child: Column(
                           children: [
                             Icon(Icons.assignment_late_outlined, size: 64, color: Colors.grey),
@@ -76,6 +77,17 @@ class DashboardScreen extends ConsumerWidget {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(height: 100),
+                      Center(
+                        child: Text(
+                          '© 2026 D\'Azhars Studio. All Rights Reserved.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.blueGrey.shade300,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -110,19 +122,19 @@ class DashboardScreen extends ConsumerWidget {
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
                         // Header Selamat Datang
-                        _buildHeader(),
+                        _buildHeader(context, ref),
                         const SizedBox(height: 24),
 
                         // --- SECTION 1: KPI FINANCIAL CARDS (GRADASI PREMIUM) ---
-                        _buildFinancialKPIs(isDesktop, totalNetEarnings, totalIncome, totalExpense),
+                        _buildFinancialKPIs(isDesktop, totalNetEarnings, totalIncome, totalExpense, ref),
                         const SizedBox(height: 24),
 
                         // --- SECTION 1B: STATUS SALDO AKUN & REKENING ---
-                        _buildAccountBalances(context, recaps.first),
+                        _buildAccountBalances(context, recaps.first, ref),
                         const SizedBox(height: 24),
 
                         // --- SECTION 2: VEHICLE TELEMETRY CARD (MODERN GLASSMORPHISM EFFECT) ---
-                        _buildVehicleTelemetry(totalJarak, totalLiterTerpakai),
+                        _buildVehicleTelemetry(totalJarak, totalLiterTerpakai, ref),
                         const SizedBox(height: 24),
 
                         // --- SECTION 3: CHARTS ---
@@ -174,6 +186,17 @@ class DashboardScreen extends ConsumerWidget {
                             child: _buildLoyverseBarChart(chartRecaps),
                           ),
                         ],
+                        const SizedBox(height: 24),
+                        Center(
+                          child: Text(
+                            '© 2026 D\'Azhars Studio. All Rights Reserved.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.blueGrey.shade300,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: 40),
                       ],
                     );
@@ -188,7 +211,7 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   // --- HEADER DASHBOARD ---
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
     final hour = now.hour;
     String greeting = 'Selamat Datang';
@@ -212,7 +235,7 @@ class DashboardScreen extends ConsumerWidget {
               Text(
                 '$greeting, Pak Fadli!',
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF0F172A),
                   letterSpacing: -0.5,
@@ -224,7 +247,7 @@ class DashboardScreen extends ConsumerWidget {
               Text(
                 'Ringkasan data operasional harian terupdate.',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: Colors.blueGrey.shade500,
                   fontWeight: FontWeight.w500,
                 ),
@@ -235,33 +258,177 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE2F1E8),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.offline_bolt_rounded, color: Color(0xFF2E7D32), size: 16),
-              SizedBox(width: 4),
-              Text(
-                'Supabase Sync',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF2E7D32),
-                  fontWeight: FontWeight.bold,
+        InkWell(
+          onTap: () => _showSyncLogsBottomSheet(context, ref),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE2F1E8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.15)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF22C55E),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                const Text(
+                  'Online',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF2E7D32),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
 
+  void _showSyncLogsBottomSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Consumer(
+          builder: (context, ref, child) {
+            final logs = ref.watch(syncLogsProvider);
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Status & Log Sinkronisasi',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.cloud_done_outlined, color: Color(0xFF2E7D32)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Supabase Cloud DB',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                            Text(
+                              'Status: Online (Terhubung)',
+                              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.sync, size: 16),
+                        label: const Text('Sinkronkan'),
+                        onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          final nowStr = DateFormat('HH:mm:ss').format(DateTime.now());
+                          
+                          ref.read(syncLogsProvider.notifier).addLog('$nowStr: Memulai sinkronisasi Supabase...');
+
+                          try {
+                            await SyncService.sync();
+                            
+                            final successStr = DateFormat('HH:mm:ss').format(DateTime.now());
+                            ref.read(syncLogsProvider.notifier).addLog('$successStr: Sinkronisasi data sukses (Supabase synced).');
+                            
+                            ref.invalidate(recapsProvider);
+                            ref.invalidate(platformDistributionProvider);
+
+                            messenger.showSnackBar(
+                              const SnackBar(content: Text('Sinkronisasi Supabase sukses!')),
+                            );
+                          } catch (e) {
+                            final failStr = DateFormat('HH:mm:ss').format(DateTime.now());
+                            ref.read(syncLogsProvider.notifier).addLog('$failStr: Sinkronisasi gagal: $e');
+                            messenger.showSnackBar(
+                              SnackBar(content: Text('Sinkronisasi gagal: $e')),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2E7D32),
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Riwayat Aktivitas (Log)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 180,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: ListView.builder(
+                      itemCount: logs.length,
+                      itemBuilder: (context, index) {
+                        final log = logs[logs.length - 1 - index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('• ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                              Expanded(
+                                child: Text(
+                                  log,
+                                  style: const TextStyle(fontFamily: 'monospace', fontSize: 11, color: Colors.black87),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   // --- SECTION 1: FINANCIAL CARDS DENGAN GRADASI PREMIUM & SHADOW SOFT ---
-  Widget _buildFinancialKPIs(bool isDesktop, double net, double income, double expense) {
+  Widget _buildFinancialKPIs(bool isDesktop, double net, double income, double expense, WidgetRef ref) {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (isDesktop) {
@@ -274,6 +441,10 @@ class DashboardScreen extends ConsumerWidget {
                 colors: [const Color(0xFF16A34A), const Color(0xFF15803D)], // Hijau gradasi
                 iconColor: Colors.white.withOpacity(0.2),
                 isMain: true,
+                onTap: () {
+                  ref.read(homeTabProvider.notifier).change(2); // Laporan
+                  ref.read(reportTabProvider.notifier).change(0); // Kinerja
+                },
               )),
               const SizedBox(width: 16),
               Expanded(child: _buildPremiumKpiCard(
@@ -282,6 +453,10 @@ class DashboardScreen extends ConsumerWidget {
                 icon: Icons.trending_up_rounded,
                 colors: [const Color(0xFF3B82F6), const Color(0xFF2563EB)], // Biru gradasi
                 iconColor: Colors.white.withOpacity(0.2),
+                onTap: () {
+                  ref.read(homeTabProvider.notifier).change(2); // Laporan
+                  ref.read(reportTabProvider.notifier).change(0); // Kinerja
+                },
               )),
               const SizedBox(width: 16),
               Expanded(child: _buildPremiumKpiCard(
@@ -290,6 +465,10 @@ class DashboardScreen extends ConsumerWidget {
                 icon: Icons.trending_down_rounded,
                 colors: [const Color(0xFFEF4444), const Color(0xFFDC2626)], // Merah gradasi
                 iconColor: Colors.white.withOpacity(0.2),
+                onTap: () {
+                  ref.read(homeTabProvider.notifier).change(2); // Laporan
+                  ref.read(reportTabProvider.notifier).change(0); // Kinerja
+                },
               )),
             ],
           );
@@ -303,6 +482,10 @@ class DashboardScreen extends ConsumerWidget {
                 colors: [const Color(0xFF16A34A), const Color(0xFF15803D)],
                 iconColor: Colors.white.withOpacity(0.25),
                 isMain: true,
+                onTap: () {
+                  ref.read(homeTabProvider.notifier).change(2); // Laporan
+                  ref.read(reportTabProvider.notifier).change(0); // Kinerja
+                },
               ),
               const SizedBox(height: 12),
               Row(
@@ -314,6 +497,10 @@ class DashboardScreen extends ConsumerWidget {
                     colors: [const Color(0xFF3B82F6), const Color(0xFF2563EB)],
                     iconColor: Colors.white.withOpacity(0.2),
                     isCompact: true,
+                    onTap: () {
+                      ref.read(homeTabProvider.notifier).change(2); // Laporan
+                      ref.read(reportTabProvider.notifier).change(0); // Kinerja
+                    },
                   )),
                   const SizedBox(width: 12),
                   Expanded(child: _buildPremiumKpiCard(
@@ -323,6 +510,10 @@ class DashboardScreen extends ConsumerWidget {
                     colors: [const Color(0xFFEF4444), const Color(0xFFDC2626)],
                     iconColor: Colors.white.withOpacity(0.2),
                     isCompact: true,
+                    onTap: () {
+                      ref.read(homeTabProvider.notifier).change(2); // Laporan
+                      ref.read(reportTabProvider.notifier).change(0); // Kinerja
+                    },
                   )),
                 ],
               ),
@@ -341,6 +532,7 @@ class DashboardScreen extends ConsumerWidget {
     required Color iconColor,
     bool isMain = false,
     bool isCompact = false,
+    VoidCallback? onTap,
   }) {
     return Container(
       height: isMain ? 115 : (isCompact ? 95 : 110),
@@ -360,8 +552,14 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Stack(
-        children: [
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          splashColor: Colors.white.withOpacity(0.1),
+          highlightColor: Colors.white.withOpacity(0.05),
+          child: Stack(
+            children: [
           // Background Decorative Circle
           Positioned(
             right: -20,
@@ -432,13 +630,15 @@ class DashboardScreen extends ConsumerWidget {
               ],
             ),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
 
   // --- KARTU TELEMETRI KENDARAAN (GLASSMORPHISM / NEUMORPHIC CARD) ---
-  Widget _buildVehicleTelemetry(double totalKm, double totalLiter) {
+  Widget _buildVehicleTelemetry(double totalKm, double totalLiter, WidgetRef ref) {
     double efisiensi = totalLiter > 0 ? (totalKm / totalLiter) : 0.0;
 
     // Menentukan kategori kesehatan efisiensi BBM
@@ -469,144 +669,128 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'AKUMULASI TELEMETRI KENDARAAN',
-                style: TextStyle(
-                  color: Color(0xFF94A3B8), // Slate 400
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
-                ),
-              ),
-              if (efisiensi > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: efficiencyColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: efficiencyColor.withOpacity(0.3), width: 1),
-                  ),
-                  child: Text(
-                    efficiencyStatus,
-                    style: TextStyle(
-                      color: efficiencyColor,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _telemetryItem(
-                Icons.alt_route_rounded, 
-                '${totalKm.toStringAsFixed(1)}', 
-                'KM', 
-                'Jarak Tempuh',
-                const Color(0xFF38BDF8), // Light Blue
-              ),
-              Container(width: 1, height: 40, color: Colors.white10),
-              _telemetryItem(
-                Icons.local_gas_station_rounded, 
-                '${totalLiter.toStringAsFixed(1)}', 
-                'Liter', 
-                'BBM Terpakai',
-                const Color(0xFFFB923C), // Orange
-              ),
-              Container(width: 1, height: 40, color: Colors.white10),
-              _telemetryItem(
-                Icons.eco_rounded, 
-                '${efisiensi.toStringAsFixed(1)}', 
-                'KM/L', 
-                'Efisiensi',
-                const Color(0xFF4ADE80), // Light Green
-                isEco: true,
-              ),
-            ],
-          ),
-          if (efisiensi > 0) ...[
-            const SizedBox(height: 16),
-            const Divider(color: Colors.white10, height: 1),
-            const SizedBox(height: 12),
-            Row(
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            ref.read(homeTabProvider.notifier).change(2); // Laporan
+            ref.read(reportTabProvider.notifier).change(0); // Kinerja
+          },
+          splashColor: Colors.white.withOpacity(0.08),
+          child: Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.info_outline_rounded, color: Colors.white30, size: 14),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'Performa dihitung berdasarkan odometer harian dibagi liter BBM terisi.',
-                    style: TextStyle(
-                      color: Colors.blueGrey.shade400,
-                      fontSize: 10,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'AKUMULASI TELEMETRI KENDARAAN',
+                      style: TextStyle(
+                        color: Color(0xFF94A3B8), // Slate 400
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1,
+                      ),
                     ),
-                  ),
+                    if (efisiensi > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: efficiencyColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: efficiencyColor.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          efficiencyStatus.toUpperCase(),
+                          style: TextStyle(
+                            color: efficiencyColor,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'EFISIENSI RATA-RATA',
+                            style: TextStyle(
+                              color: Colors.blueGrey.shade400,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            efisiensi > 0 ? '${efisiensi.toStringAsFixed(1)} KM/L' : '0.0 KM/L',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(height: 35, width: 1, color: Colors.blueGrey.shade800),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'TOTAL KONSUMSI BBM',
+                            style: TextStyle(
+                              color: Colors.blueGrey.shade400,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${totalLiter.toStringAsFixed(1)} LITER',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(Icons.directions_car_outlined, size: 12, color: Colors.blueGrey.shade400),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Berdasarkan total jarak tempuh ${totalKm.toStringAsFixed(0)} KM',
+                      style: TextStyle(
+                        color: Colors.blueGrey.shade400,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _telemetryItem(
-    IconData icon, 
-    String value, 
-    String unit, 
-    String label, 
-    Color iconColor, {
-    bool isEco = false,
-  }) {
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(icon, color: iconColor, size: 22),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -1,
-                ),
-              ),
-              const SizedBox(width: 2),
-              Text(
-                unit,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF64748B), // Slate 500
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -932,15 +1116,15 @@ class DashboardScreen extends ConsumerWidget {
     return value.toStringAsFixed(0);
   }
 
-  Widget _buildAccountBalances(BuildContext context, DailyRecap latest) {
+  Widget _buildAccountBalances(BuildContext context, DailyRecap latest, WidgetRef ref) {
     final wallets = [
-      _WalletBalanceItem('Kas Tunai', latest.cashAkhir, Icons.money_outlined, Colors.teal),
-      _WalletBalanceItem('ShopeeFood', latest.saldoAkhirApp, Icons.fastfood_outlined, Colors.orange),
-      _WalletBalanceItem('Grab Tunai', latest.saldoAkhirGrabTunai, Icons.account_balance_wallet_outlined, Colors.green),
-      _WalletBalanceItem('Grab Kredit', latest.saldoAkhirGrabKredit, Icons.local_taxi_outlined, Colors.lightGreen),
-      _WalletBalanceItem('Grab OVO', latest.saldoAkhirGrabOvo, Icons.phone_android_outlined, Colors.purple),
-      _WalletBalanceItem('Bank Mandiri', latest.saldoAkhirMandiri, Icons.account_balance_wallet_outlined, Colors.blue),
-      _WalletBalanceItem('Bank BCA', latest.saldoAkhirBca, Icons.account_balance_outlined, Colors.indigo),
+      _WalletBalanceItem('cash', 'Kas Tunai', latest.cashAkhir, Icons.money_outlined, Colors.teal),
+      _WalletBalanceItem('shopeefood', 'ShopeeFood', latest.saldoAkhirApp, Icons.fastfood_outlined, Colors.orange),
+      _WalletBalanceItem('grab_tunai', 'Grab Tunai', latest.saldoAkhirGrabTunai, Icons.account_balance_wallet_outlined, Colors.green),
+      _WalletBalanceItem('grab_kredit', 'Grab Kredit', latest.saldoAkhirGrabKredit, Icons.local_taxi_outlined, Colors.lightGreen),
+      _WalletBalanceItem('grab_ovo', 'Grab OVO', latest.saldoAkhirGrabOvo, Icons.phone_android_outlined, Colors.purple),
+      _WalletBalanceItem('mandiri', 'Bank Mandiri', latest.saldoAkhirMandiri, Icons.account_balance_wallet_outlined, Colors.blue),
+      _WalletBalanceItem('bca', 'Bank BCA', latest.saldoAkhirBca, Icons.account_balance_outlined, Colors.indigo),
     ];
 
     return Column(
@@ -962,57 +1146,65 @@ class DashboardScreen extends ConsumerWidget {
             itemCount: wallets.length,
             itemBuilder: (context, index) {
               final w = wallets[index];
-              return Container(
-                width: 175,
-                margin: const EdgeInsets.only(right: 12),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                  border: Border.all(color: Colors.grey.shade100),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(w.icon, color: w.color, size: 16),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            w.name,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black54,
+              return InkWell(
+                onTap: () {
+                  ref.read(homeTabProvider.notifier).change(2); // Laporan
+                  ref.read(reportTabProvider.notifier).change(1); // Mutasi Rekening
+                  ref.read(selectedAccountProvider.notifier).change(w.id);
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 175,
+                  margin: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                    border: Border.all(color: Colors.grey.shade100),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(w.icon, color: w.color, size: 16),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              w.name,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black54,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          currency.format(w.balance),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: w.balance < 0 ? Colors.red.shade700 : Colors.black87,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        currency.format(w.balance),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: w.balance < 0 ? Colors.red.shade700 : Colors.black87,
-                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },
@@ -1024,10 +1216,11 @@ class DashboardScreen extends ConsumerWidget {
 }
 
 class _WalletBalanceItem {
+  final String id;
   final String name;
   final double balance;
   final IconData icon;
   final Color color;
 
-  _WalletBalanceItem(this.name, this.balance, this.icon, this.color);
+  _WalletBalanceItem(this.id, this.name, this.balance, this.icon, this.color);
 }

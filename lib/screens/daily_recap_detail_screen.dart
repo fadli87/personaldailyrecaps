@@ -219,6 +219,42 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
             ],
           ),
           actions: [
+            if (widget.recapId != null)
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                tooltip: 'Hapus Rekap Harian',
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Hapus Rekap'),
+                      content: const Text('Apakah Anda yakin ingin menghapus rekap harian ini beserta seluruh transaksinya? Tindakan ini tidak bisa dibatalkan.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Batal'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    final messenger = ScaffoldMessenger.of(context);
+                    await ref.read(recapServiceProvider).deleteRecap(widget.recapId!);
+                    ref.invalidate(recapsProvider);
+                    ref.invalidate(platformDistributionProvider);
+                    messenger.showSnackBar(
+                      const SnackBar(content: Text('Rekap berhasil dihapus')),
+                    );
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  }
+                },
+              ),
             if (hasChanges)
               const Padding(
                 padding: EdgeInsets.only(right: 4),
@@ -451,6 +487,17 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+            Center(
+              child: Text(
+                '© 2026 D\'Azhars Studio',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.blueGrey.shade300,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
             const SizedBox(height: 40),
           ],
         );
@@ -500,6 +547,17 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
               )
             else
               ...state.orders.map((o) => _orderTile(o, isClosed)),
+            const SizedBox(height: 24),
+            Center(
+              child: Text(
+                '© 2026 D\'Azhars Studio',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.blueGrey.shade300,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
             const SizedBox(height: 40),
           ],
         );
@@ -569,6 +627,17 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
               const SizedBox(height: 16),
               _buildReconciliationCard(state),
             ],
+            const SizedBox(height: 24),
+            Center(
+              child: Text(
+                '© 2026 D\'Azhars Studio',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.blueGrey.shade300,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
             const SizedBox(height: 40),
           ],
         );

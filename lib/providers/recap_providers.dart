@@ -430,3 +430,31 @@ final platformDistributionProvider = FutureProvider<Map<String, double>>((ref) a
   final service = ref.watch(recapServiceProvider);
   return service.getPlatformIncomeDistribution();
 });
+
+class HomeTabNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  void change(int val) => state = val;
+}
+final homeTabProvider = NotifierProvider<HomeTabNotifier, int>(HomeTabNotifier.new);
+
+class ReportTabNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  void change(int val) => state = val;
+}
+final reportTabProvider = NotifierProvider<ReportTabNotifier, int>(ReportTabNotifier.new);
+
+class SelectedAccountNotifier extends Notifier<String> {
+  @override
+  String build() => 'cash';
+  void change(String val) => state = val;
+}
+final selectedAccountProvider = NotifierProvider<SelectedAccountNotifier, String>(SelectedAccountNotifier.new);
+
+class SyncLogsNotifier extends Notifier<List<String>> {
+  @override
+  List<String> build() => ['Aplikasi diinisialisasi.'];
+  void addLog(String log) => state = [...state, log];
+}
+final syncLogsProvider = NotifierProvider<SyncLogsNotifier, List<String>>(SyncLogsNotifier.new);

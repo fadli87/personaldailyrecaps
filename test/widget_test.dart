@@ -8,11 +8,15 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(
       const ProviderScope(
-        child: SFDailyRecapApp(),
+        child: PersonalFinanceTrackingApp(),
       ),
     );
 
     // Verify that MaterialApp is created.
     expect(find.byType(MaterialApp), findsOneWidget);
+
+    // Let the splash screen timer run and navigate
+    await tester.pump(const Duration(milliseconds: 2600));
+    await tester.pump(const Duration(milliseconds: 600));
   });
 }
