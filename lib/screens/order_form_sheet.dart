@@ -152,6 +152,29 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
       keterangan = _keterangan.text.trim().isEmpty ? null : _keterangan.text.trim();
       expense = _n(_expense);
       isFuel = _isFuelExpense;
+      if (isFuel) {
+        final odoText = _odometer.text.trim();
+        if (odoText.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Wajib mengisi Odometer (KM) saat pengisian bensin!')),
+          );
+          return;
+        }
+        final odoVal = double.tryParse(odoText) ?? 0;
+        if (odoVal <= 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Odometer (KM) harus lebih besar dari 0!')),
+          );
+          return;
+        }
+        if (odoVal < widget.lastOdometer) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Odometer (KM) tidak boleh lebih kecil dari KM sebelumnya (${widget.lastOdometer.toStringAsFixed(0)} KM)!')),
+          );
+          return;
+        }
+        odometer = odoVal;
+      }
     }
 
     final order = DailyOrder(
@@ -471,6 +494,10 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                       },
                 controlAffinity: ListTileControlAffinity.leading,
               ),
+              if (_isFuelExpense) ...[
+                const SizedBox(height: 12),
+                _num('Odometer Saat Pengisian (KM) *', _odometer),
+              ],
             ],
             
             const SizedBox(height: 12),
