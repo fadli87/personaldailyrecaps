@@ -163,19 +163,12 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       
       if (!mounted) return;
       
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Ekspor Berhasil'),
-          content: Text('Laporan CSV berhasil disimpan di:\n$filePath'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Laporan CSV berhasil disimpan di:\n$filePath'),
+                duration: const Duration(seconds: 4),
+              ),
+            );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

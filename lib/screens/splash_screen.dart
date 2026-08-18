@@ -42,7 +42,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     // Transisi setelah 2.5 detik
     Future.delayed(const Duration(milliseconds: 2500), () async {
       if (mounted) {
-        final session = Supabase.instance.client.auth.currentSession;
+        Session? session;
+        try {
+          session = Supabase.instance.client.auth.currentSession;
+        } catch (_) {
+          // Supabase not initialized (e.g. in test environment)
+        }
         
         if (session == null) {
           // Belum login sama sekali, arahkan ke LoginScreen

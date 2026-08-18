@@ -94,18 +94,9 @@ class DashboardScreen extends ConsumerWidget {
                   );
                 }
 
-                // Kalkulasi KPI
-                double totalIncome = 0;
-                double totalExpense = 0;
-                double totalNetEarnings = 0;
-                
-
-
-                for (var r in recaps) {
-                  totalIncome += r.totalIncome;
-                  totalExpense += r.totalExpense;
-                  totalNetEarnings += r.netEarning;
-                }
+                // Ambil rekap harian terbaru dan rekap hari sebelumnya
+                final latestRecap = recaps.first;
+                final previousRecap = recaps.length > 1 ? recaps[1] : null;
 
                 // Kalkulasi Kendaraan 7 Hari Terakhir (Siklus Mingguan)
                 double weeklyJarak = 0;
@@ -134,7 +125,7 @@ class DashboardScreen extends ConsumerWidget {
                         const SizedBox(height: 24),
 
                         // --- SECTION 1: KPI FINANCIAL CARDS (GRADASI PREMIUM) ---
-                        _buildFinancialKPIs(isDesktop, totalNetEarnings, totalIncome, totalExpense, ref),
+                        _buildFinancialKPIs(isDesktop, latestRecap, previousRecap, ref),
                         const SizedBox(height: 24),
 
                         // --- SECTION 1B: STATUS SALDO AKUN & REKENING ---
@@ -436,7 +427,29 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   // --- SECTION 1: FINANCIAL CARDS DENGAN GRADASI PREMIUM & SHADOW SOFT ---
-  Widget _buildFinancialKPIs(bool isDesktop, double net, double income, double expense, WidgetRef ref) {
+  Widget _buildFinancialKPIs(bool isDesktop, DailyRecap latest, DailyRecap? previous, WidgetRef ref) {
+    final net = latest.netEarning;
+    final income = latest.totalIncome;
+    final expense = latest.totalExpense;
+
+    final prevNet = previous?.netEarning ?? 0.0;
+    final prevIncome = previous?.totalIncome ?? 0.0;
+    final prevExpense = previous?.totalExpense ?? 0.0;
+
+    final netDiff = net - prevNet;
+    final incomeDiff = income - prevIncome;
+    final expenseDiff = expense - prevExpense;
+
+    String _diffText(double diff) {
+      if (previous == null) return 'Hari pertama';
+      final sign = diff >= 0 ? '+' : '';
+      return '$sign${currency.format(diff)} vs kemarin';
+    }
+
+    final netDiffText = _diffText(netDiff);
+    final incomeDiffText = _diffText(incomeDiff);
+    final expenseDiffText = _diffText(expenseDiff);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         if (isDesktop) {
@@ -448,6 +461,7 @@ class DashboardScreen extends ConsumerWidget {
                 icon: Icons.wallet_rounded,
                 colors: [const Color(0xFF16A34A), const Color(0xFF15803D)], // Hijau gradasi
                 iconColor: Colors.white.withOpacity(0.2),
+                comparisonText: netDiffText,
                 isMain: true,
                 onTap: () {
                   ref.read(homeTabProvider.notifier).change(2); // Laporan
@@ -461,6 +475,7 @@ class DashboardScreen extends ConsumerWidget {
                 icon: Icons.trending_up_rounded,
                 colors: [const Color(0xFF3B82F6), const Color(0xFF2563EB)], // Biru gradasi
                 iconColor: Colors.white.withOpacity(0.2),
+                comparisonText: incomeDiffText,
                 onTap: () {
                   ref.read(homeTabProvider.notifier).change(2); // Laporan
                   ref.read(reportTabProvider.notifier).change(0); // Kinerja
@@ -473,6 +488,7 @@ class DashboardScreen extends ConsumerWidget {
                 icon: Icons.trending_down_rounded,
                 colors: [const Color(0xFFEF4444), const Color(0xFFDC2626)], // Merah gradasi
                 iconColor: Colors.white.withOpacity(0.2),
+                comparisonText: expenseDiffText,
                 onTap: () {
                   ref.read(homeTabProvider.notifier).change(2); // Laporan
                   ref.read(reportTabProvider.notifier).change(0); // Kinerja
@@ -489,6 +505,7 @@ class DashboardScreen extends ConsumerWidget {
                 icon: Icons.wallet_rounded,
                 colors: [const Color(0xFF16A34A), const Color(0xFF15803D)],
                 iconColor: Colors.white.withOpacity(0.25),
+                comparisonText: netDiffText,
                 isMain: true,
                 onTap: () {
                   ref.read(homeTabProvider.notifier).change(2); // Laporan
@@ -504,6 +521,7 @@ class DashboardScreen extends ConsumerWidget {
                     icon: Icons.trending_up_rounded,
                     colors: [const Color(0xFF3B82F6), const Color(0xFF2563EB)],
                     iconColor: Colors.white.withOpacity(0.2),
+                    comparisonText: incomeDiffText,
                     isCompact: true,
                     onTap: () {
                       ref.read(homeTabProvider.notifier).change(2); // Laporan
@@ -517,6 +535,7 @@ class DashboardScreen extends ConsumerWidget {
                     icon: Icons.trending_down_rounded,
                     colors: [const Color(0xFFEF4444), const Color(0xFFDC2626)],
                     iconColor: Colors.white.withOpacity(0.2),
+                    comparisonText: expenseDiffText,
                     isCompact: true,
                     onTap: () {
                       ref.read(homeTabProvider.notifier).change(2); // Laporan
@@ -538,12 +557,13 @@ class DashboardScreen extends ConsumerWidget {
     required IconData icon,
     required List<Color> colors,
     required Color iconColor,
+    String? comparisonText,
     bool isMain = false,
     bool isCompact = false,
     VoidCallback? onTap,
   }) {
     return Container(
-      height: isMain ? 115 : (isCompact ? 95 : 110),
+      height: isMain ? 122 : (isCompact ? 102 : 117),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: colors,
@@ -618,7 +638,33 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                if (isMain) ...[
+                if (comparisonText != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        comparisonText.startsWith('+')
+                            ? Icons.trending_up_rounded
+                            : (comparisonText.startsWith('-')
+                                ? Icons.trending_down_rounded
+                                : (comparisonText == 'Hari pertama'
+                                    ? Icons.star_border_rounded
+                                    : Icons.swap_horiz_rounded)),
+                        size: 11,
+                        color: Colors.white.withOpacity(0.85),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        comparisonText,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.85),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else if (isMain) ...[
                   const SizedBox(height: 4),
                   Row(
                     children: [
