@@ -3,6 +3,7 @@ import '../services/recap_service.dart';
 import '../models/daily_recap.dart';
 import '../models/daily_order.dart';
 import '../models/petty_cash_item.dart';
+import '../models/fuel_filling.dart';
 
 final recapServiceProvider = Provider<RecapService>((ref) {
   return RecapService();
@@ -11,6 +12,23 @@ final recapServiceProvider = Provider<RecapService>((ref) {
 final recapsProvider = FutureProvider<List<DailyRecap>>((ref) async {
   final service = ref.watch(recapServiceProvider);
   return service.getRecaps();
+});
+
+// --- Fuel Filling Providers ---
+final fuelFillingsProvider = FutureProvider.family<List<FuelFilling>, String>((ref, dailyRecapId) async {
+  final service = ref.watch(recapServiceProvider);
+  return service.getFuelFillings(dailyRecapId);
+});
+
+final allFuelFillingsProvider = FutureProvider<List<FuelFilling>>((ref) async {
+  final service = ref.watch(recapServiceProvider);
+  return service.getAllFuelFillings();
+});
+
+// Provider untuk estimasi sisa BBM (untuk alert 0.5L)
+final estimatedFuelRemainingProvider = FutureProvider.family<double, String>((ref, dailyRecapId) async {
+  final service = ref.watch(recapServiceProvider);
+  return service.getEstimatedFuelRemaining(dailyRecapId);
 });
 
 class RecapDetailState {
@@ -523,6 +541,39 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
     if (id == null) return;
     await _service.savePettyCash(id, items);
     await refreshSummary();
+  }
+
+  // --- Fuel Filling Methods ---
+  
+  Future<void> addFuelFilling(FuelFilling filling) async {
+    final id = state.recapId;
+    if (id == null) return;
+    final newFilling = filling.copyWith(dailyRecapId: id);
+    await _service.addFuelFilling(newFilling);
+    await refreshSummary();
+    ref.invalidate(fuelFillingsProvider(id));
+    ref.invalidate(estimatedFuelRemainingProvider(id));
+    ref.invalidate(recapsProvider);
+  }
+
+  Future<void> updateFuelFilling(FuelFilling filling) async {
+    final id = state.recapId;
+    if (id == null) return;
+    await _service.updateFuelFilling(filling);
+    await refreshSummary();
+    ref.invalidate(fuelFillingsProvider(id));
+    ref.invalidate(estimatedFuelRemainingProvider(id));
+    ref.invalidate(recapsProvider);
+  }
+
+  Future<void> deleteFuelFilling(String fillingId) async {
+    final id = state.recapId;
+    if (id == null) return;
+    await _service.deleteFuelFilling(fillingId);
+    await refreshSummary();
+    ref.invalidate(fuelFillingsProvider(id));
+    ref.invalidate(estimatedFuelRemainingProvider(id));
+    ref.invalidate(recapsProvider);
   }
 }
 

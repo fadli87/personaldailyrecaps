@@ -19,7 +19,7 @@ class LocalDb {
     final dbPath = join(docsDir.path, 'sf_daily_recap.db');
     return await openDatabase(
       dbPath,
-      version: 9,
+      version: 10,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE daily_recap (
@@ -151,6 +151,28 @@ class LocalDb {
         if (oldVersion < 9) {
           await db.execute("ALTER TABLE daily_extra ADD COLUMN tip_wallet_type TEXT");
           await db.execute("ALTER TABLE daily_extra ADD COLUMN insentif_wallet_type TEXT");
+        }
+
+        if (oldVersion < 10) {
+          // Tabel untuk mencatat pengisian BBM (Fuel Fillings)
+          await db.execute('''
+            CREATE TABLE fuel_fillings (
+              id TEXT PRIMARY KEY,
+              daily_recap_id TEXT NOT NULL,
+              tanggal TEXT NOT NULL,
+              liter REAL NOT NULL,
+              harga_per_liter REAL NOT NULL DEFAULT 0,
+              total_biaya REAL NOT NULL DEFAULT 0,
+              odometer REAL,
+              catatan TEXT,
+              created_at TEXT NOT NULL,
+              is_synced INTEGER NOT NULL DEFAULT 0
+            )
+          ''');
+          
+          // Index untuk query cepat
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_fuel_fillings_recap ON fuel_fillings(daily_recap_id)');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_fuel_fillings_tanggal ON fuel_fillings(tanggal)');
         }
 
         // Selalu re-create view di onUpgrade untuk memastikan rumus terbaru terpakai

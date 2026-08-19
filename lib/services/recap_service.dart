@@ -4,6 +4,7 @@ import '../models/daily_recap.dart';
 import '../models/daily_order.dart';
 import '../models/petty_cash_item.dart';
 import '../models/saldo_mutation.dart';
+import '../models/fuel_filling.dart';
 import 'local_db.dart';
 import 'sync_service.dart';
 
@@ -524,5 +525,90 @@ class RecapService {
     }
 
     return mutations;
+  }
+
+  // ---------- Fuel Fillings (Pengisian BBM) ----------
+
+  Future<List<FuelFilling>> getFuelFillings(String dailyRecapId) async {
+    final db = await LocalDb.instance.database;
+    final data = await db.query(
+      'fuel_fillings',
+      where: 'daily_recap_id = ?',
+      whereArgs: [dailyRecapId],
+      orderBy: 'tanggal DESC, created_at DESC',
+    );
+    return data.map((e) => FuelFilling.fromMap(e)).toList();
+  }
+
+  Future<List<FuelFilling>> getAllFuelFillings({int limit = 100}) async {
+    final db = await LocalDb.instance.database;
+    final data = await db.query(
+      'fuel_fillings',
+      orderBy: 'tanggal DESC, created_at DESC',
+      limit: limit,
+    );
+    return data.map((e) => FuelFilling.fromMap(e)).toList();
+  }
+
+  Future<void> addFuelFilling(FuelFilling filling) async {
+    final db = await LocalDb.instance.database;
+    await db.insert('fuel_fillings', filling.toInsertMap());
+    _triggerSync();
+  }
+
+  Future<void> updateFuelFilling(FuelFilling filling) async {
+    final db = await LocalDb.instance.database;
+    await db.update(
+      'fuel_fillings',
+      filling.toInsertMap(),
+      where: 'id = ?',
+      whereArgs: [filling.id],
+    );
+    _triggerSync();
+  }
+
+  Future<void> deleteFuelFilling(String id) async {
+    final db = await LocalDb.instance.database;
+    await db.insert('pending_deletions', {
+      'table_name': 'fuel_fillings',
+      'record_id': id,
+    });
+    await db.delete('fuel_fillings', where: 'id = ?', whereArgs: [id]);
+    _triggerSync();
+  }
+
+  /// Menghitung total liter BBM yang masuk untuk rekap tertentu (dari tabel fuel_fillings)
+  Future<double> getTotalFuelLiterForRecap(String dailyRecapId) async {
+    final db = await LocalDb.instance.database;
+    final result = await db.rawQuery(
+      'SELECT SUM(liter) as total FROM fuel_fillings WHERE daily_recap_id = ?',
+      [dailyRecapId],
+    );
+    return (result.first['total'] as num?)?.toDouble() ?? 0.0;
+  }
+
+  /// Menghitung estimasi sisa BBM berdasarkan liter masuk - liter terpakai (dari KML)
+  /// Ini untuk keperluan alert 0.5L di dashboard
+  Future<double> getEstimatedFuelRemaining(String dailyRecapId) async {
+    final recap = await getRecapById(dailyRecapId);
+    if (recap == null) return 0.0;
+    
+    final totalLiterMasuk = await getTotalFuelLiterForRecap(dailyRecapId);
+    final literTerpakai = recap.literTerpakai; // Sudah dihitung di view (jarak / KML)
+    
+    return totalLiterMasuk - literTerpakai;
+  }
+
+  /// Mendapatkan rekap by ID (helper)
+  Future<DailyRecap?> getRecapById(String id) async {
+    final db = await LocalDb.instance.database;
+    final data = await db.query(
+      'daily_recap_summary',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (data.isEmpty) return null;
+    return DailyRecap.fromSummaryMap(data.first);
   }
 }

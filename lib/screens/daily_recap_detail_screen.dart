@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../models/daily_recap.dart';
 import '../models/daily_order.dart';
 import '../models/petty_cash_item.dart';
 import '../models/saldo_mutation.dart';
+import '../models/fuel_filling.dart';
 import '../providers/recap_providers.dart';
 import 'home_screen.dart' show currency, dateFmt;
 import 'order_form_sheet.dart';
+import 'fuel_filling_sheet.dart';
 
 /// recapId == null -> membuat rekap baru untuk hari ini.
 class DailyRecapDetailScreen extends ConsumerStatefulWidget {
@@ -514,6 +517,170 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+            
+            // --- PENGISIAN BBM SECTION ---
+            _sectionTitle('Pengisian BBM (Fuel Fillings)'),
+            Consumer(
+              builder: (context, ref, child) {
+                final recapId = state.recapId;
+                if (recapId == null) {
+                  return Card(
+                    elevation: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.info_outline_rounded, color: Colors.blue, size: 32),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Simpan setup awal terlebih dahulu untuk mencatat pengisian BBM.',
+                            style: TextStyle(color: Colors.grey, fontSize: 13),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                
+                final fuelFillingsAsync = ref.watch(fuelFillingsProvider(recapId));
+                
+                return Column(
+                  children: [
+                    // Add button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: isClosed ? null : () => showFuelFillingSheet(context, recapId),
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Catat Isi BBM', style: TextStyle(fontWeight: FontWeight.w600)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFEF4444),
+                          side: const BorderSide(color: Color(0xFFEF4444)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // List
+                    fuelFillingsAsync.when(
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (err, stack) => Card(
+                        color: Colors.red.shade50,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text('Gagal memuat: $err', style: TextStyle(color: Colors.red.shade700)),
+                        ),
+                      ),
+                      data: (fillings) {
+                        if (fillings.isEmpty) {
+                          return Card(
+                            elevation: 1,
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEF4444).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: const Icon(Icons.local_gas_station_rounded, color: Color(0xFFEF4444), size: 32),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'Belum ada pengisian BBM dicatat',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Tekan tombol "Catat Isi BBM" di atas untuk mulai tracking pengisian tangki.',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        
+                        return Card(
+                          elevation: 1,
+                          child: Column(
+                            children: [
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: fillings.length,
+                                separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade100, indent: 16, endIndent: 16),
+                                itemBuilder: (context, index) {
+                                  final f = fillings[index];
+                                  return ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEF4444).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Icon(Icons.local_gas_station_rounded, color: Color(0xFFEF4444), size: 20),
+                                    ),
+                                    title: Text(
+                                      '${f.liter.toStringAsFixed(2)} L × Rp ${f.hargaPerLiter.toStringAsFixed(0)}/L',
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 2),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.calendar_today_rounded, size: 10, color: Colors.grey.shade500),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              DateFormat('dd MMM yy, HH:mm', 'id_ID').format(f.tanggal),
+                                              style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                                            ),
+                                            if (f.odometer != null) ...[
+                                              const SizedBox(width: 12),
+                                              Icon(Icons.speed_rounded, size: 10, color: Colors.grey.shade500),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${f.odometer!.toStringAsFixed(0)} KM',
+                                                style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                        if (f.catatan != null && f.catatan!.isNotEmpty) ...[
+                                          const SizedBox(height: 2),
+                                          Text(f.catatan!, style: TextStyle(fontSize: 10, color: Colors.grey.shade400), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                        ],
+                                      ],
+                                    ),
+                                    trailing: Text(
+                                      currency.format(f.totalBiaya),
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFFEF4444)),
+                                    ),
+                                    onTap: isClosed ? null : () => showFuelFillingSheet(context, recapId, existingFilling: f),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+            
             const SizedBox(height: 24),
             Center(
               child: Text(
