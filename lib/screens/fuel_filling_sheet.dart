@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../models/fuel_filling.dart';
 import '../providers/recap_providers.dart';
-import 'home_screen.dart' show currency;
 
 class FuelFillingFormSheet extends ConsumerStatefulWidget {
   final String dailyRecapId;

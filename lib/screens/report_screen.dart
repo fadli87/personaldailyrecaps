@@ -25,7 +25,6 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   Map<String, double> _platformData = {};
   String? _error;
 
-  int _activeTab = 0;
   List<SaldoMutation> _mutations = [];
 
   @override
