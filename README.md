@@ -79,3 +79,13 @@ di `supabase/schema.sql`.
 - Export ke Excel/PDF
 - Login screen (lihat catatan di atas)
 - Kalender untuk lompat ke tanggal tertentu
+
+## CI/CD & Download APK Otomatis (GitHub Actions)
+
+Aplikasi ini sudah dilengkapi pipeline CI/CD GitHub Actions:
+- **Build Otomatis**: Setiap kali melakukan `push` ke branch `master`/`main` atau push tag (`v*`, `BetaTest`).
+- **Download APK Langsung**:
+  1. Buka repository di GitHub: [Releases](https://github.com/fadli87/personaldailyrecaps/releases).
+  2. Buka tag terbaru (misal `BetaTest` atau `vX.X.X`).
+  3. Unduh file `sf-daily-recap.apk` dan langsung install di perangkat Android kamu.
+- **Manual Trigger**: Kamu juga bisa memicu build APK kapan saja melalui tab **Actions** → pilih **Flutter CI/CD** → klik **Run workflow**.

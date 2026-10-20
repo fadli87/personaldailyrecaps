@@ -3,9 +3,24 @@ name: Flutter CI/CD
 on:
   push:
     branches: [ master, main ]
+    tags: [ 'v*', 'Beta*', 'beta*', 'release*' ]
   pull_request:
     branches: [ master, main ]
   workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Publish / Update as GitHub Release'
+        required: true
+        type: boolean
+        default: true
+      release_tag:
+        description: 'Target Release Tag (e.g. BetaTest or v1.0.0)'
+        required: false
+        type: string
+        default: 'BetaTest'
+
+permissions:
+  contents: write
 
 jobs:
   lint_and_test:
@@ -35,10 +50,13 @@ jobs:
           sudo apt-get install -y -qq libsqlite3-dev
 
       - name: Prepare Environment File (.env)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          if [ -n "${{ secrets.SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
-            echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
-            echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            echo "SUPABASE_URL=$SUPABASE_URL" > .env
+            echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> .env
           else
             cp .env.example .env
           fi
@@ -58,7 +76,10 @@ jobs:
   build_apk:
     name: Build Android APK
     needs: lint_and_test
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -76,10 +97,13 @@ jobs:
           cache: true
 
       - name: Prepare Environment File (.env)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          if [ -n "${{ secrets.SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
-            echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
-            echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            echo "SUPABASE_URL=$SUPABASE_URL" > .env
+            echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> .env
           else
             cp .env.example .env
           fi
@@ -90,9 +114,41 @@ jobs:
       - name: Build Android Release APK
         run: flutter build apk --release
 
+      - name: Prepare APK Release Artifacts
+        run: |
+          mkdir -p release-apks
+          cp build/app/outputs/flutter-apk/app-release.apk release-apks/sf-daily-recap.apk
+          cp build/app/outputs/flutter-apk/app-release.apk release-apks/app-release.apk
+
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: sf-daily-recap-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: release-apks/*.apk
           retention-days: 14
+
+      - name: Determine Release Tag
+        id: release_meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.release_tag }}"
+            [ -z "$TAG" ] && TAG="BetaTest"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="BetaTest"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Publish to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release_meta.outputs.tag }}
+          name: ${{ steps.release_meta.outputs.tag }}
+          files: release-apks/*.apk
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ startsWith(steps.release_meta.outputs.tag, 'beta') || startsWith(steps.release_meta.outputs.tag, 'Beta') }}
