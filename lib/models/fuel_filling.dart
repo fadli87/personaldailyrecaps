@@ -9,6 +9,7 @@ class FuelFilling {
   final double totalBiaya;
   final double? odometer;
   final String? catatan;
+  final String? vehicleId;
   final DateTime createdAt;
   final int isSynced;
 
@@ -21,6 +22,7 @@ class FuelFilling {
     this.totalBiaya = 0,
     this.odometer,
     this.catatan,
+    this.vehicleId,
     required this.createdAt,
     this.isSynced = 0,
   });
@@ -38,6 +40,7 @@ class FuelFilling {
       totalBiaya: d(map['total_biaya']),
       odometer: map['odometer'] != null ? d(map['odometer']) : null,
       catatan: map['catatan'] as String?,
+      vehicleId: map['vehicle_id'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
       isSynced: i(map['is_synced']),
     );
@@ -52,9 +55,12 @@ class FuelFilling {
         'total_biaya': totalBiaya,
         'odometer': odometer,
         'catatan': catatan,
+        'vehicle_id': vehicleId,
         'created_at': createdAt.toIso8601String(),
         'is_synced': isSynced,
       };
+
+  Map<String, dynamic> toMap() => toInsertMap();
 
   // Helper untuk membuat instance baru dengan UUID otomatis
   factory FuelFilling.create({
@@ -65,6 +71,7 @@ class FuelFilling {
     double totalBiaya = 0,
     double? odometer,
     String? catatan,
+    String? vehicleId,
   }) {
     return FuelFilling(
       id: const Uuid().v4(),
@@ -75,6 +82,7 @@ class FuelFilling {
       totalBiaya: totalBiaya,
       odometer: odometer,
       catatan: catatan,
+      vehicleId: vehicleId,
       createdAt: DateTime.now(),
     );
   }
@@ -88,6 +96,7 @@ class FuelFilling {
     double? totalBiaya,
     double? odometer,
     String? catatan,
+    String? vehicleId,
     DateTime? createdAt,
     int? isSynced,
   }) {
@@ -100,6 +109,7 @@ class FuelFilling {
       totalBiaya: totalBiaya ?? this.totalBiaya,
       odometer: odometer ?? this.odometer,
       catatan: catatan ?? this.catatan,
+      vehicleId: vehicleId ?? this.vehicleId,
       createdAt: createdAt ?? this.createdAt,
       isSynced: isSynced ?? this.isSynced,
     );

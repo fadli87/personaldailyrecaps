@@ -41,7 +41,8 @@ class FinanceReportService {
 
   FinanceReportService({required this.ledgerService});
 
-  Future<FinanceMonthSummary> monthSummary(DateTime month, {String? vehicleId}) =>
+  Future<FinanceMonthSummary> monthSummary(DateTime month,
+          {String? vehicleId}) =>
       getMonthSummary(month, vehicleId: vehicleId);
 
   Future<FinanceMonthSummary> getMonthSummary(DateTime month,

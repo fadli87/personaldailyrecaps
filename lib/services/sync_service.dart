@@ -71,7 +71,8 @@ class SyncService {
     }
 
     if (errors.isNotEmpty) {
-      throw StateError('Sinkronisasi sebagian gagal (${errors.length}): ${errors.first}');
+      throw StateError(
+          'Sinkronisasi sebagian gagal (${errors.length}): ${errors.first}');
     }
   }
 
@@ -96,7 +97,8 @@ class SyncService {
       final recordId = del['record_id'] as String;
       try {
         await client.from(table).delete().eq('id', recordId);
-        await db.delete('pending_deletions', where: 'id = ?', whereArgs: [queueId]);
+        await db
+            .delete('pending_deletions', where: 'id = ?', whereArgs: [queueId]);
       } catch (e) {
         // JANGAN buang antrean saat gagal (mis. offline): kalau dibuang, baris remote
         // masih ada dan akan "hidup lagi" saat pull. Coba lagi pada sync berikutnya.
@@ -131,7 +133,8 @@ class SyncService {
       }
       // user_id tidak ada di SQLite: server mengisinya lewat default auth.uid().
       await client.from(table).upsert(data);
-      await db.update(table, {'is_synced': 1}, where: '$pk = ?', whereArgs: [r[pk]]);
+      await db.update(table, {'is_synced': 1},
+          where: '$pk = ?', whereArgs: [r[pk]]);
     }
   }
 
@@ -160,7 +163,11 @@ class SyncService {
     const pageSize = 1000; // batas default PostgREST
     var from = 0;
     while (true) {
-      final chunk = await client.from(table).select().order(pk).range(from, from + pageSize - 1);
+      final chunk = await client
+          .from(table)
+          .select()
+          .order(pk)
+          .range(from, from + pageSize - 1);
 
       for (final rr in chunk) {
         final id = rr[pk].toString();

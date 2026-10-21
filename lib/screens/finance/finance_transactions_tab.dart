@@ -14,7 +14,8 @@ class FinanceTransactionsTab extends ConsumerStatefulWidget {
       _FinanceTransactionsTabState();
 }
 
-class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab> {
+class _FinanceTransactionsTabState
+    extends ConsumerState<FinanceTransactionsTab> {
   String? _filterPool;
   String? _filterActivity;
   String? _filterKind;
@@ -55,7 +56,11 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
                   isSelected: _filterPool != null,
                   onSelected: () => _showFilterDialog(
                     title: 'Pilih Kas',
-                    options: {'Semua': null, 'Kas Utama': 'utama', 'Kas Tambahan': 'tambahan'},
+                    options: {
+                      'Semua': null,
+                      'Kas Utama': 'utama',
+                      'Kas Tambahan': 'tambahan'
+                    },
                     current: _filterPool,
                     onPick: (val) => setState(() => _filterPool = val),
                   ),
@@ -64,7 +69,9 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
 
                 // Filter Aktivitas
                 _buildFilterChip<String?>(
-                  label: _filterActivity == null ? 'Aktivitas: Semua' : 'Aktivitas: $_filterActivity',
+                  label: _filterActivity == null
+                      ? 'Aktivitas: Semua'
+                      : 'Aktivitas: $_filterActivity',
                   isSelected: _filterActivity != null,
                   onSelected: () => _showFilterDialog(
                     title: 'Pilih Aktivitas',
@@ -105,11 +112,17 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
                 _buildFilterChip<String?>(
                   label: _filterStatus == null
                       ? 'Status: Semua'
-                      : (_filterStatus == 'pending' ? 'Belum Cair (Pending)' : 'Cleared'),
+                      : (_filterStatus == 'pending'
+                          ? 'Belum Cair (Pending)'
+                          : 'Cleared'),
                   isSelected: _filterStatus != null,
                   onSelected: () => _showFilterDialog(
                     title: 'Pilih Status',
-                    options: {'Semua': null, 'Belum Cair (Pending)': 'pending', 'Cleared': 'cleared'},
+                    options: {
+                      'Semua': null,
+                      'Belum Cair (Pending)': 'pending',
+                      'Cleared': 'cleared'
+                    },
                     current: _filterStatus,
                     onPick: (val) => setState(() => _filterStatus = val),
                   ),
@@ -166,11 +179,14 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
                     Center(
                       child: Column(
                         children: [
-                          Icon(Icons.receipt_long_outlined, size: 56, color: Colors.grey),
+                          Icon(Icons.receipt_long_outlined,
+                              size: 56, color: Colors.grey),
                           SizedBox(height: 12),
                           Text(
                             'Belum ada transaksi di bulan ini.',
-                            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 4),
                           Text(
@@ -212,13 +228,15 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
                         children: [
                           // Header Tanggal
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
                             color: const Color(0xFFF8FAFC),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  DateFormat('EEEE, d MMM yyyy', 'id_ID').format(parsedDate),
+                                  DateFormat('EEEE, d MMM yyyy', 'id_ID')
+                                      .format(parsedDate),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
@@ -227,7 +245,9 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
                                 ),
                                 Text(
                                   '${dayTxs.length} transaksi',
-                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600),
                                 ),
                               ],
                             ),
@@ -235,7 +255,8 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
 
                           // Daftar transaksi pada tanggal ini
                           ...dayTxs.map((tx) {
-                            return _buildTransactionTile(context, tx, accountNames);
+                            return _buildTransactionTile(
+                                context, tx, accountNames);
                           }),
                         ],
                       );
@@ -256,7 +277,9 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
     required VoidCallback onSelected,
   }) {
     return FilterChip(
-      label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : Colors.black87)),
+      label: Text(label,
+          style: TextStyle(
+              fontSize: 12, color: isSelected ? Colors.white : Colors.black87)),
       selected: isSelected,
       selectedColor: const Color(0xFF2E7D32),
       backgroundColor: Colors.grey.shade100,
@@ -274,7 +297,8 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
     showDialog(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        title: Text(title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         children: options.entries.map((e) {
           final isCurrent = e.value == current;
           return SimpleDialogOption(
@@ -285,8 +309,12 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(e.key, style: TextStyle(fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal)),
-                if (isCurrent) const Icon(Icons.check, size: 18, color: Color(0xFF2E7D32)),
+                Text(e.key,
+                    style: TextStyle(
+                        fontWeight:
+                            isCurrent ? FontWeight.bold : FontWeight.normal)),
+                if (isCurrent)
+                  const Icon(Icons.check, size: 18, color: Color(0xFF2E7D32)),
               ],
             ),
           );
@@ -306,7 +334,9 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
     final isPending = tx.status == 'pending';
 
     final accName = accountNames[tx.accountId] ?? 'Rekening';
-    final toAccName = tx.toAccountId != null ? accountNames[tx.toAccountId] ?? 'Rekening' : null;
+    final toAccName = tx.toAccountId != null
+        ? accountNames[tx.toAccountId] ?? 'Rekening'
+        : null;
 
     IconData icon;
     Color iconColor;
@@ -327,7 +357,9 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
     } else {
       final act = tx.activity == 'kanvasing'
           ? 'Kanvasing'
-          : (tx.activity == 'ojol' ? 'Ojol' : (tx.activity == 'kendaraan' ? 'Kendaraan' : 'Pribadi'));
+          : (tx.activity == 'ojol'
+              ? 'Ojol'
+              : (tx.activity == 'kendaraan' ? 'Kendaraan' : 'Pribadi'));
       final cat = tx.category != null ? ' · ${tx.category}' : '';
       subtitleText = '$accName (${tx.pool}) · $act$cat';
     }
@@ -344,7 +376,9 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
           children: [
             Icon(Icons.delete_outline, color: Colors.white),
             SizedBox(width: 8),
-            Text('Hapus', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            Text('Hapus',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -396,19 +430,24 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
                     ? tx.note!
                     : (isTransfer
                         ? 'Transfer Saldo'
-                        : (tx.category ?? (isIncome ? 'Pemasukan' : 'Pengeluaran'))),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        : (tx.category ??
+                            (isIncome ? 'Pemasukan' : 'Pengeluaran'))),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             Text(
-              (isIncome ? '+' : (isExpense ? '-' : '')) + currency.format(tx.amount),
+              (isIncome ? '+' : (isExpense ? '-' : '')) +
+                  currency.format(tx.amount),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
                 color: isIncome
-                    ? (isPending ? Colors.amber.shade800 : Colors.green.shade700)
+                    ? (isPending
+                        ? Colors.amber.shade800
+                        : Colors.green.shade700)
                     : (isExpense ? Colors.red.shade700 : Colors.blue.shade700),
               ),
             ),
@@ -417,13 +456,15 @@ class _FinanceTransactionsTabState extends ConsumerState<FinanceTransactionsTab>
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(subtitleText, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+            Text(subtitleText,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
             if (isPending) ...[
               const SizedBox(height: 4),
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.amber.shade100,
                       borderRadius: BorderRadius.circular(6),

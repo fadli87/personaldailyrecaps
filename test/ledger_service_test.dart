@@ -22,16 +22,20 @@ void main() {
     service = LedgerService();
 
     // Seed akun
-    await service.saveAccount(Account.create(name: 'Tunai', kind: 'cash', openingBalance: 100000));
-    await service.saveAccount(Account.create(name: 'BCA', kind: 'bank', openingBalance: 500000));
-    await service.saveAccount(Account.create(name: 'Dana', kind: 'ewallet', openingBalance: 0));
+    await service.saveAccount(
+        Account.create(name: 'Tunai', kind: 'cash', openingBalance: 100000));
+    await service.saveAccount(
+        Account.create(name: 'BCA', kind: 'bank', openingBalance: 500000));
+    await service.saveAccount(
+        Account.create(name: 'Dana', kind: 'ewallet', openingBalance: 0));
   });
 
   tearDown(() async {
     await db.close();
   });
 
-  test('validasi transaksi salah bentuk ditolak service dengan pesan Indonesia', () async {
+  test('validasi transaksi salah bentuk ditolak service dengan pesan Indonesia',
+      () async {
     final accounts = await service.getAccounts();
     final bca = accounts.firstWhere((a) => a.name == 'BCA');
     final dana = accounts.firstWhere((a) => a.name == 'Dana');
@@ -96,12 +100,15 @@ void main() {
       throwsA(isA<ArgumentError>().having(
         (e) => e.message,
         'message',
-        contains('Transaksi non-transfer tidak boleh memiliki rekening atau kas tujuan'),
+        contains(
+            'Transaksi non-transfer tidak boleh memiliki rekening atau kas tujuan'),
       )),
     );
   });
 
-  test('transaksi valid, pending tidak masuk saldo, soft delete mengurangi saldo', () async {
+  test(
+      'transaksi valid, pending tidak masuk saldo, soft delete mengurangi saldo',
+      () async {
     final accounts = await service.getAccounts();
     final tunai = accounts.firstWhere((a) => a.name == 'Tunai');
     final bca = accounts.firstWhere((a) => a.name == 'BCA');

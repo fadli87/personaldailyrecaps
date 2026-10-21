@@ -104,7 +104,8 @@ class _FinanceHomeScreenState extends ConsumerState<FinanceHomeScreen>
                   unselectedLabelColor: Colors.grey.shade600,
                   indicatorColor: const Color(0xFF2E7D32),
                   indicatorWeight: 3,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  labelStyle: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 13),
                   tabs: const [
                     Tab(
                       icon: Icon(Icons.dashboard_outlined, size: 20),
@@ -115,7 +116,8 @@ class _FinanceHomeScreenState extends ConsumerState<FinanceHomeScreen>
                       text: 'Transaksi',
                     ),
                     Tab(
-                      icon: Icon(Icons.account_balance_wallet_outlined, size: 20),
+                      icon:
+                          Icon(Icons.account_balance_wallet_outlined, size: 20),
                       text: 'Rekening',
                     ),
                     Tab(

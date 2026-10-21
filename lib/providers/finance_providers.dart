@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/account.dart';
+import '../models/fuel_filling.dart';
 import '../models/ledger_transaction.dart';
 import '../models/service_record.dart';
 import '../models/vehicle.dart';
@@ -79,6 +80,18 @@ final serviceRecordsProvider =
     FutureProvider.family<List<ServiceRecord>, String>((ref, vehicleId) async {
   final service = ref.watch(ledgerServiceProvider);
   return service.getServiceRecords(vehicleId);
+});
+
+final vehicleFuelStatsProvider =
+    FutureProvider.family<VehicleFuelStats, String>((ref, vehicleId) async {
+  final service = ref.watch(ledgerServiceProvider);
+  return service.getVehicleFuelStats(vehicleId);
+});
+
+final vehicleFuelFillingsProvider =
+    FutureProvider.family<List<FuelFilling>, String>((ref, vehicleId) async {
+  final service = ref.watch(ledgerServiceProvider);
+  return service.getFuelFillingsByVehicle(vehicleId);
 });
 
 // Month selector for finance tab

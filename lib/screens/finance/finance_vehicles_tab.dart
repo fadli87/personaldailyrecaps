@@ -5,6 +5,7 @@ import '../../logic/ledger_math.dart';
 import '../../models/vehicle.dart';
 import '../../providers/finance_providers.dart';
 import '../home_screen.dart' show currency;
+import '../fuel_filling_sheet.dart';
 import 'service_form_sheet.dart';
 import 'service_item_sheet.dart';
 import 'vehicle_log_sheet.dart';
@@ -52,7 +53,10 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                     SizedBox(height: 16),
                     Text(
                       'Belum Ada Motor Terdaftar',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey),
                     ),
                     SizedBox(height: 8),
                     Text(
@@ -72,8 +76,10 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),
@@ -100,12 +106,17 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                       onTap: () => setState(() => _selectedVehicleId = v.id),
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 12),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF2E7D32) : Colors.white,
+                          color: isSelected
+                              ? const Color(0xFF2E7D32)
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isSelected ? const Color(0xFF2E7D32) : Colors.grey.shade300,
+                            color: isSelected
+                                ? const Color(0xFF2E7D32)
+                                : Colors.grey.shade300,
                           ),
                           boxShadow: [
                             if (isSelected)
@@ -120,7 +131,9 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                           children: [
                             Icon(
                               Icons.two_wheeler,
-                              color: isSelected ? Colors.white : Colors.grey.shade700,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Colors.grey.shade700,
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -128,7 +141,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
-                                color: isSelected ? Colors.white : Colors.black87,
+                                color:
+                                    isSelected ? Colors.white : Colors.black87,
                               ),
                             ),
                             if (v.plateHint != null)
@@ -136,7 +150,9 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                                 v.plateHint!,
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isSelected ? Colors.white70 : Colors.grey.shade600,
+                                  color: isSelected
+                                      ? Colors.white70
+                                      : Colors.grey.shade600,
                                 ),
                               ),
                           ],
@@ -153,8 +169,13 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
             _buildVehicleHeroCard(context, selectedVehicle),
             const SizedBox(height: 20),
 
+            // Bagian Bahan Bakar & Efisiensi (Fase 5)
+            _buildFuelEfficiencySection(context, selectedVehicle),
+            const SizedBox(height: 20),
+
             // Bagian Servis Berkala
-            _buildPeriodicServiceSection(context, selectedVehicle, serviceDueAsync),
+            _buildPeriodicServiceSection(
+                context, selectedVehicle, serviceDueAsync),
             const SizedBox(height: 20),
 
             // Bagian Riwayat Servis
@@ -196,7 +217,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.speed, color: Colors.greenAccent, size: 28),
+                      const Icon(Icons.speed,
+                          color: Colors.greenAccent, size: 28),
                       const SizedBox(width: 8),
                       Text(
                         vehicle.name,
@@ -210,14 +232,16 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                   ),
                   if (vehicle.plateHint != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.white12,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         vehicle.plateHint!,
-                        style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 11),
                       ),
                     ),
                 ],
@@ -242,7 +266,9 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  const Text('km', style: TextStyle(color: Colors.greenAccent, fontSize: 16)),
+                  const Text('km',
+                      style:
+                          TextStyle(color: Colors.greenAccent, fontSize: 16)),
                 ],
               ),
               const SizedBox(height: 16),
@@ -256,22 +282,49 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                           isScrollControlled: true,
                           backgroundColor: Colors.white,
                           shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(24)),
                           ),
                           builder: (_) => VehicleLogSheet(vehicle: vehicle),
                         );
                       },
-                      icon: const Icon(Icons.add_road, size: 16),
-                      label: const Text('Km Hari Ini'),
+                      icon: const Icon(Icons.add_road, size: 14),
+                      label: const Text('Km Hari Ini',
+                          style: TextStyle(fontSize: 12)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E7D32),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 4),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        showFuelFillingSheet(
+                          context,
+                          null,
+                          preselectedVehicleId: vehicle.id,
+                        );
+                      },
+                      icon: const Icon(Icons.local_gas_station, size: 14),
+                      label: const Text('Catat BBM',
+                          style: TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white30),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 4),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
@@ -280,18 +333,22 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                           isScrollControlled: true,
                           backgroundColor: Colors.white,
                           shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(24)),
                           ),
                           builder: (_) => ServiceFormSheet(vehicle: vehicle),
                         );
                       },
-                      icon: const Icon(Icons.build, size: 16),
-                      label: const Text('Catat Servis'),
+                      icon: const Icon(Icons.build, size: 14),
+                      label:
+                          const Text('Servis', style: TextStyle(fontSize: 12)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
                         side: const BorderSide(color: Colors.white30),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 4),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
                   ),
@@ -301,6 +358,213 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildFuelEfficiencySection(BuildContext context, Vehicle vehicle) {
+    final fuelStatsAsync = ref.watch(vehicleFuelStatsProvider(vehicle.id));
+    final fillingsAsync = ref.watch(vehicleFuelFillingsProvider(vehicle.id));
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.local_gas_station_rounded,
+                        color: Colors.orange.shade800, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Bahan Bakar & Efisiensi',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  showFuelFillingSheet(
+                    context,
+                    null,
+                    preselectedVehicleId: vehicle.id,
+                  );
+                },
+                icon: const Icon(Icons.add, size: 16, color: Color(0xFF2E7D32)),
+                label: const Text(
+                  'Catat BBM',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF2E7D32),
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          fuelStatsAsync.when(
+            data: (stats) {
+              final lastLitersStr = stats.lastLiters != null
+                  ? '${stats.lastLiters!.toStringAsFixed(2)} L'
+                  : '-';
+              final kmPerLStr = stats.kmPerLiter != null
+                  ? '${stats.kmPerLiter!.toStringAsFixed(1)} km/L'
+                  : '-';
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Pengisian Terakhir',
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey.shade600)),
+                          const SizedBox(height: 4),
+                          Text(lastLitersStr,
+                              style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0F172A))),
+                          if (stats.lastFillingDate != null)
+                            Text(
+                              DateFormat('d MMM yyyy', 'id_ID')
+                                  .format(stats.lastFillingDate!),
+                              style: TextStyle(
+                                  fontSize: 10, color: Colors.grey.shade500),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Efisiensi Riil',
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey.shade600)),
+                          const SizedBox(height: 4),
+                          Text(kmPerLStr,
+                              style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2E7D32))),
+                          Text(
+                            stats.kmPerLiter != null
+                                ? 'Antar isi penuh'
+                                : 'Perlu 2x isi odo',
+                            style: TextStyle(
+                                fontSize: 10, color: Colors.grey.shade500),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 12),
+
+          // Riwayat Pengisian BBM Terakhir
+          fillingsAsync.when(
+            data: (fillings) {
+              if (fillings.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: Text(
+                      'Belum ada catatan BBM untuk ${vehicle.name}.',
+                      style:
+                          TextStyle(color: Colors.grey.shade500, fontSize: 11),
+                    ),
+                  ),
+                );
+              }
+              return Column(
+                children: fillings.take(3).map((f) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.check_circle_outline,
+                                size: 14, color: Colors.green),
+                            const SizedBox(width: 6),
+                            Text(
+                              DateFormat('d MMM yyyy', 'id_ID')
+                                  .format(f.tanggal),
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${f.liter.toStringAsFixed(1)}L',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          currency.format(f.totalBiaya.round()),
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -331,7 +595,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.add_circle_outline, color: Color(0xFF2E7D32)),
+                icon: const Icon(Icons.add_circle_outline,
+                    color: Color(0xFF2E7D32)),
                 tooltip: 'Tambah Item Servis',
                 onPressed: () {
                   showModalBottomSheet(
@@ -339,7 +604,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                     isScrollControlled: true,
                     backgroundColor: Colors.white,
                     shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(24)),
                     ),
                     builder: (_) => ServiceItemSheet(vehicle: vehicle),
                   );
@@ -348,12 +614,12 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
             ],
           ),
           const SizedBox(height: 8),
-
           serviceDueAsync.when(
             loading: () => const LinearProgressIndicator(),
             error: (e, _) => Text('Error: $e'),
             data: (dueList) {
-              final vehicleItems = dueList.where((d) => d.item.vehicleId == vehicle.id).toList();
+              final vehicleItems =
+                  dueList.where((d) => d.item.vehicleId == vehicle.id).toList();
 
               if (vehicleItems.isEmpty) {
                 return Padding(
@@ -363,7 +629,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                       children: [
                         Text(
                           'Belum ada item servis berkala untuk ${vehicle.name}.',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                          style: TextStyle(
+                              color: Colors.grey.shade600, fontSize: 12),
                         ),
                         const SizedBox(height: 8),
                         TextButton.icon(
@@ -373,13 +640,16 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                               isScrollControlled: true,
                               backgroundColor: Colors.white,
                               shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(24)),
                               ),
-                              builder: (_) => ServiceItemSheet(vehicle: vehicle),
+                              builder: (_) =>
+                                  ServiceItemSheet(vehicle: vehicle),
                             );
                           },
                           icon: const Icon(Icons.add, size: 16),
-                          label: const Text('Tambah Item (Oli/Busi/Filter)', style: TextStyle(fontSize: 12)),
+                          label: const Text('Tambah Item (Oli/Busi/Filter)',
+                              style: TextStyle(fontSize: 12)),
                         ),
                       ],
                     ),
@@ -399,7 +669,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
     );
   }
 
-  Widget _buildServiceItemTile(BuildContext context, Vehicle vehicle, dynamic due) {
+  Widget _buildServiceItemTile(
+      BuildContext context, Vehicle vehicle, dynamic due) {
     final item = due.item;
     final status = due.status as ServiceStatus;
     final remKm = due.remainingKm as double?;
@@ -440,10 +711,12 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
     }
     if (remDays != null) {
       if (subtitleDetails.isNotEmpty) subtitleDetails += ' · ';
-      subtitleDetails += remDays >= 0 ? 'Sisa $remDays hari' : 'Lewat ${-remDays} hari';
+      subtitleDetails +=
+          remDays >= 0 ? 'Sisa $remDays hari' : 'Lewat ${-remDays} hari';
     }
     if (subtitleDetails.isEmpty) {
-      subtitleDetails = 'Interval: ${item.intervalKm != null ? '${item.intervalKm} km' : ''}${item.intervalDays != null ? ' / ${item.intervalDays} hari' : ''}';
+      subtitleDetails =
+          'Interval: ${item.intervalKm != null ? '${item.intervalKm} km' : ''}${item.intervalDays != null ? ' / ${item.intervalDays} hari' : ''}';
     }
 
     return Container(
@@ -465,11 +738,13 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                   children: [
                     Text(
                       item.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: badgeBg,
                         borderRadius: BorderRadius.circular(6),
@@ -502,7 +777,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
-                builder: (_) => ServiceFormSheet(vehicle: vehicle, selectedItem: item),
+                builder: (_) =>
+                    ServiceFormSheet(vehicle: vehicle, selectedItem: item),
               );
             },
             style: ElevatedButton.styleFrom(
@@ -510,7 +786,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               minimumSize: const Size(60, 30),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text('Servis', style: TextStyle(fontSize: 11)),
           ),
@@ -550,7 +827,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                   child: Center(
                     child: Text(
                       'Belum ada riwayat servis untuk ${vehicle.name}.',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      style:
+                          TextStyle(color: Colors.grey.shade600, fontSize: 12),
                     ),
                   ),
                 ),
@@ -561,7 +839,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                     dense: true,
                     leading: const CircleAvatar(
                       backgroundColor: Color(0xFFE8F5E9),
-                      child: Icon(Icons.build, size: 16, color: Color(0xFF2E7D32)),
+                      child:
+                          Icon(Icons.build, size: 16, color: Color(0xFF2E7D32)),
                     ),
                     title: Text(
                       r.shop ?? 'Bengkel',
@@ -569,7 +848,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
                     ),
                     subtitle: Text(
                       '${DateFormat('d MMM yyyy', 'id_ID').format(r.tanggal)}${r.odometer != null ? ' · ${r.odometer.toStringAsFixed(0)} km' : ''}',
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                      style:
+                          TextStyle(fontSize: 11, color: Colors.grey.shade600),
                     ),
                     trailing: Text(
                       currency.format(r.cost),
@@ -604,7 +884,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
             const SizedBox(height: 16),
             TextFormField(
               controller: jupiterOdoCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(
                 labelText: 'Odometer Awal Jupiter Z (km)',
                 border: OutlineInputBorder(),
@@ -613,7 +894,8 @@ class _FinanceVehiclesTabState extends ConsumerState<FinanceVehiclesTab> {
             const SizedBox(height: 12),
             TextFormField(
               controller: aeroxOdoCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(
                 labelText: 'Odometer Awal Aerox (km)',
                 border: OutlineInputBorder(),

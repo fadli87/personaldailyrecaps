@@ -15,8 +15,8 @@ Dokumentasi ini mencatat progres, keputusan teknis, daftar perubahan file, dan v
 | **Fase 2** | **Skema Baru (Ledger, Kendaraan, Servis, View Saldo)** | **SELESAI (CLEAR)** | Skema SQLite v11 teruji in-memory; file SQL Fase 2 siap |
 | **Fase 3** | **Model, Service, Provider (Riverpod 3, LedgerService, ReportService)** | **SELESAI (CLEAR)** | Model, Service, Provider & Test `ledger_service_test.dart` lulus (18/18 tests total) |
 | **Fase 4** | **Antarmuka (Tab Keuangan: Ringkasan, Transaksi, Rekening, Motor + Sheets)** | **SELESAI (CLEAR)** | Tab Keuangan di BottomNav, 4 sub-tab, 5 modal sheets, quick cards dashboard, & End-to-End scenario test Bagian 8 lulus (19/19 tests) |
-| **Fase 5** | **Integrasi BBM ke Ledger** | Siap Dikerjakan | Dropdown motor & link transaksi otomatis di `fuel_filling_sheet.dart` |
-| **Fase 6** | **Penutup (Backup DB, Cleanup CI/CD)** | Menunggu Fase 5 | |
+| **Fase 5** | **Integrasi BBM ke Ledger & Efisiensi Bahan Bakar** | **SELESAI (CLEAR)** | Model `FuelFilling` + `vehicle_id`, dropdown motor, switch catat ke kas, atomik transaksi DB, efisiensi km/L, & test `fuel_ledger_integration_test.dart` lulus (20/20 tests total) |
+| **Fase 6** | **Penutup (Backup DB, Cleanup CI/CD, README)** | Siap Dikerjakan | Ekspor/backup DB lokal, pembersihan workflow CI, dan finalisasi README |
 
 ---
 
@@ -190,27 +190,88 @@ Dokumentasi ini mencatat progres, keputusan teknis, daftar perubahan file, dan v
 
 ---
 
+### FASE 5 — Integrasi BBM ke Ledger & Efisiensi Kendaraan
+**Status:** **CLEAR (SELESAI, TERUJI TRANSAKSI ATOMIK & 20/20 TEST LULUS)**
+
+#### 1. Perubahan Model & Skema
+- [x] **`lib/models/fuel_filling.dart`**:
+  - Menambahkan kolom `vehicleId` ke model `FuelFilling` (`fromMap`, `toInsertMap`, `toMap`, `create`, `copyWith`).
+  - Mendukung relasi antara catatan BBM dengan motor spesifik (`Jupiter Z` / `Aerox 155`).
+
+#### 2. Service & Sinkronisasi Finansial Atomik
+- [x] **`lib/services/ledger_service.dart`**:
+  - `saveFuelWithLedger(...)`:
+    - Menyimpan catatan pengisian BBM ke tabel `fuel_fillings`.
+    - Jika switch *"Catat di Keuangan"* aktif: membuat transaksi pengeluaran kendaraan (`activity='kendaraan'`, `category='bbm'`, `fuel_filling_id`, `vehicle_id`, `amount = total_biaya`) secara atomik dalam satu `db.transaction`.
+    - Mode edit: memperbarui transaksi tertaut secara otomatis. Jika dimatikan saat edit, otomatis men-soft-delete transaksi tertaut.
+  - `deleteFuelWithLedger(...)`:
+    - Menghapus baris dari `fuel_fillings` dan mencatat ke `pending_deletions`.
+    - Secara atomik melakukan soft-delete pada transaksi ledger yang tertaut.
+  - `getLinkedFuelTransaction(fuelFillingId)`:
+    - Mengambil transaksi ledger tertaut untuk keperluan edit form.
+  - `getFuelFillingsByVehicle(vehicleId)`:
+    - Riwayat pengisian BBM untuk motor tertentu.
+  - `getVehicleFuelStats(vehicleId)`:
+    - Menghitung efisiensi bahan bakar murni dari dua pengisian berurutan yang memiliki data odometer:  
+      $$\text{Efisiensi (km/L)} = \frac{\text{Odometer}_2 - \text{Odometer}_1}{\text{Liter}_2}$$
+    - Tanpa asumsi atau tebakan angka bawaan.
+- [x] **`lib/services/recap_service.dart`**:
+  - Memperbarui `deleteFuelFilling(id)` agar juga men-soft-delete transaksi ledger terkait di tabel `transactions` jika pengisian BBM dihapus dari rekap harian lama.
+
+#### 3. Pembaruan Antarmuka Form (`lib/screens/fuel_filling_sheet.dart`)
+- [x] **Dropdown Motor**:
+  - Menampilkan daftar motor aktif dari `activeVehiclesProvider`.
+  - Wajib dipilih jika user telah mendaftarkan motor.
+  - Otomatis mengingat motor terakhir yang dipilih di `shared_preferences` (`last_fuel_vehicle_id`).
+- [x] **Section "Catat di Keuangan"**:
+  - Switch interaktif (default aktif/true).
+  - Pilihan **Rekening Pembayar** (dari `activeAccountsProvider`).
+  - Pilihan **Kas** (`utama` / `tambahan`).
+  - Mengingat harga bensin, rekening, dan kas terakhir via `shared_preferences`.
+- [x] **Kemandirian Sheet**:
+  - `dailyRecapId` kini opsional (`showFuelFillingSheet(context, null)`).
+  - Jika dipanggil dari tab Keuangan atau tab Motor, sistem secara otomatis mencari rekap harian tanggal tersebut atau membuat rekap tanggal bersangkutan.
+
+#### 4. Pembaruan Tab Motor (`lib/screens/finance/finance_vehicles_tab.dart`)
+- [x] Menambahkan tombol aksi cepat **"Catat BBM"** langsung di hero card motor terpilih.
+- [x] Menambahkan kartu **Bahan Bakar & Efisiensi** (`_buildFuelEfficiencySection`):
+  - Menampilkan **Liter Terakhir** dan tanggal pengisian.
+  - Menampilkan **Efisiensi Riil (km/L)** antar pengisian penuh.
+  - Menampilkan 3 riwayat pengisian BBM terakhir motor bersangkutan.
+
+#### 5. Pengujian Unit & Integrasi (`test/fuel_ledger_integration_test.dart`)
+- [x] Pengujian komprehensif berhasil:
+  - Pembuatan data BBM membuat transaksi ledger `expense` dan memotong saldo rekening secara atomik.
+  - Update data BBM otomatis menyinkronkan nominal transaksi pengeluaran.
+  - Hapus data BBM otomatis menghapus pengisian dan men-soft-delete transaksi ledger tertaut serta mengembalikan saldo rekening.
+  - Perhitungan efisiensi bahan bakar terbukti akurat (misal jarak 180 km / 4.0 L = 45.0 km/L).
+  - **Hasil Test:** **LULUS (100% Passed)**.
+
+---
+
 ### Hasil Pengujian Otomatis Saat Ini
 ```text
 flutter test
 00:00 +0: C:/DevApp/personalDailyRecaps/test/finance_scenario_test.dart: Skenario Lengkap Bagian 8 Panduan Agy (End-to-End)
-00:00 +1: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: saldo rekening dan saldo kas
-00:01 +2: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: soft delete mengurangi saldo; pending tidak dihitung
-00:01 +3: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: constraint menolak data yang salah bentuk
-00:01 +4: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: item servis wajib punya minimal satu interval
-00:01 +5: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost proporsional km, jumlah tepat
-00:01 +6: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sepertiga: sisa 1 rupiah ke kanvasing (urutan seri)
-00:01 +7: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sisa terbesar ke pecahan terbesar
-00:01 +8: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost km nol di satu aktivitas
-00:01 +9: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost total km nol atau biaya nol -> semua 0 (tidak error)
-00:02 +10: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: computeActivityProfits profit per pekerjaan (komisi pending tidak dihitung)
-00:02 +11: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: perUnit pembagian aman
-00:02 +12: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan km
-00:02 +13: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan hari
-00:02 +14: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem km dan hari: yang terburuk menang
-00:02 +15: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem belum ada data servis terakhir -> unknown
-00:03 +16: C:/DevApp/personalDailyRecaps/test/ledger_service_test.dart: validasi transaksi salah bentuk ditolak service dengan pesan Indonesia
-00:03 +17: C:/DevApp/personalDailyRecaps/test/ledger_service_test.dart: transaksi valid, pending tidak masuk saldo, soft delete mengurangi saldo
-00:11 +18: C:/DevApp/personalDailyRecaps/test/widget_test.dart: App smoke test
-00:13 +19: All tests passed!
+00:01 +1: C:/DevApp/personalDailyRecaps/test/fuel_ledger_integration_test.dart: Integrasi BBM ke Ledger: simpan, update, soft delete, dan efisiensi km/L
+00:02 +2: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: saldo rekening dan saldo kas
+00:03 +3: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: soft delete mengurangi saldo; pending tidak dihitung
+00:03 +4: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: constraint menolak data yang salah bentuk
+00:03 +5: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: item servis wajib punya minimal satu interval
+00:03 +6: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost proporsional km, jumlah tepat
+00:04 +7: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sepertiga: sisa 1 rupiah ke kanvasing (urutan seri)
+00:04 +8: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sisa terbesar ke pecahan terbesar
+00:04 +9: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost km nol di satu aktivitas
+00:04 +10: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost total km nol atau biaya nol -> semua 0 (tidak error)
+00:04 +11: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: computeActivityProfits profit per pekerjaan (komisi pending tidak dihitung)
+00:04 +12: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: perUnit pembagian aman
+00:04 +13: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan km
+00:04 +14: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan hari
+00:04 +15: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem km dan hari: yang terburuk menang
+00:04 +16: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem belum ada data servis terakhir -> unknown
+00:05 +17: C:/DevApp/personalDailyRecaps/test/ledger_service_test.dart: validasi transaksi salah bentuk ditolak service dengan pesan Indonesia
+00:05 +18: C:/DevApp/personalDailyRecaps/test/ledger_service_test.dart: transaksi valid, pending tidak masuk saldo, soft delete mengurangi saldo
+00:06 +19: C:/DevApp/personalDailyRecaps/test/widget_test.dart: App smoke test
+00:09 +20: All tests passed!
 ```
+

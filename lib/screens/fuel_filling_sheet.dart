@@ -3,16 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/fuel_filling.dart';
+import '../providers/finance_providers.dart';
 import '../providers/recap_providers.dart';
 
 class FuelFillingFormSheet extends ConsumerStatefulWidget {
-  final String dailyRecapId;
+  final String? dailyRecapId;
   final FuelFilling? existingFilling;
+  final String? preselectedVehicleId;
 
   const FuelFillingFormSheet({
     super.key,
-    required this.dailyRecapId,
+    this.dailyRecapId,
     this.existingFilling,
+    this.preselectedVehicleId,
   });
 
   @override
@@ -29,6 +32,10 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
   final _catatanController = TextEditingController();
 
   DateTime _selectedDate = DateTime.now();
+  String? _selectedVehicleId;
+  bool _recordInFinance = true;
+  String? _selectedAccountId;
+  String _selectedPool = 'utama';
   bool _isLoading = false;
 
   @override
@@ -42,19 +49,43 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
       _odometerController.text = f.odometer?.toStringAsFixed(0) ?? '';
       _catatanController.text = f.catatan ?? '';
       _selectedDate = f.tanggal;
+      _selectedVehicleId = f.vehicleId;
+
+      // Muat transaksi terkait jika ada
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final tx = await ref
+            .read(ledgerServiceProvider)
+            .getLinkedFuelTransaction(f.id);
+        if (mounted) {
+          setState(() {
+            if (tx != null) {
+              _recordInFinance = true;
+              _selectedAccountId = tx.accountId;
+              _selectedPool = tx.pool;
+            } else {
+              _recordInFinance = false;
+            }
+          });
+        }
+      });
     } else {
-      _loadLastFuelPrice();
+      _selectedVehicleId = widget.preselectedVehicleId;
+      _loadPreferences();
     }
   }
 
-  Future<void> _loadLastFuelPrice() async {
+  Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    final lastPrice = prefs.getString('last_fuel_price');
-    if (lastPrice != null && lastPrice.isNotEmpty && mounted) {
-      setState(() {
+    if (!mounted) return;
+    setState(() {
+      final lastPrice = prefs.getString('last_fuel_price');
+      if (lastPrice != null && lastPrice.isNotEmpty) {
         _hargaController.text = lastPrice;
-      });
-    }
+      }
+      _selectedVehicleId ??= prefs.getString('last_fuel_vehicle_id');
+      _selectedAccountId ??= prefs.getString('last_fuel_account_id');
+      _selectedPool = prefs.getString('last_fuel_pool') ?? _selectedPool;
+    });
   }
 
   @override
@@ -119,45 +150,93 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
           ? double.parse(_odometerController.text)
           : null;
 
-      if (widget.existingFilling != null) {
-        final updated = widget.existingFilling!.copyWith(
-          tanggal: _selectedDate,
-          liter: liter,
-          hargaPerLiter: hargaPerLiter,
-          totalBiaya: totalBiaya,
-          odometer: odometer,
-          catatan:
-              _catatanController.text.isEmpty ? null : _catatanController.text,
-        );
-        await ref
-            .read(recapDetailNotifierProvider(widget.dailyRecapId).notifier)
-            .updateFuelFilling(updated);
-      } else {
-        final newFilling = FuelFilling.create(
-          dailyRecapId: widget.dailyRecapId,
-          tanggal: _selectedDate,
-          liter: liter,
-          hargaPerLiter: hargaPerLiter,
-          totalBiaya: totalBiaya,
-          odometer: odometer,
-          catatan:
-              _catatanController.text.isEmpty ? null : _catatanController.text,
-        );
-        await ref
-            .read(recapDetailNotifierProvider(widget.dailyRecapId).notifier)
-            .addFuelFilling(newFilling);
+      // Cari atau buat daily_recap_id bila tidak diberikan dari context
+      String recapIdStr = widget.dailyRecapId ?? '';
+      if (recapIdStr.isEmpty) {
+        final existingRecap =
+            await ref.read(recapServiceProvider).getRecapByDate(_selectedDate);
+        if (existingRecap != null) {
+          recapIdStr = existingRecap.id;
+        } else {
+          recapIdStr = await ref.read(recapServiceProvider).createRecap(
+                tanggal: _selectedDate,
+                cashAwal: 0,
+                saldoAwalApp: 0,
+              );
+        }
       }
 
+      final isEdit = widget.existingFilling != null;
+      final filling = isEdit
+          ? widget.existingFilling!.copyWith(
+              dailyRecapId: recapIdStr,
+              tanggal: _selectedDate,
+              liter: liter,
+              hargaPerLiter: hargaPerLiter,
+              totalBiaya: totalBiaya,
+              odometer: odometer,
+              catatan: _catatanController.text.isEmpty
+                  ? null
+                  : _catatanController.text.trim(),
+              vehicleId: _selectedVehicleId,
+            )
+          : FuelFilling.create(
+              dailyRecapId: recapIdStr,
+              tanggal: _selectedDate,
+              liter: liter,
+              hargaPerLiter: hargaPerLiter,
+              totalBiaya: totalBiaya,
+              odometer: odometer,
+              catatan: _catatanController.text.isEmpty
+                  ? null
+                  : _catatanController.text.trim(),
+              vehicleId: _selectedVehicleId,
+            );
+
+      // Simpan terintegrasi secara atomik ke fuel_fillings dan ledger transactions
+      await ref.read(ledgerServiceProvider).saveFuelWithLedger(
+            filling: filling,
+            recordInFinance: _recordInFinance,
+            accountId: _selectedAccountId,
+            pool: _selectedPool,
+            isEdit: isEdit,
+          );
+
+      // Simpan preferensi input terakhir
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('last_fuel_price', _hargaController.text.trim());
+      if (_selectedVehicleId != null) {
+        await prefs.setString('last_fuel_vehicle_id', _selectedVehicleId!);
+      }
+      if (_selectedAccountId != null) {
+        await prefs.setString('last_fuel_account_id', _selectedAccountId!);
+      }
+      await prefs.setString('last_fuel_pool', _selectedPool);
+
+      // Refresh providers
+      if (widget.dailyRecapId != null && widget.dailyRecapId!.isNotEmpty) {
+        await ref
+            .read(recapDetailNotifierProvider(widget.dailyRecapId!).notifier)
+            .refreshSummary();
+        ref.invalidate(fuelFillingsProvider(widget.dailyRecapId!));
+      }
+      ref.invalidate(allFuelFillingsProvider);
+      ref.invalidate(poolBalancesProvider);
+      ref.invalidate(accountBalancesProvider);
+      ref.invalidate(monthSummaryProvider);
+      ref.invalidate(transactionsProvider);
+      if (_selectedVehicleId != null) {
+        ref.invalidate(vehicleFuelStatsProvider(_selectedVehicleId!));
+        ref.invalidate(vehicleFuelFillingsProvider(_selectedVehicleId!));
+      }
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.existingFilling != null
+            content: Text(isEdit
                 ? 'Pengisian BBM diperbarui'
-                : 'Pengisian BBM ditambahkan'),
+                : 'Pengisian BBM berhasil dicatat'),
             backgroundColor: const Color(0xFF2E7D32),
             behavior: SnackBarBehavior.floating,
           ),
@@ -181,6 +260,8 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.existingFilling != null;
+    final vehiclesAsync = ref.watch(activeVehiclesProvider);
+    final accountsAsync = ref.watch(activeAccountsProvider);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -239,7 +320,7 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                           ),
                         ),
                         Text(
-                          'Catat kapan & berapa liter isi tangki',
+                          'Catat konsumsi bahan bakar & integrasikan ke kas',
                           style: TextStyle(
                               fontSize: 12, color: Colors.grey.shade600),
                         ),
@@ -249,6 +330,53 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                 ],
               ),
               const SizedBox(height: 24),
+
+              // Dropdown Motor (Wajib jika ada motor)
+              vehiclesAsync.when(
+                data: (vehicles) {
+                  if (vehicles.isEmpty) return const SizedBox.shrink();
+
+                  // Set default bila belum dipilih
+                  if (_selectedVehicleId == null && vehicles.isNotEmpty) {
+                    _selectedVehicleId = vehicles.first.id;
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedVehicleId,
+                      decoration: InputDecoration(
+                        labelText: 'Pilih Motor *',
+                        prefixIcon: const Icon(Icons.two_wheeler_rounded,
+                            color: Color(0xFF2E7D32)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                      ),
+                      items: vehicles.map((v) {
+                        return DropdownMenuItem<String>(
+                          value: v.id,
+                          child: Text(
+                            '${v.name}${v.plateHint != null ? ' (${v.plateHint})' : ''}',
+                          ),
+                        );
+                      }).toList(),
+                      validator: (val) {
+                        if (vehicles.isNotEmpty &&
+                            (val == null || val.isEmpty)) {
+                          return 'Pilih motor terlebih dahulu';
+                        }
+                        return null;
+                      },
+                      onChanged: (val) =>
+                          setState(() => _selectedVehicleId = val),
+                    ),
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
 
               // Tanggal
               InkWell(
@@ -293,8 +421,9 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Wajib diisi';
                         final val = double.tryParse(v);
-                        if (val == null || val <= 0)
+                        if (val == null || val <= 0) {
                           return 'Masukkan angka valid';
+                        }
                         return null;
                       },
                       onChanged: (_) => _calculateTotal(),
@@ -318,8 +447,9 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Wajib diisi';
                         final val = double.tryParse(v);
-                        if (val == null || val <= 0)
+                        if (val == null || val <= 0) {
                           return 'Masukkan angka valid';
+                        }
                         return null;
                       },
                       onChanged: (_) => _calculateTotal(),
@@ -352,7 +482,7 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
               TextFormField(
                 controller: _odometerController,
                 decoration: InputDecoration(
-                  labelText: 'Kilometer (Opsional)',
+                  labelText: 'Kilometer Odometer (Opsional)',
                   suffixText: 'KM',
                   prefixIcon:
                       const Icon(Icons.speed_rounded, color: Colors.grey),
@@ -360,7 +490,7 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                       borderRadius: BorderRadius.circular(12)),
                   filled: true,
                   fillColor: Colors.grey.shade50,
-                  helperText: 'Untuk tracking konsumsi per KM',
+                  helperText: 'Diperlukan untuk menghitung efisiensi (km/L)',
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -378,9 +508,132 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                       borderRadius: BorderRadius.circular(12)),
                   filled: true,
                   fillColor: Colors.grey.shade50,
-                  hintText: 'Contoh: Isi full di SPBU Pertamina Jalan Sudirman',
+                  hintText: 'Contoh: Isi full di SPBU Pertamina',
                 ),
                 maxLines: 2,
+              ),
+              const SizedBox(height: 20),
+
+              // Section: Catat di Keuangan (Fase 5)
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SwitchListTile(
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16),
+                      value: _recordInFinance,
+                      activeColor: const Color(0xFF2E7D32),
+                      title: const Text(
+                        'Catat di Keuangan',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Buat pengeluaran BBM motor di buku kas secara otomatis',
+                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
+                      onChanged: (val) {
+                        setState(() => _recordInFinance = val);
+                      },
+                    ),
+                    if (_recordInFinance) ...[
+                      const Divider(height: 1),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            // Rekening Pembayar
+                            accountsAsync.when(
+                              data: (accounts) {
+                                if (accounts.isEmpty) {
+                                  return const Text(
+                                    'Belum ada rekening aktif. Tambahkan rekening di tab Keuangan.',
+                                    style: TextStyle(
+                                        color: Colors.red, fontSize: 12),
+                                  );
+                                }
+                                _selectedAccountId ??= accounts.first.id;
+
+                                return DropdownButtonFormField<String>(
+                                  value: _selectedAccountId,
+                                  decoration: InputDecoration(
+                                    labelText: 'Rekening Pembayar *',
+                                    prefixIcon: const Icon(
+                                        Icons.account_balance_rounded,
+                                        color: Color(0xFF2E7D32)),
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                  ),
+                                  items: accounts.map((acc) {
+                                    return DropdownMenuItem<String>(
+                                      value: acc.id,
+                                      child:
+                                          Text('${acc.name} (${acc.kindText})'),
+                                    );
+                                  }).toList(),
+                                  validator: (v) {
+                                    if (_recordInFinance &&
+                                        (v == null || v.isEmpty)) {
+                                      return 'Pilih rekening pembayar';
+                                    }
+                                    return null;
+                                  },
+                                  onChanged: (val) =>
+                                      setState(() => _selectedAccountId = val),
+                                );
+                              },
+                              loading: () => const LinearProgressIndicator(),
+                              error: (_, __) => const SizedBox.shrink(),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Pilihan Kas (Pool)
+                            DropdownButtonFormField<String>(
+                              value: _selectedPool,
+                              decoration: InputDecoration(
+                                labelText: 'Alokasi Kas *',
+                                prefixIcon: const Icon(Icons.pie_chart_rounded,
+                                    color: Color(0xFF2E7D32)),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Colors.white,
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'utama',
+                                  child:
+                                      Text('Kas Utama (XL Satu / Kanvasing)'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'tambahan',
+                                  child: Text('Kas Tambahan (Ojol)'),
+                                ),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => _selectedPool = val);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
 
@@ -440,8 +693,12 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
 }
 
 // Helper function to show the bottom sheet
-void showFuelFillingSheet(BuildContext context, String dailyRecapId,
-    {FuelFilling? existingFilling}) {
+void showFuelFillingSheet(
+  BuildContext context,
+  String? dailyRecapId, {
+  FuelFilling? existingFilling,
+  String? preselectedVehicleId,
+}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -455,6 +712,7 @@ void showFuelFillingSheet(BuildContext context, String dailyRecapId,
       child: FuelFillingFormSheet(
         dailyRecapId: dailyRecapId,
         existingFilling: existingFilling,
+        preselectedVehicleId: preselectedVehicleId,
       ),
     ),
   );

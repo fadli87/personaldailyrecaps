@@ -2014,7 +2014,8 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFinanceAndServiceQuickCards(BuildContext context, WidgetRef ref) {
+  Widget _buildFinanceAndServiceQuickCards(
+      BuildContext context, WidgetRef ref) {
     final poolBalancesAsync = ref.watch(poolBalancesProvider);
     final serviceDueAsync = ref.watch(serviceDueProvider);
 
@@ -2052,17 +2053,20 @@ class DashboardScreen extends ConsumerWidget {
                         const SizedBox(width: 8),
                         const Text(
                           'Saldo Kas',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                       ],
                     ),
-                    const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+                    const Icon(Icons.arrow_forward_ios,
+                        size: 12, color: Colors.grey),
                   ],
                 ),
                 const SizedBox(height: 12),
                 poolBalancesAsync.when(
                   loading: () => const LinearProgressIndicator(),
-                  error: (_, __) => const Text('Gagal memuat kas', style: TextStyle(fontSize: 12)),
+                  error: (_, __) => const Text('Gagal memuat kas',
+                      style: TextStyle(fontSize: 12)),
                   data: (pools) {
                     final utama = pools['utama'] ?? 0;
                     final tambahan = pools['tambahan'] ?? 0;
@@ -2072,17 +2076,23 @@ class DashboardScreen extends ConsumerWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Kas Utama', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                            Text('Kas Utama',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey.shade600)),
                             Text(currency.format(utama),
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 13)),
                           ],
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text('Kas Tambahan', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                            Text('Kas Tambahan',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey.shade600)),
                             Text(currency.format(tambahan),
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 13)),
                           ],
                         ),
                       ],
@@ -2119,27 +2129,32 @@ class DashboardScreen extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.two_wheeler, size: 18, color: Colors.blue.shade700),
+                        Icon(Icons.two_wheeler,
+                            size: 18, color: Colors.blue.shade700),
                         const SizedBox(width: 8),
                         const Text(
                           'Servis Motor',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                       ],
                     ),
-                    const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+                    const Icon(Icons.arrow_forward_ios,
+                        size: 12, color: Colors.grey),
                   ],
                 ),
                 const SizedBox(height: 12),
                 serviceDueAsync.when(
                   loading: () => const LinearProgressIndicator(),
-                  error: (_, __) => const Text('Gagal memuat servis', style: TextStyle(fontSize: 12)),
+                  error: (_, __) => const Text('Gagal memuat servis',
+                      style: TextStyle(fontSize: 12)),
                   data: (dueList) {
                     final urgent = dueList.where((d) => d.isUrgent).toList();
                     if (urgent.isNotEmpty) {
                       return Row(
                         children: [
-                          Icon(Icons.warning_amber_rounded, size: 16, color: Colors.red.shade700),
+                          Icon(Icons.warning_amber_rounded,
+                              size: 16, color: Colors.red.shade700),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -2158,11 +2173,15 @@ class DashboardScreen extends ConsumerWidget {
                     }
                     return Row(
                       children: [
-                        Icon(Icons.check_circle_outline, size: 16, color: Colors.green.shade700),
+                        Icon(Icons.check_circle_outline,
+                            size: 16, color: Colors.green.shade700),
                         const SizedBox(width: 6),
                         Text(
                           'Semua jadwal servis aman',
-                          style: TextStyle(fontSize: 12, color: Colors.green.shade700, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.w600),
                         ),
                       ],
                     );

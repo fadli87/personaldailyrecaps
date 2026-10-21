@@ -38,9 +38,12 @@ class FinanceAccountsTab extends ConsumerWidget {
           error: (e, _) => Text('Error accounts: $e'),
           data: (accounts) {
             final activeAccounts = accounts.where((a) => a.isActive).toList();
-            final archivedAccounts = accounts.where((a) => !a.isActive).toList();
+            final archivedAccounts =
+                accounts.where((a) => !a.isActive).toList();
 
-            final balanceMap = {for (final b in balances) b.accountId: b.balance};
+            final balanceMap = {
+              for (final b in balances) b.accountId: b.balance
+            };
 
             var totalBalance = 0;
             for (final a in activeAccounts) {
@@ -56,11 +59,15 @@ class FinanceAccountsTab extends ConsumerWidget {
                   const Center(
                     child: Column(
                       children: [
-                        Icon(Icons.account_balance_wallet_outlined, size: 64, color: Colors.grey),
+                        Icon(Icons.account_balance_wallet_outlined,
+                            size: 64, color: Colors.grey),
                         SizedBox(height: 16),
                         Text(
                           'Belum Ada Rekening',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey),
                         ),
                         SizedBox(height: 8),
                         Text(
@@ -80,8 +87,10 @@ class FinanceAccountsTab extends ConsumerWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E7D32),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -90,9 +99,12 @@ class FinanceAccountsTab extends ConsumerWidget {
             }
 
             // Kelompokkan per jenis (Tunai, Bank, E-Wallet)
-            final cashAccounts = activeAccounts.where((a) => a.kind == 'cash').toList();
-            final bankAccounts = activeAccounts.where((a) => a.kind == 'bank').toList();
-            final ewalletAccounts = activeAccounts.where((a) => a.kind == 'ewallet').toList();
+            final cashAccounts =
+                activeAccounts.where((a) => a.kind == 'cash').toList();
+            final bankAccounts =
+                activeAccounts.where((a) => a.kind == 'bank').toList();
+            final ewalletAccounts =
+                activeAccounts.where((a) => a.kind == 'ewallet').toList();
 
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
@@ -120,7 +132,8 @@ class FinanceAccountsTab extends ConsumerWidget {
                         children: [
                           const Text(
                             'Total Saldo Semua Rekening',
-                            style: TextStyle(fontSize: 12, color: Colors.black54),
+                            style:
+                                TextStyle(fontSize: 12, color: Colors.black54),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -136,12 +149,15 @@ class FinanceAccountsTab extends ConsumerWidget {
                       ElevatedButton.icon(
                         onPressed: () => _openAccountSheet(context),
                         icon: const Icon(Icons.add, size: 16),
-                        label: const Text('Tambah', style: TextStyle(fontSize: 12)),
+                        label: const Text('Tambah',
+                            style: TextStyle(fontSize: 12)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                     ],
@@ -151,22 +167,30 @@ class FinanceAccountsTab extends ConsumerWidget {
 
                 // Group 1: Kas Tunai
                 if (cashAccounts.isNotEmpty) ...[
-                  _buildAccountGroupHeader('Tunai (Cash)', Icons.payments_outlined, Colors.green.shade700),
-                  ...cashAccounts.map((a) => _buildAccountTile(context, ref, a, balanceMap[a.id] ?? a.openingBalance)),
+                  _buildAccountGroupHeader('Tunai (Cash)',
+                      Icons.payments_outlined, Colors.green.shade700),
+                  ...cashAccounts.map((a) => _buildAccountTile(
+                      context, ref, a, balanceMap[a.id] ?? a.openingBalance)),
                   const SizedBox(height: 16),
                 ],
 
                 // Group 2: Bank
                 if (bankAccounts.isNotEmpty) ...[
-                  _buildAccountGroupHeader('Bank Transfer', Icons.account_balance_outlined, Colors.blue.shade700),
-                  ...bankAccounts.map((a) => _buildAccountTile(context, ref, a, balanceMap[a.id] ?? a.openingBalance)),
+                  _buildAccountGroupHeader('Bank Transfer',
+                      Icons.account_balance_outlined, Colors.blue.shade700),
+                  ...bankAccounts.map((a) => _buildAccountTile(
+                      context, ref, a, balanceMap[a.id] ?? a.openingBalance)),
                   const SizedBox(height: 16),
                 ],
 
                 // Group 3: E-Wallet
                 if (ewalletAccounts.isNotEmpty) ...[
-                  _buildAccountGroupHeader('E-Wallet', Icons.account_balance_wallet_outlined, Colors.purple.shade700),
-                  ...ewalletAccounts.map((a) => _buildAccountTile(context, ref, a, balanceMap[a.id] ?? a.openingBalance)),
+                  _buildAccountGroupHeader(
+                      'E-Wallet',
+                      Icons.account_balance_wallet_outlined,
+                      Colors.purple.shade700),
+                  ...ewalletAccounts.map((a) => _buildAccountTile(
+                      context, ref, a, balanceMap[a.id] ?? a.openingBalance)),
                   const SizedBox(height: 16),
                 ],
 
@@ -175,15 +199,20 @@ class FinanceAccountsTab extends ConsumerWidget {
                   ExpansionTile(
                     title: Text(
                       'Rekening Diarsipkan (${archivedAccounts.length})',
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.grey.shade600),
                     ),
                     children: archivedAccounts.map((a) {
                       return ListTile(
-                        title: Text(a.name, style: const TextStyle(decoration: TextDecoration.lineThrough)),
+                        title: Text(a.name,
+                            style: const TextStyle(
+                                decoration: TextDecoration.lineThrough)),
                         subtitle: Text(a.kindText),
                         trailing: TextButton(
                           onPressed: () async {
-                            await ref.read(ledgerServiceProvider).saveAccount(a.copyWith(isActive: true));
+                            await ref
+                                .read(ledgerServiceProvider)
+                                .saveAccount(a.copyWith(isActive: true));
                             ref.invalidate(accountsProvider);
                             ref.invalidate(accountBalancesProvider);
                           },
@@ -256,11 +285,14 @@ class FinanceAccountsTab extends ConsumerWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
-                    color: balance >= 0 ? const Color(0xFF0F172A) : Colors.red.shade700,
+                    color: balance >= 0
+                        ? const Color(0xFF0F172A)
+                        : Colors.red.shade700,
                   ),
                 ),
                 InkWell(
-                  onTap: () => _showReconcileDialog(context, ref, account, balance),
+                  onTap: () =>
+                      _showReconcileDialog(context, ref, account, balance),
                   child: const Text(
                     'Cek Saldo',
                     style: TextStyle(
@@ -280,13 +312,16 @@ class FinanceAccountsTab extends ConsumerWidget {
                 if (val == 'edit') {
                   _openAccountSheet(context, account: account);
                 } else if (val == 'archive') {
-                  await ref.read(ledgerServiceProvider).archiveAccount(account.id);
+                  await ref
+                      .read(ledgerServiceProvider)
+                      .archiveAccount(account.id);
                   ref.invalidate(accountsProvider);
                   ref.invalidate(accountBalancesProvider);
                 }
               },
               itemBuilder: (ctx) => [
-                const PopupMenuItem(value: 'edit', child: Text('Ubah Rekening')),
+                const PopupMenuItem(
+                    value: 'edit', child: Text('Ubah Rekening')),
                 const PopupMenuItem(value: 'archive', child: Text('Arsipkan')),
               ],
             ),
@@ -314,13 +349,16 @@ class FinanceAccountsTab extends ConsumerWidget {
     Account account,
     int bookBalance,
   ) {
-    final actualController = TextEditingController(text: bookBalance.toString());
+    final actualController =
+        TextEditingController(text: bookBalance.toString());
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
-          final actual = int.tryParse(actualController.text.replaceAll('.', '')) ?? bookBalance;
+          final actual =
+              int.tryParse(actualController.text.replaceAll('.', '')) ??
+                  bookBalance;
           final diff = actual - bookBalance;
 
           return AlertDialog(
@@ -346,22 +384,34 @@ class FinanceAccountsTab extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: diff == 0 ? Colors.green.shade50 : (diff > 0 ? Colors.blue.shade50 : Colors.red.shade50),
+                    color: diff == 0
+                        ? Colors.green.shade50
+                        : (diff > 0 ? Colors.blue.shade50 : Colors.red.shade50),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: diff == 0 ? Colors.green.shade200 : (diff > 0 ? Colors.blue.shade200 : Colors.red.shade200),
+                      color: diff == 0
+                          ? Colors.green.shade200
+                          : (diff > 0
+                              ? Colors.blue.shade200
+                              : Colors.red.shade200),
                     ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Selisih:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      const Text('Selisih:',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13)),
                       Text(
                         (diff > 0 ? '+' : '') + currency.format(diff),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
-                          color: diff == 0 ? Colors.green.shade800 : (diff > 0 ? Colors.blue.shade800 : Colors.red.shade800),
+                          color: diff == 0
+                              ? Colors.green.shade800
+                              : (diff > 0
+                                  ? Colors.blue.shade800
+                                  : Colors.red.shade800),
                         ),
                       ),
                     ],

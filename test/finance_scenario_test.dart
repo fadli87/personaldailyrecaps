@@ -162,8 +162,10 @@ void main() {
     final balanceMap = {for (final b in balances) b.name: b.balance};
 
     expect(balanceMap['Tunai'], 80000, reason: 'Tunai 100k - 20k = 80k');
-    expect(balanceMap['BCA'], 900000, reason: 'BCA 500k + 300k + 100k (transfer) = 900k');
-    expect(balanceMap['Dana'], 50000, reason: 'Dana 0 + 150k - 100k (transfer) = 50k');
+    expect(balanceMap['BCA'], 900000,
+        reason: 'BCA 500k + 300k + 100k (transfer) = 900k');
+    expect(balanceMap['Dana'], 50000,
+        reason: 'Dana 0 + 150k - 100k (transfer) = 50k');
 
     final pools = await ledgerService.getPoolBalances();
     expect(pools['utama'], 380000, reason: 'Utama: 300k - 20k + 100k = 380k');
@@ -176,8 +178,10 @@ void main() {
     // --- VERIFIKASI SOFT DELETE TRANSAKSI #1 ---
     await ledgerService.softDeleteTransaction('tx_1');
     final balancesAfterDelete = await ledgerService.getAccountBalances();
-    final bcaAfterDelete = balancesAfterDelete.firstWhere((b) => b.name == 'BCA').balance;
-    expect(bcaAfterDelete, 600000, reason: 'BCA kembali ke 600k setelah tx_1 soft-deleted');
+    final bcaAfterDelete =
+        balancesAfterDelete.firstWhere((b) => b.name == 'BCA').balance;
+    expect(bcaAfterDelete, 600000,
+        reason: 'BCA kembali ke 600k setelah tx_1 soft-deleted');
 
     // Pulihkan kembali tx_1 untuk pengujian alokasi servis
     await ledgerService.updateTransaction(t1.copyWith(deletedAt: null));

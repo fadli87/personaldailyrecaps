@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../providers/finance_providers.dart';
 import '../../services/sync_service.dart';
 import '../home_screen.dart' show currency;
+import '../fuel_filling_sheet.dart';
 import 'transaction_form_sheet.dart';
 import 'vehicle_log_sheet.dart';
 
@@ -124,7 +125,8 @@ class FinanceSummaryTab extends ConsumerWidget {
 
                   // 2. Komisi Belum Cair (Jika ada)
                   if (summary.pendingIncome > 0) ...[
-                    _buildPendingIncomeCard(context, ref, summary.pendingIncome),
+                    _buildPendingIncomeCard(
+                        context, ref, summary.pendingIncome),
                     const SizedBox(height: 16),
                   ],
 
@@ -187,7 +189,8 @@ class FinanceSummaryTab extends ConsumerWidget {
               InkWell(
                 onTap: () => onNavigateToTab(2), // Buka tab rekening
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.white24,
                     borderRadius: BorderRadius.circular(12),
@@ -197,9 +200,13 @@ class FinanceSummaryTab extends ConsumerWidget {
                     children: [
                       Text(
                         'Rekening',
-                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold),
                       ),
-                      Icon(Icons.arrow_forward_ios, color: Colors.white, size: 10),
+                      Icon(Icons.arrow_forward_ios,
+                          color: Colors.white, size: 10),
                     ],
                   ),
                 ),
@@ -208,8 +215,10 @@ class FinanceSummaryTab extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           poolAsync.when(
-            loading: () => const Text('Memuat...', style: TextStyle(color: Colors.white)),
-            error: (e, _) => Text('Error: $e', style: const TextStyle(color: Colors.white)),
+            loading: () =>
+                const Text('Memuat...', style: TextStyle(color: Colors.white)),
+            error: (e, _) =>
+                Text('Error: $e', style: const TextStyle(color: Colors.white)),
             data: (pools) {
               final utama = pools['utama'] ?? 0;
               final tambahan = pools['tambahan'] ?? 0;
@@ -224,7 +233,8 @@ class FinanceSummaryTab extends ConsumerWidget {
                           children: [
                             const Text(
                               'Kas Utama (Kanvasing)',
-                              style: TextStyle(color: Colors.white70, fontSize: 12),
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 12),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -246,7 +256,8 @@ class FinanceSummaryTab extends ConsumerWidget {
                           children: [
                             const Text(
                               'Kas Tambahan (Ojol)',
-                              style: TextStyle(color: Colors.white70, fontSize: 12),
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 12),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -276,7 +287,8 @@ class FinanceSummaryTab extends ConsumerWidget {
                         children: [
                           const Text(
                             'Total Likuiditas Semua Rekening',
-                            style: TextStyle(color: Colors.white70, fontSize: 12),
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 12),
                           ),
                           Text(
                             currency.format(total),
@@ -338,19 +350,7 @@ class FinanceSummaryTab extends ConsumerWidget {
             color: Colors.orange.shade800,
             label: 'Catat BBM',
             onTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.white,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                ),
-                builder: (_) => const TransactionFormSheet(
-                  initialKind: 'expense',
-                  initialActivity: 'kendaraan',
-                  initialPool: 'utama',
-                ),
-              );
+              showFuelFillingSheet(context, null);
             },
           ),
         ),
@@ -367,7 +367,8 @@ class FinanceSummaryTab extends ConsumerWidget {
                 if (vehicles.isEmpty) {
                   onNavigateToTab(3); // Arahkan ke tab motor
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Tambahkan motor terlebih dahulu.')),
+                    const SnackBar(
+                        content: Text('Tambahkan motor terlebih dahulu.')),
                   );
                   return;
                 }
@@ -376,7 +377,8 @@ class FinanceSummaryTab extends ConsumerWidget {
                   isScrollControlled: true,
                   backgroundColor: Colors.white,
                   shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(24)),
                   ),
                   builder: (_) => VehicleLogSheet(vehicle: vehicles.first),
                 );
@@ -405,7 +407,7 @@ class FinanceSummaryTab extends ConsumerWidget {
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -443,7 +445,7 @@ class FinanceSummaryTab extends ConsumerWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -464,7 +466,8 @@ class FinanceSummaryTab extends ConsumerWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.info_outline, size: 20, color: Colors.blueGrey),
+                icon: const Icon(Icons.info_outline,
+                    size: 20, color: Colors.blueGrey),
                 onPressed: () {
                   showDialog(
                     context: context,
@@ -499,12 +502,14 @@ class FinanceSummaryTab extends ConsumerWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900, size: 20),
+                  Icon(Icons.warning_amber_rounded,
+                      color: Colors.amber.shade900, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Biaya motor belum teralokasi: ${currency.format(summary.unallocatedVehicleCost)} (karena km bulan ini belum dicatat di tab Motor).',
-                      style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.amber.shade900),
                     ),
                   ),
                 ],
@@ -569,12 +574,14 @@ class FinanceSummaryTab extends ConsumerWidget {
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                  decoration:
+                      BoxDecoration(color: color, shape: BoxShape.circle),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   label,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ],
             ),
@@ -583,7 +590,8 @@ class FinanceSummaryTab extends ConsumerWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
-                color: profit >= 0 ? Colors.green.shade700 : Colors.red.shade700,
+                color:
+                    profit >= 0 ? Colors.green.shade700 : Colors.red.shade700,
               ),
             ),
           ],
@@ -604,7 +612,8 @@ class FinanceSummaryTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildPendingIncomeCard(BuildContext context, WidgetRef ref, int pendingAmount) {
+  Widget _buildPendingIncomeCard(
+      BuildContext context, WidgetRef ref, int pendingAmount) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -643,14 +652,17 @@ class FinanceSummaryTab extends ConsumerWidget {
             ],
           ),
           ElevatedButton(
-            onPressed: () => onNavigateToTab(1), // Buka tab transaksi untuk melihat pending
+            onPressed: () =>
+                onNavigateToTab(1), // Buka tab transaksi untuk melihat pending
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.amber.shade800,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Lihat Transaksi', style: TextStyle(fontSize: 12)),
+            child:
+                const Text('Lihat Transaksi', style: TextStyle(fontSize: 12)),
           ),
         ],
       ),
@@ -670,7 +682,7 @@ class FinanceSummaryTab extends ConsumerWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -693,7 +705,9 @@ class FinanceSummaryTab extends ConsumerWidget {
               Expanded(
                 child: _buildMetricItem(
                   title: 'Biaya Motor/km',
-                  value: biayaPerKm != null ? 'Rp ${biayaPerKm.toStringAsFixed(0)}/km' : '-',
+                  value: biayaPerKm != null
+                      ? 'Rp ${biayaPerKm.toStringAsFixed(0)}/km'
+                      : '-',
                   icon: Icons.two_wheeler,
                   color: Colors.orange.shade800,
                 ),
@@ -701,7 +715,9 @@ class FinanceSummaryTab extends ConsumerWidget {
               Expanded(
                 child: _buildMetricItem(
                   title: 'Ojol/km',
-                  value: ojolPerKm != null ? 'Rp ${ojolPerKm.toStringAsFixed(0)}/km' : '-',
+                  value: ojolPerKm != null
+                      ? 'Rp ${ojolPerKm.toStringAsFixed(0)}/km'
+                      : '-',
                   icon: Icons.near_me,
                   color: Colors.blue.shade700,
                 ),
@@ -709,7 +725,9 @@ class FinanceSummaryTab extends ConsumerWidget {
               Expanded(
                 child: _buildMetricItem(
                   title: 'Ojol/Jam',
-                  value: ojolPerHour != null ? 'Rp ${ojolPerHour.toStringAsFixed(0)}/jam' : '-',
+                  value: ojolPerHour != null
+                      ? 'Rp ${ojolPerHour.toStringAsFixed(0)}/jam'
+                      : '-',
                   icon: Icons.timer,
                   color: Colors.teal.shade700,
                 ),
@@ -760,7 +778,8 @@ class FinanceSummaryTab extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.history_toggle_off, size: 18, color: Colors.blueGrey.shade700),
+                  Icon(Icons.history_toggle_off,
+                      size: 18, color: Colors.blueGrey.shade700),
                   const SizedBox(width: 6),
                   const Text(
                     'Ojol (Rekap Harian Lama)',
@@ -780,7 +799,9 @@ class FinanceSummaryTab extends ConsumerWidget {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 15,
-              color: legacyOjolNetEarning >= 0 ? Colors.green.shade800 : Colors.red.shade800,
+              color: legacyOjolNetEarning >= 0
+                  ? Colors.green.shade800
+                  : Colors.red.shade800,
             ),
           ),
         ],
@@ -788,7 +809,8 @@ class FinanceSummaryTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildServiceDueCard(BuildContext context, AsyncValue<List<dynamic>> serviceDueAsync) {
+  Widget _buildServiceDueCard(
+      BuildContext context, AsyncValue<List<dynamic>> serviceDueAsync) {
     return serviceDueAsync.when(
       loading: () => const SizedBox(),
       error: (_, __) => const SizedBox(),
@@ -825,14 +847,16 @@ class FinanceSummaryTab extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         urgentItems.map((u) => u.item.name).join(', '),
-                        style: TextStyle(fontSize: 12, color: Colors.red.shade800),
+                        style:
+                            TextStyle(fontSize: 12, color: Colors.red.shade800),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.red),
+                const Icon(Icons.arrow_forward_ios,
+                    size: 14, color: Colors.red),
               ],
             ),
           ),

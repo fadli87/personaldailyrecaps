@@ -86,7 +86,8 @@ class _ServiceItemSheetState extends ConsumerState<ServiceItemSheet> {
     if (km == null && days == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Isi minimal salah satu interval: Interval Km atau Interval Hari.'),
+          content: Text(
+              'Isi minimal salah satu interval: Interval Km atau Interval Hari.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -181,7 +182,9 @@ class _ServiceItemSheetState extends ConsumerState<ServiceItemSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isEdit ? 'Ubah Item Servis' : 'Tambah Item Servis: ${widget.vehicle.name}',
+                    isEdit
+                        ? 'Ubah Item Servis'
+                        : 'Tambah Item Servis: ${widget.vehicle.name}',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -216,11 +219,14 @@ class _ServiceItemSheetState extends ConsumerState<ServiceItemSheet> {
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Nama Item Servis',
-                  hintText: 'Misal: Oli Mesin, Oli Gardan, Busi, Filter Udara, Kampas Rem',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  hintText:
+                      'Misal: Oli Mesin, Oli Gardan, Busi, Filter Udara, Kampas Rem',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Nama item servis wajib diisi';
+                  if (val == null || val.trim().isEmpty)
+                    return 'Nama item servis wajib diisi';
                   return null;
                 },
               ),
@@ -238,7 +244,8 @@ class _ServiceItemSheetState extends ConsumerState<ServiceItemSheet> {
                         labelText: 'Interval Km',
                         suffixText: 'km',
                         hintText: 'Mis. 3000',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -252,7 +259,8 @@ class _ServiceItemSheetState extends ConsumerState<ServiceItemSheet> {
                         labelText: 'Interval Hari',
                         suffixText: 'hari',
                         hintText: 'Mis. 60 / 90',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -275,7 +283,8 @@ class _ServiceItemSheetState extends ConsumerState<ServiceItemSheet> {
                       onTap: _pickLastDate,
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey.shade400),
                           borderRadius: BorderRadius.circular(12),
@@ -285,14 +294,18 @@ class _ServiceItemSheetState extends ConsumerState<ServiceItemSheet> {
                           children: [
                             Text(
                               _lastServiceDate != null
-                                  ? DateFormat('d MMM yyyy', 'id_ID').format(_lastServiceDate!)
+                                  ? DateFormat('d MMM yyyy', 'id_ID')
+                                      .format(_lastServiceDate!)
                                   : 'Pilih Tanggal',
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
-                                color: _lastServiceDate != null ? Colors.black87 : Colors.grey,
+                                color: _lastServiceDate != null
+                                    ? Colors.black87
+                                    : Colors.grey,
                               ),
                             ),
-                            const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2E7D32)),
+                            const Icon(Icons.calendar_today,
+                                size: 18, color: Color(0xFF2E7D32)),
                           ],
                         ),
                       ),
@@ -303,11 +316,13 @@ class _ServiceItemSheetState extends ConsumerState<ServiceItemSheet> {
                     flex: 5,
                     child: TextFormField(
                       controller: _lastOdoController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: 'Odometer Terakhir',
                         suffixText: 'km',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -325,7 +340,8 @@ class _ServiceItemSheetState extends ConsumerState<ServiceItemSheet> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.build),
                   label: Text(
@@ -335,7 +351,8 @@ class _ServiceItemSheetState extends ConsumerState<ServiceItemSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),

@@ -111,8 +111,12 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
         tanggal: _tanggal,
         odometer: double.tryParse(_odometerController.text),
         cost: cost,
-        shop: _shopController.text.trim().isEmpty ? null : _shopController.text.trim(),
-        note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+        shop: _shopController.text.trim().isEmpty
+            ? null
+            : _shopController.text.trim(),
+        note: _noteController.text.trim().isEmpty
+            ? null
+            : _noteController.text.trim(),
         accountId: (_recordExpenseInLedger && cost > 0) ? _accountId : null,
         pool: (_recordExpenseInLedger && cost > 0) ? _pool : 'utama',
       );
@@ -205,13 +209,17 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                 loading: () => const LinearProgressIndicator(),
                 error: (e, _) => const SizedBox(),
                 data: (dueList) {
-                  final vehicleItems = dueList.where((d) => d.item.vehicleId == widget.vehicle.id).toList();
+                  final vehicleItems = dueList
+                      .where((d) => d.item.vehicleId == widget.vehicle.id)
+                      .toList();
                   return DropdownButtonFormField<String>(
                     value: _selectedServiceItemId,
                     decoration: InputDecoration(
                       labelText: 'Item Servis Berkala (Opsional)',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      helperText: 'Pilih untuk memperbarui tanggal & km servis terakhir',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      helperText:
+                          'Pilih untuk memperbarui tanggal & km servis terakhir',
                     ),
                     items: [
                       const DropdownMenuItem<String>(
@@ -225,7 +233,8 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                         );
                       }),
                     ],
-                    onChanged: (val) => setState(() => _selectedServiceItemId = val),
+                    onChanged: (val) =>
+                        setState(() => _selectedServiceItemId = val),
                   );
                 },
               ),
@@ -240,7 +249,8 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                       onTap: _pickDate,
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey.shade400),
                           borderRadius: BorderRadius.circular(12),
@@ -249,10 +259,13 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              DateFormat('d MMM yyyy', 'id_ID').format(_tanggal),
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              DateFormat('d MMM yyyy', 'id_ID')
+                                  .format(_tanggal),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             ),
-                            const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2E7D32)),
+                            const Icon(Icons.calendar_today,
+                                size: 18, color: Color(0xFF2E7D32)),
                           ],
                         ),
                       ),
@@ -263,11 +276,13 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                     flex: 5,
                     child: TextFormField(
                       controller: _odometerController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: 'Odometer (km)',
                         suffixText: 'km',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -287,7 +302,8 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                       decoration: InputDecoration(
                         labelText: 'Biaya Servis (Rp)',
                         prefixText: 'Rp ',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
@@ -300,7 +316,8 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                       decoration: InputDecoration(
                         labelText: 'Nama Bengkel',
                         hintText: 'Mis. Yamaha Surya',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
@@ -309,7 +326,9 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
               const SizedBox(height: 16),
 
               // Integrasi Pembayaran ke Ledger
-              if ((int.tryParse(_costController.text.replaceAll('.', '')) ?? 0) > 0) ...[
+              if ((int.tryParse(_costController.text.replaceAll('.', '')) ??
+                      0) >
+                  0) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -325,12 +344,14 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                         children: [
                           const Text(
                             'Catat sebagai pengeluaran di Keuangan',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           Switch(
                             value: _recordExpenseInLedger,
                             activeColor: const Color(0xFF2E7D32),
-                            onChanged: (val) => setState(() => _recordExpenseInLedger = val),
+                            onChanged: (val) =>
+                                setState(() => _recordExpenseInLedger = val),
                           ),
                         ],
                       ),
@@ -340,8 +361,10 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                           loading: () => const LinearProgressIndicator(),
                           error: (_, __) => const SizedBox(),
                           data: (accounts) {
-                            final activeAccounts = accounts.where((a) => a.isActive).toList();
-                            if (activeAccounts.isNotEmpty && _accountId == null) {
+                            final activeAccounts =
+                                accounts.where((a) => a.isActive).toList();
+                            if (activeAccounts.isNotEmpty &&
+                                _accountId == null) {
                               _accountId = activeAccounts.first.id;
                             }
                             return Row(
@@ -349,7 +372,8 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                                 Expanded(
                                   flex: 6,
                                   child: DropdownButtonFormField<String>(
-                                    value: activeAccounts.any((a) => a.id == _accountId)
+                                    value: activeAccounts
+                                            .any((a) => a.id == _accountId)
                                         ? _accountId
                                         : null,
                                     decoration: InputDecoration(
@@ -363,10 +387,12 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                                     items: activeAccounts.map((a) {
                                       return DropdownMenuItem(
                                         value: a.id,
-                                        child: Text('${a.name} (${a.kindText})'),
+                                        child:
+                                            Text('${a.name} (${a.kindText})'),
                                       );
                                     }).toList(),
-                                    onChanged: (val) => setState(() => _accountId = val),
+                                    onChanged: (val) =>
+                                        setState(() => _accountId = val),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -383,10 +409,14 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                                       ),
                                     ),
                                     items: const [
-                                      DropdownMenuItem(value: 'utama', child: Text('Utama')),
-                                      DropdownMenuItem(value: 'tambahan', child: Text('Tambahan')),
+                                      DropdownMenuItem(
+                                          value: 'utama', child: Text('Utama')),
+                                      DropdownMenuItem(
+                                          value: 'tambahan',
+                                          child: Text('Tambahan')),
                                     ],
-                                    onChanged: (val) => setState(() => _pool = val ?? 'utama'),
+                                    onChanged: (val) =>
+                                        setState(() => _pool = val ?? 'utama'),
                                   ),
                                 ),
                               ],
@@ -407,7 +437,8 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                 decoration: InputDecoration(
                   labelText: 'Deskripsi Pengerjaan / Part yang Diganti',
                   hintText: 'Mis. Ganti oli mesin Yamalube + kuras radiator',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 24),
@@ -422,7 +453,8 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.check_circle_outline),
                   label: const Text(
@@ -432,7 +464,8 @@ class _ServiceFormSheetState extends ConsumerState<ServiceFormSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),

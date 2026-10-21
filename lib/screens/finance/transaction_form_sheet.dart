@@ -154,7 +154,8 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
       if (_accountId == _toAccountId && _pool == _toPool) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Rekening dan kas tujuan tidak boleh sama persis dengan sumber.'),
+            content: Text(
+                'Rekening dan kas tujuan tidak boleh sama persis dengan sumber.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -176,10 +177,16 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
               pool: _pool,
               toPool: _kind == 'transfer' ? _toPool : null,
               activity: _kind == 'transfer' ? 'pribadi' : _activity,
-              category: _categoryController.text.trim().isEmpty ? null : _categoryController.text.trim(),
-              vehicleId: (_activity == 'kendaraan' && _kind != 'transfer') ? _vehicleId : null,
+              category: _categoryController.text.trim().isEmpty
+                  ? null
+                  : _categoryController.text.trim(),
+              vehicleId: (_activity == 'kendaraan' && _kind != 'transfer')
+                  ? _vehicleId
+                  : null,
               status: (_kind == 'income' && _isPending) ? 'pending' : 'cleared',
-              note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+              note: _noteController.text.trim().isEmpty
+                  ? null
+                  : _noteController.text.trim(),
             )
           : LedgerTransaction.create(
               tanggal: _tanggal,
@@ -190,10 +197,16 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
               pool: _pool,
               toPool: _kind == 'transfer' ? _toPool : null,
               activity: _kind == 'transfer' ? 'pribadi' : _activity,
-              category: _categoryController.text.trim().isEmpty ? null : _categoryController.text.trim(),
-              vehicleId: (_activity == 'kendaraan' && _kind != 'transfer') ? _vehicleId : null,
+              category: _categoryController.text.trim().isEmpty
+                  ? null
+                  : _categoryController.text.trim(),
+              vehicleId: (_activity == 'kendaraan' && _kind != 'transfer')
+                  ? _vehicleId
+                  : null,
               status: (_kind == 'income' && _isPending) ? 'pending' : 'cleared',
-              note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+              note: _noteController.text.trim().isEmpty
+                  ? null
+                  : _noteController.text.trim(),
             );
 
       if (widget.existingTransaction != null) {
@@ -204,10 +217,12 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
 
       // Simpan preferensi terakhir
       final prefs = await SharedPreferences.getInstance();
-      if (_accountId != null) await prefs.setString('last_ledger_account_id', _accountId!);
+      if (_accountId != null)
+        await prefs.setString('last_ledger_account_id', _accountId!);
       await prefs.setString('last_ledger_pool', _pool);
       await prefs.setString('last_ledger_activity', _activity);
-      if (_vehicleId != null) await prefs.setString('last_ledger_vehicle_id', _vehicleId!);
+      if (_vehicleId != null)
+        await prefs.setString('last_ledger_vehicle_id', _vehicleId!);
 
       // Segarkan provider terkait
       ref.invalidate(accountBalancesProvider);
@@ -339,7 +354,8 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                       onTap: _pickDate,
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey.shade400),
                           borderRadius: BorderRadius.circular(12),
@@ -348,10 +364,13 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              DateFormat('d MMM yyyy', 'id_ID').format(_tanggal),
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              DateFormat('d MMM yyyy', 'id_ID')
+                                  .format(_tanggal),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             ),
-                            const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2E7D32)),
+                            const Icon(Icons.calendar_today,
+                                size: 18, color: Color(0xFF2E7D32)),
                           ],
                         ),
                       ),
@@ -367,10 +386,12 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                       decoration: InputDecoration(
                         labelText: 'Nominal (Rp)',
                         prefixText: 'Rp ',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty) return 'Wajib diisi';
+                        if (val == null || val.trim().isEmpty)
+                          return 'Wajib diisi';
                         final n = int.tryParse(val.replaceAll('.', ''));
                         if (n == null || n <= 0) return 'Nominal > 0';
                         return null;
@@ -386,7 +407,8 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                 loading: () => const LinearProgressIndicator(),
                 error: (e, _) => Text('Gagal memuat rekening: $e'),
                 data: (accounts) {
-                  final activeAccounts = accounts.where((a) => a.isActive).toList();
+                  final activeAccounts =
+                      accounts.where((a) => a.isActive).toList();
                   if (activeAccounts.isNotEmpty && _accountId == null) {
                     _accountId = activeAccounts.first.id;
                   }
@@ -395,10 +417,15 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                       Expanded(
                         flex: 6,
                         child: DropdownButtonFormField<String>(
-                          value: activeAccounts.any((a) => a.id == _accountId) ? _accountId : null,
+                          value: activeAccounts.any((a) => a.id == _accountId)
+                              ? _accountId
+                              : null,
                           decoration: InputDecoration(
-                            labelText: _kind == 'transfer' ? 'Dari Rekening' : 'Rekening',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            labelText: _kind == 'transfer'
+                                ? 'Dari Rekening'
+                                : 'Rekening',
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                           items: activeAccounts.map((a) {
                             return DropdownMenuItem(
@@ -407,7 +434,8 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                             );
                           }).toList(),
                           onChanged: (val) => setState(() => _accountId = val),
-                          validator: (val) => val == null ? 'Pilih rekening' : null,
+                          validator: (val) =>
+                              val == null ? 'Pilih rekening' : null,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -417,13 +445,17 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                           value: _pool,
                           decoration: InputDecoration(
                             labelText: _kind == 'transfer' ? 'Dari Kas' : 'Kas',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                           items: const [
-                            DropdownMenuItem(value: 'utama', child: Text('Utama')),
-                            DropdownMenuItem(value: 'tambahan', child: Text('Tambahan')),
+                            DropdownMenuItem(
+                                value: 'utama', child: Text('Utama')),
+                            DropdownMenuItem(
+                                value: 'tambahan', child: Text('Tambahan')),
                           ],
-                          onChanged: (val) => setState(() => _pool = val ?? 'utama'),
+                          onChanged: (val) =>
+                              setState(() => _pool = val ?? 'utama'),
                         ),
                       ),
                     ],
@@ -438,7 +470,8 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                   loading: () => const SizedBox(),
                   error: (_, __) => const SizedBox(),
                   data: (accounts) {
-                    final activeAccounts = accounts.where((a) => a.isActive).toList();
+                    final activeAccounts =
+                        accounts.where((a) => a.isActive).toList();
                     if (activeAccounts.isNotEmpty && _toAccountId == null) {
                       _toAccountId = activeAccounts.first.id;
                     }
@@ -447,10 +480,14 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                         Expanded(
                           flex: 6,
                           child: DropdownButtonFormField<String>(
-                            value: activeAccounts.any((a) => a.id == _toAccountId) ? _toAccountId : null,
+                            value:
+                                activeAccounts.any((a) => a.id == _toAccountId)
+                                    ? _toAccountId
+                                    : null,
                             decoration: InputDecoration(
                               labelText: 'Ke Rekening',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12)),
                             ),
                             items: activeAccounts.map((a) {
                               return DropdownMenuItem(
@@ -458,8 +495,10 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                                 child: Text('${a.name} (${a.kindText})'),
                               );
                             }).toList(),
-                            onChanged: (val) => setState(() => _toAccountId = val),
-                            validator: (val) => val == null ? 'Pilih tujuan' : null,
+                            onChanged: (val) =>
+                                setState(() => _toAccountId = val),
+                            validator: (val) =>
+                                val == null ? 'Pilih tujuan' : null,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -469,13 +508,17 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                             value: _toPool ?? 'utama',
                             decoration: InputDecoration(
                               labelText: 'Ke Kas',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12)),
                             ),
                             items: const [
-                              DropdownMenuItem(value: 'utama', child: Text('Utama')),
-                              DropdownMenuItem(value: 'tambahan', child: Text('Tambahan')),
+                              DropdownMenuItem(
+                                  value: 'utama', child: Text('Utama')),
+                              DropdownMenuItem(
+                                  value: 'tambahan', child: Text('Tambahan')),
                             ],
-                            onChanged: (val) => setState(() => _toPool = val ?? 'utama'),
+                            onChanged: (val) =>
+                                setState(() => _toPool = val ?? 'utama'),
                           ),
                         ),
                       ],
@@ -495,15 +538,21 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                         value: _activity,
                         decoration: InputDecoration(
                           labelText: 'Aktivitas',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'kanvasing', child: Text('Kanvasing')),
+                          DropdownMenuItem(
+                              value: 'kanvasing', child: Text('Kanvasing')),
                           DropdownMenuItem(value: 'ojol', child: Text('Ojol')),
-                          DropdownMenuItem(value: 'pribadi', child: Text('Pribadi')),
-                          DropdownMenuItem(value: 'kendaraan', child: Text('Kendaraan (Bersama)')),
+                          DropdownMenuItem(
+                              value: 'pribadi', child: Text('Pribadi')),
+                          DropdownMenuItem(
+                              value: 'kendaraan',
+                              child: Text('Kendaraan (Bersama)')),
                         ],
-                        onChanged: (val) => setState(() => _activity = val ?? 'kanvasing'),
+                        onChanged: (val) =>
+                            setState(() => _activity = val ?? 'kanvasing'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -513,8 +562,11 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                         controller: _categoryController,
                         decoration: InputDecoration(
                           labelText: 'Kategori',
-                          hintText: _activity == 'kendaraan' ? 'bbm / servis' : 'komisi / makan',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          hintText: _activity == 'kendaraan'
+                              ? 'bbm / servis'
+                              : 'komisi / makan',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -528,21 +580,29 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                     loading: () => const LinearProgressIndicator(),
                     error: (e, _) => Text('Gagal memuat motor: $e'),
                     data: (vehicles) {
-                      final activeVehicles = vehicles.where((v) => v.isActive).toList();
+                      final activeVehicles =
+                          vehicles.where((v) => v.isActive).toList();
                       if (activeVehicles.isNotEmpty && _vehicleId == null) {
                         _vehicleId = activeVehicles.first.id;
                       }
                       return DropdownButtonFormField<String>(
-                        value: activeVehicles.any((v) => v.id == _vehicleId) ? _vehicleId : null,
+                        value: activeVehicles.any((v) => v.id == _vehicleId)
+                            ? _vehicleId
+                            : null,
                         decoration: InputDecoration(
                           labelText: 'Motor Terkait',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          helperText: 'Biaya motor akan dialokasikan menurut km aktivitas',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          helperText:
+                              'Biaya motor akan dialokasikan menurut km aktivitas',
                         ),
                         items: activeVehicles.map((v) {
                           return DropdownMenuItem(
                             value: v.id,
-                            child: Text(v.name + (v.plateHint != null ? ' (${v.plateHint})' : '')),
+                            child: Text(v.name +
+                                (v.plateHint != null
+                                    ? ' (${v.plateHint})'
+                                    : '')),
                           );
                         }).toList(),
                         onChanged: (val) => setState(() => _vehicleId = val),
@@ -556,22 +616,28 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                 if (_kind == 'income') ...[
                   Container(
                     decoration: BoxDecoration(
-                      color: _isPending ? Colors.amber.shade50 : Colors.grey.shade50,
+                      color: _isPending
+                          ? Colors.amber.shade50
+                          : Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _isPending ? Colors.amber.shade400 : Colors.grey.shade300,
+                        color: _isPending
+                            ? Colors.amber.shade400
+                            : Colors.grey.shade300,
                       ),
                     ),
                     child: SwitchListTile(
                       title: const Text(
                         'Komisi Belum Cair (Pending)',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14),
                       ),
                       subtitle: Text(
                         _isPending
                             ? 'Tidak masuk saldo rekening hingga ditandai cair.'
                             : 'Langsung masuk saldo rekening (cleared).',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade700),
                       ),
                       value: _isPending,
                       activeColor: Colors.amber.shade800,
@@ -588,7 +654,8 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   labelText: 'Catatan (Opsional)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 24),
@@ -603,7 +670,8 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.save),
                   label: Text(
@@ -613,7 +681,8 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),

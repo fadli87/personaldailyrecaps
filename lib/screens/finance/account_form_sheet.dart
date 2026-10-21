@@ -45,7 +45,8 @@ class _AccountFormSheetState extends ConsumerState<AccountFormSheet> {
   Future<void> _saveAccount() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final balance = int.tryParse(_balanceController.text.replaceAll('.', '')) ?? 0;
+    final balance =
+        int.tryParse(_balanceController.text.replaceAll('.', '')) ?? 0;
 
     setState(() => _isLoading = true);
 
@@ -157,12 +158,14 @@ class _AccountFormSheetState extends ConsumerState<AccountFormSheet> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.shield_outlined, color: Colors.blue.shade700, size: 20),
+                    Icon(Icons.shield_outlined,
+                        color: Colors.blue.shade700, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Demi keamanan privasi, gunakan nama panggilan saja (mis. BCA, Dompet Tunai). Dilarang memasukkan nomor rekening/kartu.',
-                        style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.blue.shade900),
                       ),
                     ),
                   ],
@@ -176,10 +179,12 @@ class _AccountFormSheetState extends ConsumerState<AccountFormSheet> {
                 decoration: InputDecoration(
                   labelText: 'Nama Panggilan Rekening',
                   hintText: 'Contoh: BCA, Tunai, Dana, ShopeePay',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Nama rekening wajib diisi';
+                  if (val == null || val.trim().isEmpty)
+                    return 'Nama rekening wajib diisi';
                   return null;
                 },
               ),
@@ -211,7 +216,8 @@ class _AccountFormSheetState extends ConsumerState<AccountFormSheet> {
                     ),
                   ],
                   selected: {_kind},
-                  onSelectionChanged: (val) => setState(() => _kind = val.first),
+                  onSelectionChanged: (val) =>
+                      setState(() => _kind = val.first),
                 ),
               ),
               const SizedBox(height: 16),
@@ -225,12 +231,15 @@ class _AccountFormSheetState extends ConsumerState<AccountFormSheet> {
                   labelText: 'Saldo Awal (Rp)',
                   prefixText: 'Rp ',
                   helperText: 'Saldo sebelum pencatatan dimulai di aplikasi',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Saldo awal wajib diisi';
+                  if (val == null || val.trim().isEmpty)
+                    return 'Saldo awal wajib diisi';
                   final n = int.tryParse(val.replaceAll('.', ''));
-                  if (n == null || n < 0) return 'Saldo awal tidak boleh negatif';
+                  if (n == null || n < 0)
+                    return 'Saldo awal tidak boleh negatif';
                   return null;
                 },
               ),
@@ -246,7 +255,8 @@ class _AccountFormSheetState extends ConsumerState<AccountFormSheet> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.save),
                   label: Text(
@@ -256,7 +266,8 @@ class _AccountFormSheetState extends ConsumerState<AccountFormSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),

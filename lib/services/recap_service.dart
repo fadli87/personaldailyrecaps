@@ -583,11 +583,25 @@ class RecapService {
 
   Future<void> deleteFuelFilling(String id) async {
     final db = await LocalDb.instance.database;
-    await db.insert('pending_deletions', {
-      'table_name': 'fuel_fillings',
-      'record_id': id,
+    await db.transaction((txn) async {
+      await txn.insert('pending_deletions', {
+        'table_name': 'fuel_fillings',
+        'record_id': id,
+      });
+      await txn.delete('fuel_fillings', where: 'id = ?', whereArgs: [id]);
+
+      final now = DateTime.now().toIso8601String();
+      await txn.update(
+        'transactions',
+        {
+          'deleted_at': now,
+          'updated_at': now,
+          'is_synced': 0,
+        },
+        where: 'fuel_filling_id = ? AND deleted_at IS NULL',
+        whereArgs: [id],
+      );
     });
-    await db.delete('fuel_fillings', where: 'id = ?', whereArgs: [id]);
     _triggerSync();
   }
 

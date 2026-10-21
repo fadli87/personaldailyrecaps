@@ -120,7 +120,8 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
     final o = double.tryParse(_kmOjolController.text) ?? 0;
     final remaining = (diff - k - o);
     setState(() {
-      _kmPribadiController.text = (remaining > 0 ? remaining : 0).toStringAsFixed(1);
+      _kmPribadiController.text =
+          (remaining > 0 ? remaining : 0).toStringAsFixed(1);
     });
   }
 
@@ -145,8 +146,10 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade800),
-              child: const Text('Ya, Lanjutkan', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange.shade800),
+              child: const Text('Ya, Lanjutkan',
+                  style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -166,7 +169,9 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
               kmOjol: double.tryParse(_kmOjolController.text) ?? 0,
               kmPribadi: double.tryParse(_kmPribadiController.text) ?? 0,
               jamOnlineOjol: double.tryParse(_jamOnlineOjolController.text),
-              note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+              note: _noteController.text.trim().isEmpty
+                  ? null
+                  : _noteController.text.trim(),
             )
           : VehicleLog.create(
               vehicleId: widget.vehicle.id,
@@ -176,7 +181,9 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
               kmOjol: double.tryParse(_kmOjolController.text) ?? 0,
               kmPribadi: double.tryParse(_kmPribadiController.text) ?? 0,
               jamOnlineOjol: double.tryParse(_jamOnlineOjolController.text),
-              note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+              note: _noteController.text.trim().isEmpty
+                  ? null
+                  : _noteController.text.trim(),
             );
 
       await ledgerService.saveVehicleLog(log);
@@ -260,7 +267,8 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                       ),
                       Text(
                         'Odometer Sebelumnya: ${_previousOdo.toStringAsFixed(1)} km',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade600),
                       ),
                     ],
                   ),
@@ -281,7 +289,8 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                       onTap: _pickDate,
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey.shade400),
                           borderRadius: BorderRadius.circular(12),
@@ -290,10 +299,13 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              DateFormat('d MMM yyyy', 'id_ID').format(_tanggal),
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              DateFormat('d MMM yyyy', 'id_ID')
+                                  .format(_tanggal),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             ),
-                            const Icon(Icons.calendar_today, size: 18, color: Color(0xFF2E7D32)),
+                            const Icon(Icons.calendar_today,
+                                size: 18, color: Color(0xFF2E7D32)),
                           ],
                         ),
                       ),
@@ -304,15 +316,18 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                     flex: 6,
                     child: TextFormField(
                       controller: _odoEndController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: 'Odometer Akhir (km)',
                         suffixText: 'km',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       onChanged: (_) => setState(() {}),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty) return 'Wajib diisi';
+                        if (val == null || val.trim().isEmpty)
+                          return 'Wajib diisi';
                         final n = double.tryParse(val);
                         if (n == null || n < 0) return 'Angka tidak valid';
                         return null;
@@ -328,10 +343,14 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: hasDiscrepancy ? Colors.amber.shade50 : Colors.green.shade50,
+                    color: hasDiscrepancy
+                        ? Colors.amber.shade50
+                        : Colors.green.shade50,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: hasDiscrepancy ? Colors.amber.shade300 : Colors.green.shade200,
+                      color: hasDiscrepancy
+                          ? Colors.amber.shade300
+                          : Colors.green.shade200,
                     ),
                   ),
                   child: Column(
@@ -345,14 +364,18 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: hasDiscrepancy ? Colors.amber.shade900 : Colors.green.shade900,
+                              color: hasDiscrepancy
+                                  ? Colors.amber.shade900
+                                  : Colors.green.shade900,
                             ),
                           ),
                           Text(
                             'Tercatat: ${recorded.toStringAsFixed(1)} km',
                             style: TextStyle(
                               fontSize: 12,
-                              color: hasDiscrepancy ? Colors.amber.shade800 : Colors.green.shade800,
+                              color: hasDiscrepancy
+                                  ? Colors.amber.shade800
+                                  : Colors.green.shade800,
                             ),
                           ),
                         ],
@@ -363,7 +386,8 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                           onTap: _fillRemainingToPribadi,
                           child: Row(
                             children: [
-                              Icon(Icons.auto_fix_high, size: 16, color: Colors.amber.shade900),
+                              Icon(Icons.auto_fix_high,
+                                  size: 16, color: Colors.amber.shade900),
                               const SizedBox(width: 4),
                               Text(
                                 'Masukkan sisa ${(diff - (double.tryParse(_kmKanvasingController.text) ?? 0) - (double.tryParse(_kmOjolController.text) ?? 0)).toStringAsFixed(1)} km ke Pribadi',
@@ -395,11 +419,13 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                   Expanded(
                     child: TextFormField(
                       controller: _kmKanvasingController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: 'Kanvasing',
                         suffixText: 'km',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
@@ -408,11 +434,13 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                   Expanded(
                     child: TextFormField(
                       controller: _kmOjolController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: 'Ojol',
                         suffixText: 'km',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
@@ -421,11 +449,13 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                   Expanded(
                     child: TextFormField(
                       controller: _kmPribadiController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         labelText: 'Pribadi',
                         suffixText: 'km',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
@@ -437,13 +467,16 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
               // Jam Online Ojol
               TextFormField(
                 controller: _jamOnlineOjolController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   labelText: 'Jam Online Ojol (Opsional)',
                   hintText: 'Contoh: 4.5',
                   suffixText: 'jam',
-                  helperText: 'Untuk menghitung efisiensi pendapatan per jam ojol',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  helperText:
+                      'Untuk menghitung efisiensi pendapatan per jam ojol',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -454,7 +487,8 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   labelText: 'Catatan Harian (Opsional)',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               const SizedBox(height: 24),
@@ -469,7 +503,8 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.speed),
                   label: const Text(
@@ -479,7 +514,8 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),

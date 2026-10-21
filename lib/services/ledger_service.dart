@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import '../logic/ledger_math.dart';
 import '../models/account.dart';
+import '../models/fuel_filling.dart';
 import '../models/ledger_transaction.dart';
 import '../models/service_item.dart';
 import '../models/service_record.dart';
@@ -515,7 +516,8 @@ class LedgerService {
     Future.microtask(() => SyncService.sync());
   }
 
-  Future<List<ServiceItemEvaluation>> serviceDueList([String? vehicleId]) async {
+  Future<List<ServiceItemEvaluation>> serviceDueList(
+      [String? vehicleId]) async {
     final List<Vehicle> vehicles;
     if (vehicleId != null) {
       final all = await getVehicles();
@@ -637,4 +639,200 @@ class LedgerService {
     );
     return rows.map((r) => ServiceRecord.fromMap(r)).toList();
   }
+
+  // --- INTEGRASI BBM KE LEDGER (FASE 5) ---
+
+  Future<void> saveFuelWithLedger({
+    required FuelFilling filling,
+    required bool recordInFinance,
+    String? accountId,
+    String pool = 'utama',
+    bool isEdit = false,
+  }) async {
+    final db = await LocalDb.instance.database;
+    await db.transaction((txn) async {
+      final now = DateTime.now().toIso8601String();
+      if (isEdit) {
+        await txn.update(
+          'fuel_fillings',
+          filling.toInsertMap()..['is_synced'] = 0,
+          where: 'id = ?',
+          whereArgs: [filling.id],
+        );
+
+        final existingTxRows = await txn.query(
+          'transactions',
+          where: 'fuel_filling_id = ? AND deleted_at IS NULL',
+          whereArgs: [filling.id],
+        );
+
+        if (recordInFinance && accountId != null && filling.totalBiaya > 0) {
+          final amount = filling.totalBiaya.round();
+          if (existingTxRows.isNotEmpty) {
+            final txId = existingTxRows.first['id'] as String;
+            await txn.update(
+              'transactions',
+              {
+                'tanggal': filling.tanggal.toIso8601String().split('T').first,
+                'amount': amount,
+                'account_id': accountId,
+                'pool': pool,
+                'activity': 'kendaraan',
+                'category': 'bbm',
+                'vehicle_id': filling.vehicleId,
+                'note': filling.catatan ?? 'Pengisian BBM ${filling.liter}L',
+                'updated_at': now,
+                'is_synced': 0,
+              },
+              where: 'id = ?',
+              whereArgs: [txId],
+            );
+          } else {
+            final tx = LedgerTransaction.create(
+              tanggal: filling.tanggal,
+              kind: 'expense',
+              amount: amount,
+              accountId: accountId,
+              pool: pool,
+              activity: 'kendaraan',
+              category: 'bbm',
+              vehicleId: filling.vehicleId,
+              fuelFillingId: filling.id,
+              status: 'cleared',
+              note: filling.catatan ?? 'Pengisian BBM ${filling.liter}L',
+            );
+            await txn.insert('transactions', tx.toMap()..['is_synced'] = 0);
+          }
+        } else if (!recordInFinance && existingTxRows.isNotEmpty) {
+          for (final r in existingTxRows) {
+            await txn.update(
+              'transactions',
+              {
+                'deleted_at': now,
+                'updated_at': now,
+                'is_synced': 0,
+              },
+              where: 'id = ?',
+              whereArgs: [r['id']],
+            );
+          }
+        }
+      } else {
+        await txn.insert(
+            'fuel_fillings', filling.toInsertMap()..['is_synced'] = 0);
+
+        if (recordInFinance && accountId != null && filling.totalBiaya > 0) {
+          final tx = LedgerTransaction.create(
+            tanggal: filling.tanggal,
+            kind: 'expense',
+            amount: filling.totalBiaya.round(),
+            accountId: accountId,
+            pool: pool,
+            activity: 'kendaraan',
+            category: 'bbm',
+            vehicleId: filling.vehicleId,
+            fuelFillingId: filling.id,
+            status: 'cleared',
+            note: filling.catatan ?? 'Pengisian BBM ${filling.liter}L',
+          );
+          await txn.insert('transactions', tx.toMap()..['is_synced'] = 0);
+        }
+      }
+    });
+
+    Future.microtask(() => SyncService.sync());
+  }
+
+  Future<void> deleteFuelWithLedger(String fillingId) async {
+    final db = await LocalDb.instance.database;
+    await db.transaction((txn) async {
+      await txn.insert('pending_deletions', {
+        'table_name': 'fuel_fillings',
+        'record_id': fillingId,
+      });
+      await txn
+          .delete('fuel_fillings', where: 'id = ?', whereArgs: [fillingId]);
+
+      final now = DateTime.now().toIso8601String();
+      await txn.update(
+        'transactions',
+        {
+          'deleted_at': now,
+          'updated_at': now,
+          'is_synced': 0,
+        },
+        where: 'fuel_filling_id = ? AND deleted_at IS NULL',
+        whereArgs: [fillingId],
+      );
+    });
+
+    Future.microtask(() => SyncService.sync());
+  }
+
+  Future<LedgerTransaction?> getLinkedFuelTransaction(
+      String fuelFillingId) async {
+    final db = await LocalDb.instance.database;
+    final rows = await db.query(
+      'transactions',
+      where: 'fuel_filling_id = ? AND deleted_at IS NULL',
+      whereArgs: [fuelFillingId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return LedgerTransaction.fromMap(rows.first);
+  }
+
+  Future<List<FuelFilling>> getFuelFillingsByVehicle(String vehicleId) async {
+    final db = await LocalDb.instance.database;
+    final rows = await db.query(
+      'fuel_fillings',
+      where: 'vehicle_id = ?',
+      whereArgs: [vehicleId],
+      orderBy: 'tanggal DESC, created_at DESC',
+    );
+    return rows.map((e) => FuelFilling.fromMap(e)).toList();
+  }
+
+  Future<VehicleFuelStats> getVehicleFuelStats(String vehicleId) async {
+    final fillings = await getFuelFillingsByVehicle(vehicleId);
+    if (fillings.isEmpty) {
+      return const VehicleFuelStats();
+    }
+
+    final latest = fillings.first;
+    double? kmPerLiter;
+
+    // Cari pengisian dengan odometer non-null yang berurutan
+    final withOdo =
+        fillings.where((f) => f.odometer != null && f.odometer! > 0).toList();
+    if (withOdo.length >= 2) {
+      final f1 = withOdo[0]; // lebih baru
+      final f2 = withOdo[1]; // sebelumnya
+      final deltaKm = f1.odometer! - f2.odometer!;
+      if (deltaKm > 0 && f1.liter > 0) {
+        kmPerLiter = deltaKm / f1.liter;
+      }
+    }
+
+    return VehicleFuelStats(
+      lastLiters: latest.liter,
+      kmPerLiter: kmPerLiter,
+      lastOdometer: latest.odometer,
+      lastFillingDate: latest.tanggal,
+    );
+  }
+}
+
+class VehicleFuelStats {
+  final double? lastLiters;
+  final double? kmPerLiter;
+  final double? lastOdometer;
+  final DateTime? lastFillingDate;
+
+  const VehicleFuelStats({
+    this.lastLiters,
+    this.kmPerLiter,
+    this.lastOdometer,
+    this.lastFillingDate,
+  });
 }
