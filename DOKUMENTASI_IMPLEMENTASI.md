@@ -13,8 +13,8 @@ Dokumentasi ini mencatat progres, keputusan teknis, daftar perubahan file, dan v
 |---|---|---|---|
 | **Fase 1** | **Fondasi & Keamanan (Sync, LocalDb v11, Auth Lockdown, Migrasi SQL 1A-1C)** | **SELESAI (CLEAR)** | Kode app diperbarui; Semua 16 test lulus; Menunggu user menjalankan SQL 1B & 1C di Supabase |
 | **Fase 2** | **Skema Baru (Ledger, Kendaraan, Servis, View Saldo)** | **SELESAI (CLEAR)** | Skema SQLite v11 teruji in-memory; file SQL Fase 2 siap |
-| **Fase 3** | **Model, Service, Provider (Riverpod 3, LedgerService, ReportService)** | Siap Dikerjakan | Logika `ledger_math.dart` & test sudah lulus |
-| **Fase 4** | **Antarmuka (Tab Keuangan: Ringkasan, Transaksi, Rekening, Motor)** | Menunggu Fase 3 | |
+| **Fase 3** | **Model, Service, Provider (Riverpod 3, LedgerService, ReportService)** | **SELESAI (CLEAR)** | Model, Service, Provider & Test `ledger_service_test.dart` lulus (18/18 tests total) |
+| **Fase 4** | **Antarmuka (Tab Keuangan: Ringkasan, Transaksi, Rekening, Motor)** | Siap Dikerjakan | Menyiapkan `finance_home_screen.dart` dkk |
 | **Fase 5** | **Integrasi BBM ke Ledger** | Menunggu Fase 4 | Dropdown motor & link transaksi otomatis |
 | **Fase 6** | **Penutup (Backup DB, Cleanup CI/CD)** | Menunggu Fase 5 | |
 
@@ -74,24 +74,28 @@ Dokumentasi ini mencatat progres, keputusan teknis, daftar perubahan file, dan v
 ---
 
 ### FASE 3 — Model, Service & Provider
-**Status:** **IN PROGRESS (Logika Inti Siap)**
+**Status:** **CLEAR (SELESAI & LULUS PENGUJIAN)**
 
 - [x] **Logika Murni Finansial (`lib/logic/ledger_math.dart`)**:
   - Fungsi `allocateVehicleCost`: Alokasi biaya motor bersama ke kanvasing/ojol/pribadi menurut km dengan metode sisa terbesar (*Hamilton-Hare*).
   - Fungsi `computeActivityProfits`: Menghitung profit kanvasing, ojol, dan pribadi (income − direct expense − allocated vehicle cost).
   - Fungsi `evaluateServiceItem`: Menentukan status servis berkala (`ok`, `soon`, `overdue`, `unknown`).
   - Pengujian `test/ledger_math_test.dart`: **11 unit test LULUS**.
-- [ ] **Model Data (`lib/models/`)**:
-  - `account.dart`
-  - `vehicle.dart`
-  - `vehicle_log.dart`
-  - `ledger_transaction.dart`
-  - `service_item.dart`
-  - `service_record.dart`
-- [ ] **Service (`lib/services/`)**:
-  - `ledger_service.dart`
-  - `finance_report_service.dart`
-- [ ] **Provider (`lib/providers/finance_providers.dart`)**
+- [x] **Model Data (`lib/models/`)**:
+  - `account.dart`: Rekening tunai/bank/ewallet, saldo awal, soft delete.
+  - `vehicle.dart`: Motor Jupiter Z & Aerox, odo awal, soft delete.
+  - `vehicle_log.dart`: Odometer akhir, km kanvasing, km ojol, km pribadi, jam online ojol.
+  - `ledger_transaction.dart`: Transaksi income, expense, transfer, kas utama/tambahan, status cleared/pending.
+  - `service_item.dart`: Interval km & hari (diisi user, tanpa tebakan default).
+  - `service_record.dart`: Riwayat servis, tautan ke transaksi & item servis.
+- [x] **Service (`lib/services/`)**:
+  - `ledger_service.dart`: CRUD akun, saldo rekening (`v_account_balance`), saldo kas (`v_pool_balance`), validasi bentuk transaksi berbahasa Indonesia, soft delete, reconcile penyesuaian saldo, log km kendaraan, status servis berkala, dan `recordService`.
+  - `finance_report_service.dart`: Menghitung `monthSummary` (profit per pekerjaan, biaya motor belum teralokasi, komisi pending, efisiensi pendapatan ojol per km/jam, dan saldo ojol rekap lama).
+- [x] **Provider (`lib/providers/finance_providers.dart`)**:
+  - Riverpod providers: `ledgerServiceProvider`, `financeReportServiceProvider`, `accountsProvider`, `accountBalancesProvider`, `poolBalancesProvider`, `vehiclesProvider`, `serviceDueProvider`, `financeMonthProvider`, `monthSummaryProvider`, `transactionsProvider.family`.
+- [x] **Pengujian Unit & Integrasi (`test/ledger_service_test.dart`)**:
+  - Validasi error input berbahasa Indonesia teruji.
+  - Skenario saldo rekening & kas, transaksi pending tidak dihitung, dan soft delete teruji.
 
 ---
 
@@ -102,17 +106,19 @@ flutter test
 00:00 +1: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: soft delete mengurangi saldo; pending tidak dihitung
 00:00 +2: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: constraint menolak data yang salah bentuk
 00:00 +3: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: item servis wajib punya minimal satu interval
-00:00 +4: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost proporsional km, jumlah tepat
-00:00 +5: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sepertiga: sisa 1 rupiah ke kanvasing (urutan seri)
-00:00 +6: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sisa terbesar ke pecahan terbesar
-00:00 +7: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost km nol di satu aktivitas
-00:00 +8: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost total km nol atau biaya nol -> semua 0 (tidak error)
-00:00 +9: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: computeActivityProfits profit per pekerjaan (komisi pending tidak dihitung)
-00:00 +10: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: perUnit pembagian aman
-00:00 +11: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan km
-00:00 +12: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan hari
-00:00 +13: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem km dan hari: yang terburuk menang
-00:00 +14: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem belum ada data servis terakhir -> unknown
-00:01 +15: C:/DevApp/personalDailyRecaps/test/widget_test.dart: App smoke test
-00:03 +16: All tests passed!
+00:01 +4: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost proporsional km, jumlah tepat
+00:01 +5: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sepertiga: sisa 1 rupiah ke kanvasing (urutan seri)
+00:01 +6: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sisa terbesar ke pecahan terbesar
+00:01 +7: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost km nol di satu aktivitas
+00:01 +8: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost total km nol atau biaya nol -> semua 0 (tidak error)
+00:01 +9: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: computeActivityProfits profit per pekerjaan (komisi pending tidak dihitung)
+00:01 +10: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: perUnit pembagian aman
+00:01 +11: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan km
+00:01 +12: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan hari
+00:01 +13: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem km dan hari: yang terburuk menang
+00:01 +14: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem belum ada data servis terakhir -> unknown
+00:02 +15: C:/DevApp/personalDailyRecaps/test/ledger_service_test.dart: validasi transaksi salah bentuk ditolak service dengan pesan Indonesia
+00:03 +16: C:/DevApp/personalDailyRecaps/test/ledger_service_test.dart: transaksi valid, pending tidak masuk saldo, soft delete mengurangi saldo
+00:13 +17: C:/DevApp/personalDailyRecaps/test/widget_test.dart: App smoke test
+00:16 +18: All tests passed!
 ```

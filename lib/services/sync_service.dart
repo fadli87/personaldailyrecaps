@@ -3,11 +3,17 @@ import 'package:sqflite/sqflite.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'local_db.dart';
 
-/// Sinkronisasi SQLite <-> Supabase (REFERENSI IMPLEMENTASI — ganti isi lib/services/sync_service.dart).
+/// Sinkronisasi SQLite <-> Supabase.
 /// Perilaku yang dipertahankan: baris lokal is_synced = 0 tidak ditimpa oleh pull.
 /// Perbaikan: filter kolom pull, paginasi, isolasi error per tabel, antrean hapus tidak dibuang saat gagal.
 class SyncService {
-  static final SupabaseClient _client = Supabase.instance.client;
+  static SupabaseClient? get _client {
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Urutan push/pull: tabel induk dulu (foreign key).
   static const List<String> _order = <String>[
@@ -39,6 +45,9 @@ class SyncService {
   static final Map<String, Set<String>> _colCache = <String, Set<String>>{};
 
   static Future<void> sync() async {
+    final client = _client;
+    if (client == null) return;
+
     final errors = <String>[];
 
     Future<void> guard(String label, Future<void> Function() fn) async {
@@ -62,22 +71,32 @@ class SyncService {
     }
 
     if (errors.isNotEmpty) {
-      throw StateError(
-          'Sinkronisasi sebagian gagal (${errors.length}): ${errors.first}');
+      throw StateError('Sinkronisasi sebagian gagal (${errors.length}): ${errors.first}');
     }
   }
 
+  static Future<bool> _tableExists(Database db, String table) async {
+    final res = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+      [table],
+    );
+    return res.isNotEmpty;
+  }
+
   static Future<void> _syncDeletions() async {
+    final client = _client;
+    if (client == null) return;
     final db = await LocalDb.instance.database;
+    if (!await _tableExists(db, 'pending_deletions')) return;
+
     final deletions = await db.query('pending_deletions');
     for (final del in deletions) {
       final queueId = del['id'] as int;
       final table = del['table_name'] as String;
       final recordId = del['record_id'] as String;
       try {
-        await _client.from(table).delete().eq('id', recordId);
-        await db
-            .delete('pending_deletions', where: 'id = ?', whereArgs: [queueId]);
+        await client.from(table).delete().eq('id', recordId);
+        await db.delete('pending_deletions', where: 'id = ?', whereArgs: [queueId]);
       } catch (e) {
         // JANGAN buang antrean saat gagal (mis. offline): kalau dibuang, baris remote
         // masih ada dan akan "hidup lagi" saat pull. Coba lagi pada sync berikutnya.
@@ -96,7 +115,11 @@ class SyncService {
   }
 
   static Future<void> _pushTable(String table) async {
+    final client = _client;
+    if (client == null) return;
     final db = await LocalDb.instance.database;
+    if (!await _tableExists(db, table)) return;
+
     final pk = _pk[table] ?? 'id';
     final boolCols = _boolCols[table] ?? const <String>[];
 
@@ -107,36 +130,37 @@ class SyncService {
         if (data[c] != null) data[c] = data[c] == 1;
       }
       // user_id tidak ada di SQLite: server mengisinya lewat default auth.uid().
-      await _client.from(table).upsert(data);
-      await db.update(table, {'is_synced': 1},
-          where: '$pk = ?', whereArgs: [r[pk]]);
+      await client.from(table).upsert(data);
+      await db.update(table, {'is_synced': 1}, where: '$pk = ?', whereArgs: [r[pk]]);
     }
   }
 
   static Future<void> _pullTable(String table) async {
+    final client = _client;
+    if (client == null) return;
     final db = await LocalDb.instance.database;
+    if (!await _tableExists(db, table)) return;
+
     final pk = _pk[table] ?? 'id';
     final cols = await _localCols(db, table);
     final boolCols = _boolCols[table] ?? const <String>[];
 
-    // Baris yang menunggu dihapus (mis. sedang offline) tidak boleh dihidupkan lagi oleh pull.
-    final pending = (await db.query(
-      'pending_deletions',
-      columns: ['record_id'],
-      where: 'table_name = ?',
-      whereArgs: [table],
-    ))
-        .map((r) => r['record_id'] as String)
-        .toSet();
+    final hasPendingTable = await _tableExists(db, 'pending_deletions');
+    final pending = hasPendingTable
+        ? (await db.query(
+            'pending_deletions',
+            columns: ['record_id'],
+            where: 'table_name = ?',
+            whereArgs: [table],
+          ))
+            .map((r) => r['record_id'] as String)
+            .toSet()
+        : <String>{};
 
     const pageSize = 1000; // batas default PostgREST
     var from = 0;
     while (true) {
-      final chunk = await _client
-          .from(table)
-          .select()
-          .order(pk)
-          .range(from, from + pageSize - 1);
+      final chunk = await client.from(table).select().order(pk).range(from, from + pageSize - 1);
 
       for (final rr in chunk) {
         final id = rr[pk].toString();

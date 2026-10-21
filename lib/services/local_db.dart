@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -8,6 +9,11 @@ class LocalDb {
   LocalDb._();
 
   Database? _db;
+
+  @visibleForTesting
+  static void setMockDatabase(Database? db) {
+    instance._db = db;
+  }
 
   static const String _fuelFillingsDdl = '''
     CREATE TABLE IF NOT EXISTS fuel_fillings (
