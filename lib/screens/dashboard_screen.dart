@@ -68,7 +68,8 @@ class DashboardScreen extends ConsumerWidget {
                       const Center(
                         child: Column(
                           children: [
-                            Icon(Icons.assignment_late_outlined, size: 64, color: Colors.grey),
+                            Icon(Icons.assignment_late_outlined,
+                                size: 64, color: Colors.grey),
                             SizedBox(height: 16),
                             Text(
                               'Belum ada data transaksi.',
@@ -119,7 +120,8 @@ class DashboardScreen extends ConsumerWidget {
                   builder: (context, constraints) {
                     final isDesktop = constraints.maxWidth > 850;
                     return ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 24),
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
                         // Header Selamat Datang
@@ -127,7 +129,8 @@ class DashboardScreen extends ConsumerWidget {
                         const SizedBox(height: 24),
 
                         // --- SECTION 1: KPI FINANCIAL CARDS (GRADASI PREMIUM) ---
-                        _buildFinancialKPIs(isDesktop, latestRecap, previousRecap, ref),
+                        _buildFinancialKPIs(
+                            isDesktop, latestRecap, previousRecap, ref),
                         const SizedBox(height: 24),
 
                         // --- SECTION 1B: STATUS SALDO AKUN & REKENING ---
@@ -135,14 +138,15 @@ class DashboardScreen extends ConsumerWidget {
                         const SizedBox(height: 24),
 
                         // --- SECTION 2: VEHICLE TELEMETRY CARD (MODERN GLASSMORPHISM EFFECT) ---
-                                                _buildVehicleTelemetry(weeklyJarak, weeklyLiterTerpakai, weeklyLiterMasuk, ref),
-                                                const SizedBox(height: 24),
+                        _buildVehicleTelemetry(weeklyJarak, weeklyLiterTerpakai,
+                            weeklyLiterMasuk, ref),
+                        const SizedBox(height: 24),
 
-                                                // --- SECTION 2B: FUEL ALERT & RECENT FILLINGS ---
-                                                _buildFuelAlertAndHistory(ref, latestRecap),
-                                                const SizedBox(height: 24),
+                        // --- SECTION 2B: FUEL ALERT & RECENT FILLINGS ---
+                        _buildFuelAlertAndHistory(ref, latestRecap),
+                        const SizedBox(height: 24),
 
-                                                // --- SECTION 3: CHARTS ---
+                        // --- SECTION 3: CHARTS ---
                         if (isDesktop) ...[
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,8 +154,10 @@ class DashboardScreen extends ConsumerWidget {
                               Expanded(
                                 flex: 3,
                                 child: _buildChartContainer(
-                                  title: 'Tren Keuntungan Bersih (7 Hari Terakhir)',
-                                  subtitle: 'Pantau stabilitas harian pendapatan bersih Anda',
+                                  title:
+                                      'Tren Keuntungan Bersih (7 Hari Terakhir)',
+                                  subtitle:
+                                      'Pantau stabilitas harian pendapatan bersih Anda',
                                   child: _buildLoyverseLineChart(chartRecaps),
                                 ),
                               ),
@@ -168,14 +174,17 @@ class DashboardScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 20),
                           _buildChartContainer(
-                            title: 'Perbandingan Pemasukan vs Pengeluaran Harian',
-                            subtitle: 'Rasio rasional antara modal BBM/Operasional dan Omset harian',
+                            title:
+                                'Perbandingan Pemasukan vs Pengeluaran Harian',
+                            subtitle:
+                                'Rasio rasional antara modal BBM/Operasional dan Omset harian',
                             child: _buildLoyverseBarChart(chartRecaps),
                           ),
                         ] else ...[
                           _buildChartContainer(
                             title: 'Tren Keuntungan Bersih (7 Hari Terakhir)',
-                            subtitle: 'Pantau stabilitas harian pendapatan bersih Anda',
+                            subtitle:
+                                'Pantau stabilitas harian pendapatan bersih Anda',
                             child: _buildLoyverseLineChart(chartRecaps),
                           ),
                           const SizedBox(height: 20),
@@ -186,8 +195,10 @@ class DashboardScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 20),
                           _buildChartContainer(
-                            title: 'Perbandingan Pemasukan vs Pengeluaran Harian',
-                            subtitle: 'Rasio rasional antara modal BBM/Operasional dan Omset harian',
+                            title:
+                                'Perbandingan Pemasukan vs Pengeluaran Harian',
+                            subtitle:
+                                'Rasio rasional antara modal BBM/Operasional dan Omset harian',
                             child: _buildLoyverseBarChart(chartRecaps),
                           ),
                         ],
@@ -271,7 +282,8 @@ class DashboardScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFE2F1E8),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.15)),
+              border:
+                  Border.all(color: const Color(0xFF2E7D32).withOpacity(0.15)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -322,7 +334,8 @@ class DashboardScreen extends ConsumerWidget {
                     children: [
                       const Text(
                         'Status & Log Sinkronisasi',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       IconButton(
                         icon: const Icon(Icons.close),
@@ -334,7 +347,8 @@ class DashboardScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.cloud_done_outlined, color: Color(0xFF2E7D32)),
+                      const Icon(Icons.cloud_done_outlined,
+                          color: Color(0xFF2E7D32)),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -342,11 +356,13 @@ class DashboardScreen extends ConsumerWidget {
                           children: [
                             const Text(
                               'Supabase Cloud DB',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                             Text(
                               'Status: Online (Terhubung)',
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                              style: TextStyle(
+                                  color: Colors.grey.shade600, fontSize: 12),
                             ),
                           ],
                         ),
@@ -356,25 +372,34 @@ class DashboardScreen extends ConsumerWidget {
                         label: const Text('Sinkronkan'),
                         onPressed: () async {
                           final messenger = ScaffoldMessenger.of(context);
-                          final nowStr = DateFormat('HH:mm:ss').format(DateTime.now());
-                          
-                          ref.read(syncLogsProvider.notifier).addLog('$nowStr: Memulai sinkronisasi Supabase...');
+                          final nowStr =
+                              DateFormat('HH:mm:ss').format(DateTime.now());
+
+                          ref.read(syncLogsProvider.notifier).addLog(
+                              '$nowStr: Memulai sinkronisasi Supabase...');
 
                           try {
                             await SyncService.sync();
-                            
-                            final successStr = DateFormat('HH:mm:ss').format(DateTime.now());
-                            ref.read(syncLogsProvider.notifier).addLog('$successStr: Sinkronisasi data sukses (Supabase synced).');
-                            
+
+                            final successStr =
+                                DateFormat('HH:mm:ss').format(DateTime.now());
+                            ref.read(syncLogsProvider.notifier).addLog(
+                                '$successStr: Sinkronisasi data sukses (Supabase synced).');
+
                             ref.invalidate(recapsProvider);
                             ref.invalidate(platformDistributionProvider);
 
                             messenger.showSnackBar(
-                              const SnackBar(content: Text('Sinkronisasi Supabase sukses!')),
+                              const SnackBar(
+                                  content:
+                                      Text('Sinkronisasi Supabase sukses!')),
                             );
                           } catch (e) {
-                            final failStr = DateFormat('HH:mm:ss').format(DateTime.now());
-                            ref.read(syncLogsProvider.notifier).addLog('$failStr: Sinkronisasi gagal: $e');
+                            final failStr =
+                                DateFormat('HH:mm:ss').format(DateTime.now());
+                            ref
+                                .read(syncLogsProvider.notifier)
+                                .addLog('$failStr: Sinkronisasi gagal: $e');
                             messenger.showSnackBar(
                               SnackBar(content: Text('Sinkronisasi gagal: $e')),
                             );
@@ -410,11 +435,17 @@ class DashboardScreen extends ConsumerWidget {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('• ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                              const Text('• ',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blueGrey)),
                               Expanded(
                                 child: Text(
                                   log,
-                                  style: const TextStyle(fontFamily: 'monospace', fontSize: 11, color: Colors.black87),
+                                  style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 11,
+                                      color: Colors.black87),
                                 ),
                               ),
                             ],
@@ -433,7 +464,8 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   // --- SECTION 1: FINANCIAL CARDS DENGAN GRADASI PREMIUM & SHADOW SOFT ---
-  Widget _buildFinancialKPIs(bool isDesktop, DailyRecap latest, DailyRecap? previous, WidgetRef ref) {
+  Widget _buildFinancialKPIs(
+      bool isDesktop, DailyRecap latest, DailyRecap? previous, WidgetRef ref) {
     final net = latest.netEarning;
     final income = latest.totalIncome;
     final expense = latest.totalExpense;
@@ -461,11 +493,15 @@ class DashboardScreen extends ConsumerWidget {
         if (isDesktop) {
           return Row(
             children: [
-              Expanded(child: _buildPremiumKpiCard(
+              Expanded(
+                  child: _buildPremiumKpiCard(
                 title: 'Keuntungan Bersih',
                 value: net,
                 icon: Icons.wallet_rounded,
-                colors: [const Color(0xFF16A34A), const Color(0xFF15803D)], // Hijau gradasi
+                colors: [
+                  const Color(0xFF16A34A),
+                  const Color(0xFF15803D)
+                ], // Hijau gradasi
                 iconColor: Colors.white.withOpacity(0.2),
                 comparisonText: netDiffText,
                 isMain: true,
@@ -475,11 +511,15 @@ class DashboardScreen extends ConsumerWidget {
                 },
               )),
               const SizedBox(width: 16),
-              Expanded(child: _buildPremiumKpiCard(
+              Expanded(
+                  child: _buildPremiumKpiCard(
                 title: 'Total Pemasukan',
                 value: income,
                 icon: Icons.trending_up_rounded,
-                colors: [const Color(0xFF3B82F6), const Color(0xFF2563EB)], // Biru gradasi
+                colors: [
+                  const Color(0xFF3B82F6),
+                  const Color(0xFF2563EB)
+                ], // Biru gradasi
                 iconColor: Colors.white.withOpacity(0.2),
                 comparisonText: incomeDiffText,
                 onTap: () {
@@ -488,11 +528,15 @@ class DashboardScreen extends ConsumerWidget {
                 },
               )),
               const SizedBox(width: 16),
-              Expanded(child: _buildPremiumKpiCard(
+              Expanded(
+                  child: _buildPremiumKpiCard(
                 title: 'Total Pengeluaran',
                 value: expense,
                 icon: Icons.trending_down_rounded,
-                colors: [const Color(0xFFEF4444), const Color(0xFFDC2626)], // Merah gradasi
+                colors: [
+                  const Color(0xFFEF4444),
+                  const Color(0xFFDC2626)
+                ], // Merah gradasi
                 iconColor: Colors.white.withOpacity(0.2),
                 comparisonText: expenseDiffText,
                 onTap: () {
@@ -521,7 +565,8 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildPremiumKpiCard(
+                  Expanded(
+                      child: _buildPremiumKpiCard(
                     title: 'Total Pemasukan',
                     value: income,
                     icon: Icons.trending_up_rounded,
@@ -535,7 +580,8 @@ class DashboardScreen extends ConsumerWidget {
                     },
                   )),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildPremiumKpiCard(
+                  Expanded(
+                      child: _buildPremiumKpiCard(
                     title: 'Total Pengeluaran',
                     value: expense,
                     icon: Icons.trending_down_rounded,
@@ -594,102 +640,103 @@ class DashboardScreen extends ConsumerWidget {
           highlightColor: Colors.white.withOpacity(0.05),
           child: Stack(
             children: [
-          // Background Decorative Circle
-          Positioned(
-            right: -20,
-            bottom: -20,
-            child: CircleAvatar(
-              radius: isMain ? 60 : 45,
-              backgroundColor: Colors.white.withOpacity(0.06),
-            ),
-          ),
-          // Icon hiasan besar di pojok
-          Positioned(
-            right: 8,
-            bottom: isMain ? 4 : 0,
-            child: Icon(
-              icon,
-              size: isMain ? 74 : 54,
-              color: iconColor,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: isCompact ? 12 : 16,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title.toUpperCase(),
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
-                    fontSize: isCompact ? 9 : 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                  ),
+              // Background Decorative Circle
+              Positioned(
+                right: -20,
+                bottom: -20,
+                child: CircleAvatar(
+                  radius: isMain ? 60 : 45,
+                  backgroundColor: Colors.white.withOpacity(0.06),
                 ),
-                const SizedBox(height: 6),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    currency.format(value),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: isMain ? 24 : (isCompact ? 18 : 20),
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
+              ),
+              // Icon hiasan besar di pojok
+              Positioned(
+                right: 8,
+                bottom: isMain ? 4 : 0,
+                child: Icon(
+                  icon,
+                  size: isMain ? 74 : 54,
+                  color: iconColor,
                 ),
-                if (comparisonText != null) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        comparisonText.startsWith('+')
-                            ? Icons.trending_up_rounded
-                            : (comparisonText.startsWith('-')
-                                ? Icons.trending_down_rounded
-                                : (comparisonText == 'Hari pertama'
-                                    ? Icons.star_border_rounded
-                                    : Icons.swap_horiz_rounded)),
-                        size: 11,
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: isCompact ? 12 : 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title.toUpperCase(),
+                      style: TextStyle(
                         color: Colors.white.withOpacity(0.85),
+                        fontSize: isCompact ? 9 : 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        comparisonText,
+                    ),
+                    const SizedBox(height: 6),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        currency.format(value),
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.85),
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: isMain ? 24 : (isCompact ? 18 : 20),
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                    ],
-                  ),
-                ] else if (isMain) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.check_circle_outline, size: 12, color: Colors.white.withOpacity(0.7)),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Sudah dikurangi pengeluaran harian',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 9,
-                          fontWeight: FontWeight.w500,
-                        ),
+                    ),
+                    if (comparisonText != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            comparisonText.startsWith('+')
+                                ? Icons.trending_up_rounded
+                                : (comparisonText.startsWith('-')
+                                    ? Icons.trending_down_rounded
+                                    : (comparisonText == 'Hari pertama'
+                                        ? Icons.star_border_rounded
+                                        : Icons.swap_horiz_rounded)),
+                            size: 11,
+                            color: Colors.white.withOpacity(0.85),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            comparisonText,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else if (isMain) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.check_circle_outline,
+                              size: 12, color: Colors.white.withOpacity(0.7)),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Sudah dikurangi pengeluaran harian',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ],
-              ],
-            ),
-          ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -697,7 +744,8 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildVehicleTelemetry(double weeklyKm, double weeklyLiter, double weeklyLiterMasuk, WidgetRef ref) {
+  Widget _buildVehicleTelemetry(double weeklyKm, double weeklyLiter,
+      double weeklyLiterMasuk, WidgetRef ref) {
     double efisiensi = weeklyLiter > 0 ? (weeklyKm / weeklyLiter) : 0.0;
     double surplusDefisit = weeklyLiterMasuk - weeklyLiter;
 
@@ -757,11 +805,13 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     if (efisiensi > 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: efficiencyColor.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: efficiencyColor.withOpacity(0.3)),
+                          border: Border.all(
+                              color: efficiencyColor.withOpacity(0.3)),
                         ),
                         child: Text(
                           efficiencyStatus.toUpperCase(),
@@ -810,26 +860,36 @@ class DashboardScreen extends ConsumerWidget {
                 Row(
                   children: [
                     Icon(
-                      surplusDefisit >= 0 ? Icons.battery_charging_full : Icons.battery_alert,
-                      color: surplusDefisit >= 0 ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                      surplusDefisit >= 0
+                          ? Icons.battery_charging_full
+                          : Icons.battery_alert,
+                      color: surplusDefisit >= 0
+                          ? const Color(0xFF22C55E)
+                          : const Color(0xFFEF4444),
                       size: 16,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: RichText(
                         text: TextSpan(
-                          style: const TextStyle(fontSize: 11, color: Colors.white70),
+                          style: const TextStyle(
+                              fontSize: 11, color: Colors.white70),
                           children: [
                             const TextSpan(text: 'Estimasi Tangki Mingguan: '),
                             TextSpan(
-                              text: '${surplusDefisit >= 0 ? '+' : ''}${surplusDefisit.toStringAsFixed(1)} Liter ',
+                              text:
+                                  '${surplusDefisit >= 0 ? '+' : ''}${surplusDefisit.toStringAsFixed(1)} Liter ',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: surplusDefisit >= 0 ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                                color: surplusDefisit >= 0
+                                    ? const Color(0xFF22C55E)
+                                    : const Color(0xFFEF4444),
                               ),
                             ),
                             TextSpan(
-                              text: surplusDefisit >= 0 ? '(Surplus Bensin)' : '(Defisit Bensin)',
+                              text: surplusDefisit >= 0
+                                  ? '(Surplus Bensin)'
+                                  : '(Defisit Bensin)',
                               style: const TextStyle(color: Colors.white38),
                             ),
                           ],
@@ -912,7 +972,8 @@ class DashboardScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.03), // Shadow sangat redup & rapi
+            color: const Color(0xFF0F172A)
+                .withOpacity(0.03), // Shadow sangat redup & rapi
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -1009,8 +1070,10 @@ class DashboardScreen extends ConsumerWidget {
               },
             ),
           ),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: false),
         lineBarsData: [
@@ -1026,7 +1089,10 @@ class DashboardScreen extends ConsumerWidget {
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(
-                colors: [primaryColor.withOpacity(0.18), primaryColor.withOpacity(0.0)],
+                colors: [
+                  primaryColor.withOpacity(0.18),
+                  primaryColor.withOpacity(0.0)
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -1096,7 +1162,8 @@ class DashboardScreen extends ConsumerWidget {
                       Container(
                         width: 8,
                         height: 8,
-                        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                        decoration:
+                            BoxDecoration(color: color, shape: BoxShape.circle),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -1203,8 +1270,10 @@ class DashboardScreen extends ConsumerWidget {
               },
             ),
           ),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: false),
         barGroups: groups,
@@ -1218,15 +1287,27 @@ class DashboardScreen extends ConsumerWidget {
     return value.toStringAsFixed(0);
   }
 
-  Widget _buildAccountBalances(BuildContext context, DailyRecap latest, WidgetRef ref) {
+  Widget _buildAccountBalances(
+      BuildContext context, DailyRecap latest, WidgetRef ref) {
     final wallets = [
-      _WalletBalanceItem('cash', 'Kas Tunai', latest.cashAkhir, Icons.money_outlined, Colors.teal),
-      _WalletBalanceItem('shopeefood', 'ShopeeFood', latest.saldoAkhirApp, Icons.fastfood_outlined, Colors.orange),
-      _WalletBalanceItem('grab_tunai', 'Grab Tunai', latest.saldoAkhirGrabTunai, Icons.account_balance_wallet_outlined, Colors.green),
-      _WalletBalanceItem('grab_kredit', 'Grab Kredit', latest.saldoAkhirGrabKredit, Icons.local_taxi_outlined, Colors.lightGreen),
-      _WalletBalanceItem('grab_ovo', 'Grab OVO', latest.saldoAkhirGrabOvo, Icons.phone_android_outlined, Colors.purple),
-      _WalletBalanceItem('mandiri', 'Bank Mandiri', latest.saldoAkhirMandiri, Icons.account_balance_wallet_outlined, Colors.blue),
-      _WalletBalanceItem('bca', 'Bank BCA', latest.saldoAkhirBca, Icons.account_balance_outlined, Colors.indigo),
+      _WalletBalanceItem('cash', 'Kas Tunai', latest.cashAkhir,
+          Icons.money_outlined, Colors.teal),
+      _WalletBalanceItem('shopeefood', 'ShopeeFood', latest.saldoAkhirApp,
+          Icons.fastfood_outlined, Colors.orange),
+      _WalletBalanceItem('grab_tunai', 'Grab Tunai', latest.saldoAkhirGrabTunai,
+          Icons.account_balance_wallet_outlined, Colors.green),
+      _WalletBalanceItem(
+          'grab_kredit',
+          'Grab Kredit',
+          latest.saldoAkhirGrabKredit,
+          Icons.local_taxi_outlined,
+          Colors.lightGreen),
+      _WalletBalanceItem('grab_ovo', 'Grab OVO', latest.saldoAkhirGrabOvo,
+          Icons.phone_android_outlined, Colors.purple),
+      _WalletBalanceItem('mandiri', 'Bank Mandiri', latest.saldoAkhirMandiri,
+          Icons.account_balance_wallet_outlined, Colors.blue),
+      _WalletBalanceItem('bca', 'Bank BCA', latest.saldoAkhirBca,
+          Icons.account_balance_outlined, Colors.indigo),
     ];
 
     return Column(
@@ -1251,7 +1332,9 @@ class DashboardScreen extends ConsumerWidget {
               return InkWell(
                 onTap: () {
                   ref.read(homeTabProvider.notifier).change(2); // Laporan
-                  ref.read(reportTabProvider.notifier).change(1); // Mutasi Rekening
+                  ref
+                      .read(reportTabProvider.notifier)
+                      .change(1); // Mutasi Rekening
                   ref.read(selectedAccountProvider.notifier).change(w.id);
                 },
                 borderRadius: BorderRadius.circular(12),
@@ -1301,7 +1384,9 @@ class DashboardScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: w.balance < 0 ? Colors.red.shade700 : Colors.black87,
+                            color: w.balance < 0
+                                ? Colors.red.shade700
+                                : Colors.black87,
                           ),
                         ),
                       ),
@@ -1314,575 +1399,622 @@ class DashboardScreen extends ConsumerWidget {
         ),
       ],
     );
-      }
+  }
 
-      // --- FUEL ALERT & HISTORY WIDGET ---
-  
-      Widget _buildFuelAlertAndHistory(WidgetRef ref, DailyRecap latestRecap) {
-        final recapId = latestRecap.id;
-    
-        return Consumer(
-          builder: (context, ref, child) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  // --- FUEL ALERT & HISTORY WIDGET ---
+
+  Widget _buildFuelAlertAndHistory(WidgetRef ref, DailyRecap latestRecap) {
+    final recapId = latestRecap.id;
+
+    return Consumer(
+      builder: (context, ref, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section Header with Add Button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Section Header with Add Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                const Text(
+                  '⛽ MONITORING BBM & RIWAYAT ISI',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => showFuelFillingSheet(context, recapId),
+                  icon: const Icon(Icons.add_rounded, size: 16),
+                  label: const Text('Isi BBM',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFEF4444),
+                    foregroundColor: Colors.white,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    elevation: 2,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Alert Card & Fuel Fillings List
+            Consumer(
+              builder: (context, ref, child) {
+                final estimatedRemainingAsync =
+                    ref.watch(estimatedFuelRemainingProvider(recapId));
+                final fuelFillingsAsync =
+                    ref.watch(fuelFillingsProvider(recapId));
+
+                return Column(
                   children: [
-                    const Text(
-                      '⛽ MONITORING BBM & RIWAYAT ISI',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: 0.5,
-                      ),
+                    // Alert Card (Estimasi Sisa BBM)
+                    estimatedRemainingAsync.when(
+                      loading: () => _buildSkeletonFuelCard(),
+                      error: (err, stack) =>
+                          _buildErrorFuelCard(err.toString()),
+                      data: (estimatedRemaining) {
+                        final isCritical =
+                            estimatedRemaining <= 0.5 && estimatedRemaining > 0;
+                        final isEmpty = estimatedRemaining <= 0;
+
+                        return _buildFuelAlertCard(
+                          context,
+                          estimatedRemaining: estimatedRemaining,
+                          isCritical: isCritical,
+                          isEmpty: isEmpty,
+                          onTap: () => showFuelFillingSheet(context, recapId),
+                        );
+                      },
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () => showFuelFillingSheet(context, recapId),
-                      icon: const Icon(Icons.add_rounded, size: 16),
-                      label: const Text('Isi BBM', style: TextStyle(fontWeight: FontWeight.w600)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEF4444),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        elevation: 2,
-                      ),
+                    const SizedBox(height: 12),
+
+                    // Recent Fuel Fillings List
+                    fuelFillingsAsync.when(
+                      loading: () => _buildSkeletonFuelList(),
+                      error: (err, stack) =>
+                          _buildErrorFuelList(err.toString()),
+                      data: (fillings) {
+                        if (fillings.isEmpty) {
+                          return _buildEmptyFuelState(
+                            context,
+                            recapId,
+                            onAdd: () => showFuelFillingSheet(context, recapId),
+                          );
+                        }
+                        return _buildFuelFillingsList(
+                          context,
+                          fillings,
+                          ref,
+                          recapId,
+                        );
+                      },
                     ),
                   ],
-                ),
-                const SizedBox(height: 16),
-
-                // Alert Card & Fuel Fillings List
-                Consumer(
-                  builder: (context, ref, child) {
-                    final estimatedRemainingAsync = ref.watch(estimatedFuelRemainingProvider(recapId));
-                    final fuelFillingsAsync = ref.watch(fuelFillingsProvider(recapId));
-
-                    return Column(
-                      children: [
-                        // Alert Card (Estimasi Sisa BBM)
-                        estimatedRemainingAsync.when(
-                          loading: () => _buildSkeletonFuelCard(),
-                          error: (err, stack) => _buildErrorFuelCard(err.toString()),
-                          data: (estimatedRemaining) {
-                            final isCritical = estimatedRemaining <= 0.5 && estimatedRemaining > 0;
-                            final isEmpty = estimatedRemaining <= 0;
-                        
-                            return _buildFuelAlertCard(
-                              context,
-                              estimatedRemaining: estimatedRemaining,
-                              isCritical: isCritical,
-                              isEmpty: isEmpty,
-                              onTap: () => showFuelFillingSheet(context, recapId),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Recent Fuel Fillings List
-                        fuelFillingsAsync.when(
-                          loading: () => _buildSkeletonFuelList(),
-                          error: (err, stack) => _buildErrorFuelList(err.toString()),
-                          data: (fillings) {
-                            if (fillings.isEmpty) {
-                              return _buildEmptyFuelState(
-                                context,
-                                recapId,
-                                onAdd: () => showFuelFillingSheet(context, recapId),
-                              );
-                            }
-                            return _buildFuelFillingsList(
-                              context,
-                              fillings,
-                              ref,
-                              recapId,
-                            );
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
-            );
-          },
+                );
+              },
+            ),
+          ],
         );
-      }
+      },
+    );
+  }
 
-      Widget _buildFuelAlertCard(
-        BuildContext context, {
-        required double estimatedRemaining,
-        required bool isCritical,
-        required bool isEmpty,
-        required VoidCallback onTap,
-      }) {
-        Color alertColor;
-        IconData alertIcon;
-        String title;
-        String subtitle;
-    
-        if (isEmpty) {
-          alertColor = const Color(0xFFEF4444);
-          alertIcon = Icons.battery_alert_rounded;
-          title = 'TANGKI HAMPIR KOSONG!';
-          subtitle = 'Estimasi sisa: 0 Liter. Segera isi BBM!';
-        } else if (isCritical) {
-          alertColor = const Color(0xFFF59E0B);
-          alertIcon = Icons.warning_amber_rounded;
-          title = 'PERINGATAN: SISA ≤ 0.5 LITER';
-          subtitle = 'Estimasi sisa: ${estimatedRemaining.toStringAsFixed(1)} Liter. Siapkan isi BBM.';
-        } else {
-          alertColor = const Color(0xFF22C55E);
-          alertIcon = Icons.battery_charging_full_rounded;
-          title = 'BBM AMAN';
-          subtitle = 'Estimasi sisa tangki: ${estimatedRemaining.toStringAsFixed(1)} Liter';
-        }
+  Widget _buildFuelAlertCard(
+    BuildContext context, {
+    required double estimatedRemaining,
+    required bool isCritical,
+    required bool isEmpty,
+    required VoidCallback onTap,
+  }) {
+    Color alertColor;
+    IconData alertIcon;
+    String title;
+    String subtitle;
 
-        return InkWell(
-          onTap: onTap,
+    if (isEmpty) {
+      alertColor = const Color(0xFFEF4444);
+      alertIcon = Icons.battery_alert_rounded;
+      title = 'TANGKI HAMPIR KOSONG!';
+      subtitle = 'Estimasi sisa: 0 Liter. Segera isi BBM!';
+    } else if (isCritical) {
+      alertColor = const Color(0xFFF59E0B);
+      alertIcon = Icons.warning_amber_rounded;
+      title = 'PERINGATAN: SISA ≤ 0.5 LITER';
+      subtitle =
+          'Estimasi sisa: ${estimatedRemaining.toStringAsFixed(1)} Liter. Siapkan isi BBM.';
+    } else {
+      alertColor = const Color(0xFF22C55E);
+      alertIcon = Icons.battery_charging_full_rounded;
+      title = 'BBM AMAN';
+      subtitle =
+          'Estimasi sisa tangki: ${estimatedRemaining.toStringAsFixed(1)} Liter';
+    }
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              alertColor.withOpacity(0.12),
+              alertColor.withOpacity(0.04),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  alertColor.withOpacity(0.12),
-                  alertColor.withOpacity(0.04),
+          border: Border.all(
+            color: alertColor.withOpacity(isCritical || isEmpty ? 0.4 : 0.2),
+            width: isCritical || isEmpty ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: alertColor.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Alert Icon
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: alertColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(alertIcon, color: alertColor, size: 28),
+            ),
+            const SizedBox(width: 16),
+
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: alertColor,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Progress Bar
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: estimatedRemaining > 0
+                          ? (estimatedRemaining / 10)
+                              .clamp(0.0, 1.0) // Assuming max ~10L tank
+                          : 0.0,
+                      minHeight: 6,
+                      backgroundColor: Colors.grey.shade200,
+                      valueColor: AlwaysStoppedAnimation<Color>(alertColor),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tekan untuk catat isi BBM →',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: alertColor.withOpacity(0.8),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: alertColor.withOpacity(isCritical || isEmpty ? 0.4 : 0.2),
-                width: isCritical || isEmpty ? 2 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: alertColor.withOpacity(0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+            ),
+
+            // Chevron
+            Icon(Icons.chevron_right_rounded, color: alertColor, size: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFuelFillingsList(
+    BuildContext context,
+    List<FuelFilling> fillings,
+    WidgetRef ref,
+    String recapId,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+              border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
             ),
             child: Row(
               children: [
-                // Alert Icon
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: alertColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(alertIcon, color: alertColor, size: 28),
-                ),
-                const SizedBox(width: 16),
-            
-                // Content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: alertColor,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Progress Bar
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: estimatedRemaining > 0 
-                              ? (estimatedRemaining / 10).clamp(0.0, 1.0) // Assuming max ~10L tank
-                              : 0.0,
-                          minHeight: 6,
-                          backgroundColor: Colors.grey.shade200,
-                          valueColor: AlwaysStoppedAnimation<Color>(alertColor),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Tekan untuk catat isi BBM →',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: alertColor.withOpacity(0.8),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                const Icon(Icons.history_rounded,
+                    color: Color(0xFF2E7D32), size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Riwayat Pengisian BBM (Terbaru)',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
                   ),
                 ),
-            
-                // Chevron
-                Icon(Icons.chevron_right_rounded, color: alertColor, size: 24),
+                const Spacer(),
+                Text(
+                  '${fillings.length} catatan',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
-        );
-      }
-
-      Widget _buildFuelFillingsList(
-        BuildContext context,
-        List<FuelFilling> fillings,
-        WidgetRef ref,
-        String recapId,
-      ) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-            border: Border.all(color: Colors.grey.shade100),
-          ),
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
+          // List
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: fillings.length > 5
+                ? 5
+                : fillings.length, // Show max 5 on dashboard
+            separatorBuilder: (context, index) => Divider(
+                height: 1,
+                color: Colors.grey.shade100,
+                indent: 16,
+                endIndent: 16),
+            itemBuilder: (context, index) {
+              final filling = fillings[index];
+              return ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.local_gas_station_rounded,
+                      color: Color(0xFFEF4444), size: 20),
                 ),
-                child: Row(
+                title: Text(
+                  '${filling.liter.toStringAsFixed(2)} L × Rp ${filling.hargaPerLiter.toStringAsFixed(0)}/L',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.history_rounded, color: Color(0xFF2E7D32), size: 20),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Riwayat Pengisian BBM (Terbaru)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${fillings.length} catatan',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // List
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: fillings.length > 5 ? 5 : fillings.length, // Show max 5 on dashboard
-                separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade100, indent: 16, endIndent: 16),
-                itemBuilder: (context, index) {
-                  final filling = fillings[index];
-                  return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.local_gas_station_rounded, color: Color(0xFFEF4444), size: 20),
-                    ),
-                    title: Text(
-                      '${filling.liter.toStringAsFixed(2)} L × Rp ${filling.hargaPerLiter.toStringAsFixed(0)}/L',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 2),
+                    Row(
                       children: [
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Icon(Icons.calendar_today_rounded, size: 10, color: Colors.grey.shade500),
-                            const SizedBox(width: 4),
-                            Text(
-                              DateFormat('dd MMM yy, HH:mm', 'id_ID').format(filling.tanggal),
-                              style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
-                            ),
-                            if (filling.odometer != null) ...[
-                              const SizedBox(width: 12),
-                              Icon(Icons.speed_rounded, size: 10, color: Colors.grey.shade500),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${filling.odometer!.toStringAsFixed(0)} KM',
-                                style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
-                              ),
-                            ],
-                          ],
+                        Icon(Icons.calendar_today_rounded,
+                            size: 10, color: Colors.grey.shade500),
+                        const SizedBox(width: 4),
+                        Text(
+                          DateFormat('dd MMM yy, HH:mm', 'id_ID')
+                              .format(filling.tanggal),
+                          style: TextStyle(
+                              fontSize: 10, color: Colors.grey.shade500),
                         ),
-                        if (filling.catatan != null && filling.catatan!.isNotEmpty) ...[
-                          const SizedBox(height: 2),
+                        if (filling.odometer != null) ...[
+                          const SizedBox(width: 12),
+                          Icon(Icons.speed_rounded,
+                              size: 10, color: Colors.grey.shade500),
+                          const SizedBox(width: 4),
                           Text(
-                            filling.catatan!,
-                            style: TextStyle(fontSize: 10, color: Colors.grey.shade400),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            '${filling.odometer!.toStringAsFixed(0)} KM',
+                            style: TextStyle(
+                                fontSize: 10, color: Colors.grey.shade500),
                           ),
                         ],
                       ],
                     ),
-                    trailing: Text(
-                      currency.format(filling.totalBiaya),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFEF4444),
-                      ),
-                    ),
-                    onTap: () => showFuelFillingSheet(
-                      context,
-                      recapId,
-                      existingFilling: filling,
-                    ),
-                  );
-                },
-              ),
-              // View All Footer
-              if (fillings.length > 5)
-                InkWell(
-                  onTap: () {
-                    ref.read(homeTabProvider.notifier).change(2);
-                    ref.read(reportTabProvider.notifier).change(3);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-                      border: Border(top: BorderSide(color: Colors.grey.shade100)),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Lihat semua ${fillings.length} riwayat →',
+                    if (filling.catatan != null &&
+                        filling.catatan!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        filling.catatan!,
                         style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blueGrey.shade600,
-                        ),
+                            fontSize: 10, color: Colors.grey.shade400),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      }
-
-      Widget _buildEmptyFuelState(
-        BuildContext context,
-        String recapId, {
-        required VoidCallback onAdd,
-      }) {
-        return Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-            border: Border.all(color: Colors.grey.shade100),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Icon(Icons.local_gas_station_rounded, color: Color(0xFFEF4444), size: 32),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Belum Ada Riwayat Pengisian BBM',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Mulai catat pengisian BBM agar estimasi sisa tangki akurat dan alert 0.5L berfungsi.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade500,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: onAdd,
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Catat Isi BBM Pertama', style: TextStyle(fontWeight: FontWeight.w600)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEF4444),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 2,
-                ),
-              ),
-            ],
-          ),
-        );
-      }
-
-      Widget _buildSkeletonFuelCard() {
-        return Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(width: 120, height: 16, color: Colors.grey.shade200),
-                    const SizedBox(height: 8),
-                    Container(width: 200, height: 12, color: Colors.grey.shade200),
-                    const SizedBox(height: 12),
-                    Container(width: double.infinity, height: 6, color: Colors.grey.shade200),
+                    ],
                   ],
                 ),
-              ),
-            ],
-          ),
-        );
-      }
-
-      Widget _buildErrorFuelCard(String error) {
-        return Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.red.shade50,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.red.shade200),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.error_outline_rounded, color: Colors.red, size: 28),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  'Gagal memuat estimasi BBM: $error',
-                  style: TextStyle(fontSize: 13, color: Colors.red.shade700),
+                trailing: Text(
+                  currency.format(filling.totalBiaya),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFEF4444),
+                  ),
                 ),
-              ),
-            ],
+                onTap: () => showFuelFillingSheet(
+                  context,
+                  recapId,
+                  existingFilling: filling,
+                ),
+              );
+            },
           ),
-        );
-      }
-
-      Widget _buildSkeletonFuelList() {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade100),
-          ),
-          child: Column(
-            children: List.generate(3, (index) => Container(
-              height: 72,
-              decoration: BoxDecoration(
-                color: index.isEven ? Colors.grey.shade50 : Colors.white,
-                border: Border(bottom: index < 2 ? BorderSide(color: Colors.grey.shade100) : BorderSide.none),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 16),
-                  Container(width: 36, height: 36, color: Colors.grey.shade200),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(width: 150, height: 14, color: Colors.grey.shade200),
-                        const SizedBox(height: 6),
-                        Container(width: 100, height: 10, color: Colors.grey.shade200),
-                      ],
+          // View All Footer
+          if (fillings.length > 5)
+            InkWell(
+              onTap: () {
+                ref.read(homeTabProvider.notifier).change(2);
+                ref.read(reportTabProvider.notifier).change(3);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius:
+                      const BorderRadius.vertical(bottom: Radius.circular(16)),
+                  border: Border(top: BorderSide(color: Colors.grey.shade100)),
+                ),
+                child: Center(
+                  child: Text(
+                    'Lihat semua ${fillings.length} riwayat →',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blueGrey.shade600,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                ],
+                ),
               ),
-            )),
-          ),
-        );
-      }
+            ),
+        ],
+      ),
+    );
+  }
 
-      Widget _buildErrorFuelList(String error) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.red.shade50,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.red.shade200),
+  Widget _buildEmptyFuelState(
+    BuildContext context,
+    String recapId, {
+    required VoidCallback onAdd,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          child: Text(
-            'Gagal memuat riwayat: $error',
-            style: TextStyle(fontSize: 13, color: Colors.red.shade700),
+        ],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEF4444).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.local_gas_station_rounded,
+                color: Color(0xFFEF4444), size: 32),
           ),
-        );
-      }
-    }
+          const SizedBox(height: 16),
+          const Text(
+            'Belum Ada Riwayat Pengisian BBM',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Mulai catat pengisian BBM agar estimasi sisa tangki akurat dan alert 0.5L berfungsi.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade500,
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Catat Isi BBM Pertama',
+                style: TextStyle(fontWeight: FontWeight.w600)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              elevation: 2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-    class _WalletBalanceItem {
-      final String id;
-      final String name;
-      final double balance;
-      final IconData icon;
-      final Color color;
+  Widget _buildSkeletonFuelCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(width: 120, height: 16, color: Colors.grey.shade200),
+                const SizedBox(height: 8),
+                Container(width: 200, height: 12, color: Colors.grey.shade200),
+                const SizedBox(height: 12),
+                Container(
+                    width: double.infinity,
+                    height: 6,
+                    color: Colors.grey.shade200),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-      _WalletBalanceItem(this.id, this.name, this.balance, this.icon, this.color);
-    }
+  Widget _buildErrorFuelCard(String error) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline_rounded, color: Colors.red, size: 28),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              'Gagal memuat estimasi BBM: $error',
+              style: TextStyle(fontSize: 13, color: Colors.red.shade700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonFuelList() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Column(
+        children: List.generate(
+            3,
+            (index) => Container(
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: index.isEven ? Colors.grey.shade50 : Colors.white,
+                    border: Border(
+                        bottom: index < 2
+                            ? BorderSide(color: Colors.grey.shade100)
+                            : BorderSide.none),
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 16),
+                      Container(
+                          width: 36, height: 36, color: Colors.grey.shade200),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                                width: 150,
+                                height: 14,
+                                color: Colors.grey.shade200),
+                            const SizedBox(height: 6),
+                            Container(
+                                width: 100,
+                                height: 10,
+                                color: Colors.grey.shade200),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                    ],
+                  ),
+                )),
+      ),
+    );
+  }
+
+  Widget _buildErrorFuelList(String error) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Text(
+        'Gagal memuat riwayat: $error',
+        style: TextStyle(fontSize: 13, color: Colors.red.shade700),
+      ),
+    );
+  }
+}
+
+class _WalletBalanceItem {
+  final String id;
+  final String name;
+  final double balance;
+  final IconData icon;
+  final Color color;
+
+  _WalletBalanceItem(this.id, this.name, this.balance, this.icon, this.color);
+}

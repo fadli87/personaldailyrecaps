@@ -10,7 +10,8 @@ import 'report_screen.dart';
 import 'profile_screen.dart';
 import 'pin_lock_screen.dart';
 
-final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+final currency =
+    NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 final dateFmt = DateFormat('EEEE, d MMM yyyy', 'id_ID');
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -20,7 +21,8 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   bool _isLockScreenShowing = false;
 
   @override
@@ -126,7 +128,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   trailing: Text(
                     (positif ? '+' : '') + currency.format(r.netEarning),
                     style: TextStyle(
-                      color: positif ? Colors.green.shade700 : Colors.red.shade700,
+                      color:
+                          positif ? Colors.green.shade700 : Colors.red.shade700,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -158,7 +161,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
               ? 'Dashboard Eksekutif'
               : (currentIndex == 1
                   ? 'Personal Finance & Recap'
-                  : (currentIndex == 2 ? 'Laporan Bulanan & Ekspor' : 'Profil & Keamanan')),
+                  : (currentIndex == 2
+                      ? 'Laporan Bulanan & Ekspor'
+                      : 'Profil & Keamanan')),
         ),
         actions: currentIndex == 0
             ? [
@@ -168,14 +173,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                     if (!context.mounted) return;
                     final scaffold = ScaffoldMessenger.of(context);
                     scaffold.showSnackBar(
-                      const SnackBar(content: Text('Sinkronisasi data sedang berjalan...')),
+                      const SnackBar(
+                          content:
+                              Text('Sinkronisasi data sedang berjalan...')),
                     );
                     try {
                       await SyncService.sync();
                       ref.invalidate(recapsProvider);
                       ref.invalidate(platformDistributionProvider);
                       scaffold.showSnackBar(
-                        const SnackBar(content: Text('Sinkronisasi data sukses!')),
+                        const SnackBar(
+                            content: Text('Sinkronisasi data sukses!')),
                       );
                     } catch (e) {
                       scaffold.showSnackBar(
@@ -227,7 +235,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
               onPressed: () async {
                 await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const DailyRecapDetailScreen(recapId: null)),
+                  MaterialPageRoute(
+                      builder: (_) =>
+                          const DailyRecapDetailScreen(recapId: null)),
                 );
                 ref.invalidate(recapsProvider);
               },

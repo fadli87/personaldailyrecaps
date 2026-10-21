@@ -12,7 +12,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -48,15 +49,28 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         } catch (_) {
           // Supabase not initialized (e.g. in test environment)
         }
-        
-        if (session == null) {
-          // Belum login sama sekali, arahkan ke LoginScreen
+
+        bool isAnonymous = false;
+        try {
+          isAnonymous =
+              Supabase.instance.client.auth.currentUser?.isAnonymous ?? false;
+        } catch (_) {}
+
+        if (session == null || isAnonymous) {
+          if (isAnonymous) {
+            try {
+              await Supabase.instance.client.auth.signOut();
+            } catch (_) {}
+          }
+          // Belum login atau sesi anonim, arahkan ke LoginScreen
           if (!mounted) return;
           Navigator.pushReplacement(
             context,
             PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const LoginScreen(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 return FadeTransition(opacity: animation, child: child);
               },
               transitionDuration: const Duration(milliseconds: 500),
@@ -73,11 +87,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             Navigator.pushReplacement(
               context,
               PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => const PinLockScreen(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const PinLockScreen(
                   mode: PinMode.normalLock,
                   isInitialLaunch: true,
                 ),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
                   return FadeTransition(opacity: animation, child: child);
                 },
                 transitionDuration: const Duration(milliseconds: 500),
@@ -88,8 +104,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             Navigator.pushReplacement(
               context,
               PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => const HomeScreen(),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const HomeScreen(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
                   return FadeTransition(opacity: animation, child: child);
                 },
                 transitionDuration: const Duration(milliseconds: 500),

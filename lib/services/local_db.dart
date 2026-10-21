@@ -1,12 +1,46 @@
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'ledger_schema.dart';
 
 class LocalDb {
   static final LocalDb instance = LocalDb._();
   LocalDb._();
 
   Database? _db;
+
+  static const String _fuelFillingsDdl = '''
+    CREATE TABLE IF NOT EXISTS fuel_fillings (
+      id TEXT PRIMARY KEY,
+      daily_recap_id TEXT NOT NULL,
+      tanggal TEXT NOT NULL,
+      liter REAL NOT NULL,
+      harga_per_liter REAL NOT NULL DEFAULT 0,
+      total_biaya REAL NOT NULL DEFAULT 0,
+      odometer REAL,
+      catatan TEXT,
+      vehicle_id TEXT,
+      created_at TEXT NOT NULL,
+      is_synced INTEGER NOT NULL DEFAULT 0
+    )
+  ''';
+
+  static Future<void> _createFuelFillings(Database db) async {
+    await db.execute(_fuelFillingsDdl);
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_fuel_fillings_recap ON fuel_fillings(daily_recap_id)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_fuel_fillings_tanggal ON fuel_fillings(tanggal)');
+  }
+
+  static Future<void> _addColumnIfMissing(
+      Database db, String table, String column, String ddl) async {
+    final info = await db.rawQuery('PRAGMA table_info($table)');
+    final exists = info.any((r) => r['name'] == column);
+    if (!exists) {
+      await db.execute('ALTER TABLE $table ADD COLUMN $column $ddl');
+    }
+  }
 
   Future<Database> get database async {
     if (_db != null) return _db!;
@@ -19,7 +53,7 @@ class LocalDb {
     final dbPath = join(docsDir.path, 'sf_daily_recap.db');
     return await openDatabase(
       dbPath,
-      version: 10,
+      version: 11,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE daily_recap (
@@ -103,41 +137,65 @@ class LocalDb {
           )
         ''');
 
+        await _createFuelFillings(db);
+        for (final s in ledgerSchemaStatements) {
+          await db.execute(s);
+        }
+
         await _createSummaryView(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN odo_start REAL NOT NULL DEFAULT 0');
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN odo_end REAL NOT NULL DEFAULT 0');
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN fuel_price_per_liter REAL NOT NULL DEFAULT 10000');
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN kml_parameter REAL NOT NULL DEFAULT 45.5');
-          await db.execute('ALTER TABLE daily_order ADD COLUMN is_fuel_expense INTEGER NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN odo_start REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN odo_end REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN fuel_price_per_liter REAL NOT NULL DEFAULT 10000');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN kml_parameter REAL NOT NULL DEFAULT 45.5');
+          await db.execute(
+              'ALTER TABLE daily_order ADD COLUMN is_fuel_expense INTEGER NOT NULL DEFAULT 0');
         }
 
         if (oldVersion < 3) {
-          await db.execute("ALTER TABLE daily_recap ADD COLUMN status TEXT NOT NULL DEFAULT 'open'");
-          await db.execute("ALTER TABLE daily_recap ADD COLUMN saldo_akhir_app_aktual REAL NOT NULL DEFAULT 0");
+          await db.execute(
+              "ALTER TABLE daily_recap ADD COLUMN status TEXT NOT NULL DEFAULT 'open'");
+          await db.execute(
+              "ALTER TABLE daily_recap ADD COLUMN saldo_akhir_app_aktual REAL NOT NULL DEFAULT 0");
         }
 
         if (oldVersion < 4) {
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_awal_grab_kredit REAL NOT NULL DEFAULT 0');
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_awal_grab_tunai REAL NOT NULL DEFAULT 0');
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_awal_grab_ovo REAL NOT NULL DEFAULT 0');
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_akhir_grab_kredit_aktual REAL NOT NULL DEFAULT 0');
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_akhir_grab_tunai_aktual REAL NOT NULL DEFAULT 0');
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_akhir_grab_ovo_aktual REAL NOT NULL DEFAULT 0');
-          await db.execute("ALTER TABLE daily_order ADD COLUMN wallet_type TEXT NOT NULL DEFAULT 'shopeefood'");
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN saldo_awal_grab_kredit REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN saldo_awal_grab_tunai REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN saldo_awal_grab_ovo REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN saldo_akhir_grab_kredit_aktual REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN saldo_akhir_grab_tunai_aktual REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN saldo_akhir_grab_ovo_aktual REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              "ALTER TABLE daily_order ADD COLUMN wallet_type TEXT NOT NULL DEFAULT 'shopeefood'");
         }
 
         if (oldVersion < 5) {
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_awal_mandiri REAL NOT NULL DEFAULT 0');
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_awal_bca REAL NOT NULL DEFAULT 0');
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_akhir_mandiri_aktual REAL NOT NULL DEFAULT 0');
-          await db.execute('ALTER TABLE daily_recap ADD COLUMN saldo_akhir_bca_aktual REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN saldo_awal_mandiri REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN saldo_awal_bca REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN saldo_akhir_mandiri_aktual REAL NOT NULL DEFAULT 0');
+          await db.execute(
+              'ALTER TABLE daily_recap ADD COLUMN saldo_akhir_bca_aktual REAL NOT NULL DEFAULT 0');
         }
 
         if (oldVersion < 6) {
-          await db.execute("ALTER TABLE daily_order ADD COLUMN topup_source TEXT NOT NULL DEFAULT 'cash'");
+          await db.execute(
+              "ALTER TABLE daily_order ADD COLUMN topup_source TEXT NOT NULL DEFAULT 'cash'");
         }
 
         if (oldVersion < 7) {
@@ -149,8 +207,10 @@ class LocalDb {
         }
 
         if (oldVersion < 9) {
-          await db.execute("ALTER TABLE daily_extra ADD COLUMN tip_wallet_type TEXT");
-          await db.execute("ALTER TABLE daily_extra ADD COLUMN insentif_wallet_type TEXT");
+          await db.execute(
+              "ALTER TABLE daily_extra ADD COLUMN tip_wallet_type TEXT");
+          await db.execute(
+              "ALTER TABLE daily_extra ADD COLUMN insentif_wallet_type TEXT");
         }
 
         if (oldVersion < 10) {
@@ -169,10 +229,21 @@ class LocalDb {
               is_synced INTEGER NOT NULL DEFAULT 0
             )
           ''');
-          
+
           // Index untuk query cepat
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_fuel_fillings_recap ON fuel_fillings(daily_recap_id)');
-          await db.execute('CREATE INDEX IF NOT EXISTS idx_fuel_fillings_tanggal ON fuel_fillings(tanggal)');
+          await db.execute(
+              'CREATE INDEX IF NOT EXISTS idx_fuel_fillings_recap ON fuel_fillings(daily_recap_id)');
+          await db.execute(
+              'CREATE INDEX IF NOT EXISTS idx_fuel_fillings_tanggal ON fuel_fillings(tanggal)');
+        }
+
+        if (oldVersion < 11) {
+          // Instalasi yang dibuat langsung di v10 lewat onCreate tidak punya fuel_fillings.
+          await _createFuelFillings(db);
+          await _addColumnIfMissing(db, 'fuel_fillings', 'vehicle_id', 'TEXT');
+          for (final s in ledgerSchemaStatements) {
+            await db.execute(s);
+          }
         }
 
         // Selalu re-create view di onUpgrade untuk memastikan rumus terbaru terpakai

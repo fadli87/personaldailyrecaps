@@ -7,14 +7,16 @@ enum PinMode { setup, verify, normalLock }
 class PinLockScreen extends StatefulWidget {
   final PinMode mode;
   final bool isInitialLaunch;
-  const PinLockScreen({super.key, required this.mode, this.isInitialLaunch = false});
+  const PinLockScreen(
+      {super.key, required this.mode, this.isInitialLaunch = false});
 
   @override
   State<PinLockScreen> createState() => _PinLockScreenState();
 }
 
 class _PinLockScreenState extends State<PinLockScreen> {
-  late PinMode _currentMode; // Local state to allow switching modes (e.g., to setup after recovery)
+  late PinMode
+      _currentMode; // Local state to allow switching modes (e.g., to setup after recovery)
   String _inputPin = '';
   String _tempPin = '';
   String _message = '';
@@ -54,7 +56,8 @@ class _PinLockScreenState extends State<PinLockScreen> {
   Future<void> _loadSavedSecurityQuestion() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _savedQuestion = prefs.getString('app_pin_question') ?? 'Pertanyaan Pemulihan tidak diatur.';
+      _savedQuestion = prefs.getString('app_pin_question') ??
+          'Pertanyaan Pemulihan tidak diatur.';
       _savedAnswer = prefs.getString('app_pin_answer') ?? '';
     });
   }
@@ -165,7 +168,8 @@ class _PinLockScreenState extends State<PinLockScreen> {
 
     if (question.isEmpty || answer.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pertanyaan dan jawaban tidak boleh kosong')),
+        const SnackBar(
+            content: Text('Pertanyaan dan jawaban tidak boleh kosong')),
       );
       return;
     }
@@ -242,7 +246,9 @@ class _PinLockScreenState extends State<PinLockScreen> {
                       Icon(
                         _isSettingSecurityQuestion
                             ? Icons.help_outline
-                            : (_isVerifyingSecurityQuestion ? Icons.lock_open_outlined : Icons.lock_outline),
+                            : (_isVerifyingSecurityQuestion
+                                ? Icons.lock_open_outlined
+                                : Icons.lock_outline),
                         color: const Color(0xFF4CAF50),
                         size: 64,
                       ),
@@ -306,7 +312,8 @@ class _PinLockScreenState extends State<PinLockScreen> {
               labelText: 'Pilih Pertanyaan',
               labelStyle: TextStyle(color: Colors.white70),
               border: OutlineInputBorder(),
-              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+              enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white30)),
             ),
             initialValue: _selectedQuestion,
             items: [
@@ -331,7 +338,8 @@ class _PinLockScreenState extends State<PinLockScreen> {
                 labelText: 'Tulis Pertanyaan Anda',
                 labelStyle: TextStyle(color: Colors.white70),
                 border: OutlineInputBorder(),
-                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white30)),
               ),
             ),
           ],
@@ -343,7 +351,8 @@ class _PinLockScreenState extends State<PinLockScreen> {
               labelText: 'Jawaban Keamanan',
               labelStyle: TextStyle(color: Colors.white70),
               border: OutlineInputBorder(),
-              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+              enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white30)),
             ),
           ),
           const SizedBox(height: 24),
@@ -355,9 +364,11 @@ class _PinLockScreenState extends State<PinLockScreen> {
                 backgroundColor: const Color(0xFF4CAF50),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Simpan PIN & Pemulihan', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('Simpan PIN & Pemulihan',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -387,11 +398,15 @@ class _PinLockScreenState extends State<PinLockScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Pertanyaan Keamanan:', style: TextStyle(color: Colors.white38, fontSize: 11)),
+                const Text('Pertanyaan Keamanan:',
+                    style: TextStyle(color: Colors.white38, fontSize: 11)),
                 const SizedBox(height: 4),
                 Text(
                   _savedQuestion,
-                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -404,7 +419,8 @@ class _PinLockScreenState extends State<PinLockScreen> {
               labelText: 'Jawaban Anda',
               labelStyle: TextStyle(color: Colors.white70),
               border: OutlineInputBorder(),
-              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+              enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white30)),
             ),
           ),
           const SizedBox(height: 24),
@@ -422,7 +438,8 @@ class _PinLockScreenState extends State<PinLockScreen> {
                     foregroundColor: Colors.white,
                     side: const BorderSide(color: Colors.white30),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text('Batal'),
                 ),
@@ -435,9 +452,11 @@ class _PinLockScreenState extends State<PinLockScreen> {
                     backgroundColor: const Color(0xFF4CAF50),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Verifikasi', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text('Verifikasi',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -550,7 +569,8 @@ class _PinLockScreenState extends State<PinLockScreen> {
         const SizedBox(height: 24),
 
         // Tombol Lupa PIN (hanya muncul saat verifikasi atau lock screen aktif)
-        if (_currentMode == PinMode.normalLock || _currentMode == PinMode.verify)
+        if (_currentMode == PinMode.normalLock ||
+            _currentMode == PinMode.verify)
           TextButton(
             onPressed: () {
               setState(() {

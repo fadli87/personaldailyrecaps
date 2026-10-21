@@ -17,10 +17,12 @@ class DailyRecapDetailScreen extends ConsumerStatefulWidget {
   const DailyRecapDetailScreen({super.key, required this.recapId});
 
   @override
-  ConsumerState<DailyRecapDetailScreen> createState() => _DailyRecapDetailScreenState();
+  ConsumerState<DailyRecapDetailScreen> createState() =>
+      _DailyRecapDetailScreenState();
 }
 
-class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen> {
+class _DailyRecapDetailScreenState
+    extends ConsumerState<DailyRecapDetailScreen> {
   final _cashAwalCtrl = TextEditingController(text: '0');
   final _saldoAwalAppCtrl = TextEditingController(text: '0');
   final _saldoAwalGrabKreditCtrl = TextEditingController(text: '0');
@@ -74,8 +76,10 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
   Future<void> _saveHeader() async {
     final cashAwal = double.tryParse(_cashAwalCtrl.text) ?? 0;
     final saldoAwalApp = double.tryParse(_saldoAwalAppCtrl.text) ?? 0;
-    final saldoAwalGrabKredit = double.tryParse(_saldoAwalGrabKreditCtrl.text) ?? 0;
-    final saldoAwalGrabTunai = double.tryParse(_saldoAwalGrabTunaiCtrl.text) ?? 0;
+    final saldoAwalGrabKredit =
+        double.tryParse(_saldoAwalGrabKreditCtrl.text) ?? 0;
+    final saldoAwalGrabTunai =
+        double.tryParse(_saldoAwalGrabTunaiCtrl.text) ?? 0;
     final saldoAwalGrabOvo = double.tryParse(_saldoAwalGrabOvoCtrl.text) ?? 0;
     final saldoAwalMandiri = double.tryParse(_saldoAwalMandiriCtrl.text) ?? 0;
     final saldoAwalBca = double.tryParse(_saldoAwalBcaCtrl.text) ?? 0;
@@ -86,7 +90,9 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     final tip = double.tryParse(_tipCtrl.text) ?? 0;
     final insentif = double.tryParse(_insentifCtrl.text) ?? 0;
 
-    await ref.read(recapDetailNotifierProvider(widget.recapId).notifier).saveHeader(
+    await ref
+        .read(recapDetailNotifierProvider(widget.recapId).notifier)
+        .saveHeader(
           cashAwal: cashAwal,
           saldoAwalApp: saldoAwalApp,
           saldoAwalGrabKredit: saldoAwalGrabKredit,
@@ -117,9 +123,13 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
 
     double lastOdometer = state.odoStart;
     if (state.orders.isNotEmpty) {
-      final odoOrders = state.orders.where((o) => o.id != existing?.id && o.odometer != null && o.odometer! > 0).toList();
+      final odoOrders = state.orders
+          .where((o) =>
+              o.id != existing?.id && o.odometer != null && o.odometer! > 0)
+          .toList();
       if (odoOrders.isNotEmpty) {
-        lastOdometer = odoOrders.map((o) => o.odometer!).reduce((a, b) => a > b ? a : b);
+        lastOdometer =
+            odoOrders.map((o) => o.odometer!).reduce((a, b) => a > b ? a : b);
       }
     }
 
@@ -135,25 +145,32 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
       ),
     );
     if (result != null) {
-      await ref.read(recapDetailNotifierProvider(widget.recapId).notifier).upsertOrder(result);
+      await ref
+          .read(recapDetailNotifierProvider(widget.recapId).notifier)
+          .upsertOrder(result);
     }
   }
 
   Future<void> _deleteOrder(DailyOrder o) async {
     if (o.id == null) return;
-    await ref.read(recapDetailNotifierProvider(widget.recapId).notifier).deleteOrder(o);
+    await ref
+        .read(recapDetailNotifierProvider(widget.recapId).notifier)
+        .deleteOrder(o);
   }
 
   Future<void> _savePettyCash() async {
-    var activeId = ref.read(recapDetailNotifierProvider(widget.recapId)).recapId;
+    var activeId =
+        ref.read(recapDetailNotifierProvider(widget.recapId)).recapId;
     if (activeId == null) {
       await _saveHeader();
       activeId = ref.read(recapDetailNotifierProvider(widget.recapId)).recapId;
     }
     if (activeId == null) return;
 
-    await ref.read(recapDetailNotifierProvider(widget.recapId).notifier).savePettyCash(_localPettyCash);
-    
+    await ref
+        .read(recapDetailNotifierProvider(widget.recapId).notifier)
+        .savePettyCash(_localPettyCash);
+
     // Sinkronkan kembali dengan data terbaru setelah save
     final updatedState = ref.read(recapDetailNotifierProvider(widget.recapId));
     setState(() {
@@ -173,8 +190,10 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     if (!_initialized) {
       _cashAwalCtrl.text = state.cashAwal.toStringAsFixed(0);
       _saldoAwalAppCtrl.text = state.saldoAwalApp.toStringAsFixed(0);
-      _saldoAwalGrabKreditCtrl.text = state.saldoAwalGrabKredit.toStringAsFixed(0);
-      _saldoAwalGrabTunaiCtrl.text = state.saldoAwalGrabTunai.toStringAsFixed(0);
+      _saldoAwalGrabKreditCtrl.text =
+          state.saldoAwalGrabKredit.toStringAsFixed(0);
+      _saldoAwalGrabTunaiCtrl.text =
+          state.saldoAwalGrabTunai.toStringAsFixed(0);
       _saldoAwalGrabOvoCtrl.text = state.saldoAwalGrabOvo.toStringAsFixed(0);
       _saldoAwalMandiriCtrl.text = state.saldoAwalMandiri.toStringAsFixed(0);
       _saldoAwalBcaCtrl.text = state.saldoAwalBca.toStringAsFixed(0);
@@ -183,10 +202,14 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
       _fuelPriceCtrl.text = state.fuelPricePerLiter.toStringAsFixed(0);
       _kmlParamCtrl.text = state.kmlParameter.toStringAsFixed(1);
       _actualAppBalanceCtrl.text = state.saldoAkhirAppAktual.toStringAsFixed(0);
-      _actualGrabKreditCtrl.text = state.saldoAkhirGrabKreditAktual.toStringAsFixed(0);
-      _actualGrabTunaiCtrl.text = state.saldoAkhirGrabTunaiAktual.toStringAsFixed(0);
-      _actualGrabOvoCtrl.text = state.saldoAkhirGrabOvoAktual.toStringAsFixed(0);
-      _actualMandiriCtrl.text = state.saldoAkhirMandiriAktual.toStringAsFixed(0);
+      _actualGrabKreditCtrl.text =
+          state.saldoAkhirGrabKreditAktual.toStringAsFixed(0);
+      _actualGrabTunaiCtrl.text =
+          state.saldoAkhirGrabTunaiAktual.toStringAsFixed(0);
+      _actualGrabOvoCtrl.text =
+          state.saldoAkhirGrabOvoAktual.toStringAsFixed(0);
+      _actualMandiriCtrl.text =
+          state.saldoAkhirMandiriAktual.toStringAsFixed(0);
       _actualBcaCtrl.text = state.saldoAkhirBcaAktual.toStringAsFixed(0);
       _tipCtrl.text = state.tip.toStringAsFixed(0);
       _insentifCtrl.text = state.insentif.toStringAsFixed(0);
@@ -197,23 +220,31 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     }
 
     final isClosed = state.status == 'closed';
-    final hasChanges = !_initialized ? false : (
-      (double.tryParse(_cashAwalCtrl.text) ?? 0) != state.cashAwal ||
-      (double.tryParse(_saldoAwalAppCtrl.text) ?? 0) != state.saldoAwalApp ||
-      (double.tryParse(_saldoAwalGrabKreditCtrl.text) ?? 0) != state.saldoAwalGrabKredit ||
-      (double.tryParse(_saldoAwalGrabTunaiCtrl.text) ?? 0) != state.saldoAwalGrabTunai ||
-      (double.tryParse(_saldoAwalGrabOvoCtrl.text) ?? 0) != state.saldoAwalGrabOvo ||
-      (double.tryParse(_saldoAwalMandiriCtrl.text) ?? 0) != state.saldoAwalMandiri ||
-      (double.tryParse(_saldoAwalBcaCtrl.text) ?? 0) != state.saldoAwalBca ||
-      (double.tryParse(_odoStartCtrl.text) ?? 0) != state.odoStart ||
-      (double.tryParse(_odoEndCtrl.text) ?? 0) != state.odoEnd ||
-      (double.tryParse(_fuelPriceCtrl.text) ?? 0) != state.fuelPricePerLiter ||
-      (double.tryParse(_kmlParamCtrl.text) ?? 0) != state.kmlParameter ||
-      (double.tryParse(_tipCtrl.text) ?? 0) != state.tip ||
-      (double.tryParse(_insentifCtrl.text) ?? 0) != state.insentif ||
-      _tipWalletSelected != (state.tipWalletType ?? 'cash') ||
-      _insentifWalletSelected != (state.insentifWalletType ?? 'shopeefood')
-    );
+    final hasChanges = !_initialized
+        ? false
+        : ((double.tryParse(_cashAwalCtrl.text) ?? 0) != state.cashAwal ||
+            (double.tryParse(_saldoAwalAppCtrl.text) ?? 0) !=
+                state.saldoAwalApp ||
+            (double.tryParse(_saldoAwalGrabKreditCtrl.text) ?? 0) !=
+                state.saldoAwalGrabKredit ||
+            (double.tryParse(_saldoAwalGrabTunaiCtrl.text) ?? 0) !=
+                state.saldoAwalGrabTunai ||
+            (double.tryParse(_saldoAwalGrabOvoCtrl.text) ?? 0) !=
+                state.saldoAwalGrabOvo ||
+            (double.tryParse(_saldoAwalMandiriCtrl.text) ?? 0) !=
+                state.saldoAwalMandiri ||
+            (double.tryParse(_saldoAwalBcaCtrl.text) ?? 0) !=
+                state.saldoAwalBca ||
+            (double.tryParse(_odoStartCtrl.text) ?? 0) != state.odoStart ||
+            (double.tryParse(_odoEndCtrl.text) ?? 0) != state.odoEnd ||
+            (double.tryParse(_fuelPriceCtrl.text) ?? 0) !=
+                state.fuelPricePerLiter ||
+            (double.tryParse(_kmlParamCtrl.text) ?? 0) != state.kmlParameter ||
+            (double.tryParse(_tipCtrl.text) ?? 0) != state.tip ||
+            (double.tryParse(_insentifCtrl.text) ?? 0) != state.insentif ||
+            _tipWalletSelected != (state.tipWalletType ?? 'cash') ||
+            _insentifWalletSelected !=
+                (state.insentifWalletType ?? 'shopeefood'));
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -243,7 +274,10 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                 ),
                 child: Text(
                   isClosed ? 'TERKUNCI' : 'AKTIF',
-                  style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -258,7 +292,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                     context: context,
                     builder: (ctx) => AlertDialog(
                       title: const Text('Hapus Rekap'),
-                      content: const Text('Apakah Anda yakin ingin menghapus rekap harian ini beserta seluruh transaksinya? Tindakan ini tidak bisa dibatalkan.'),
+                      content: const Text(
+                          'Apakah Anda yakin ingin menghapus rekap harian ini beserta seluruh transaksinya? Tindakan ini tidak bisa dibatalkan.'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
@@ -266,14 +301,17 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                          child: const Text('Hapus',
+                              style: TextStyle(color: Colors.red)),
                         ),
                       ],
                     ),
                   );
                   if (confirm == true) {
                     final messenger = ScaffoldMessenger.of(context);
-                    await ref.read(recapServiceProvider).deleteRecap(widget.recapId!);
+                    await ref
+                        .read(recapServiceProvider)
+                        .deleteRecap(widget.recapId!);
                     ref.invalidate(recapsProvider);
                     ref.invalidate(platformDistributionProvider);
                     messenger.showSnackBar(
@@ -328,36 +366,39 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                       color: Colors.white,
                       child: _buildSidebarMenu(context, false),
                     ),
-                    const VerticalDivider(width: 1, thickness: 1, color: Colors.black12),
+                    const VerticalDivider(
+                        width: 1, thickness: 1, color: Colors.black12),
                     Expanded(
                       child: _buildSectionContent(state, isClosed),
                     ),
                   ],
                 )
               : _buildSectionContent(state, isClosed),
-          bottomNavigationBar: isDesktop ? null : BottomNavigationBar(
-            currentIndex: _selectedSection,
-            onTap: (index) {
-              setState(() {
-                _selectedSection = index;
-              });
-            },
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.tune_outlined),
-                label: 'Setup Awal',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.receipt_long_outlined),
-                label: 'Transaksi',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.fact_check_outlined),
-                label: 'Closing',
-              ),
-            ],
-            selectedItemColor: const Color(0xFF2E7D32),
-          ),
+          bottomNavigationBar: isDesktop
+              ? null
+              : BottomNavigationBar(
+                  currentIndex: _selectedSection,
+                  onTap: (index) {
+                    setState(() {
+                      _selectedSection = index;
+                    });
+                  },
+                  items: const [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.tune_outlined),
+                      label: 'Setup Awal',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.receipt_long_outlined),
+                      label: 'Transaksi',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.fact_check_outlined),
+                      label: 'Closing',
+                    ),
+                  ],
+                  selectedItemColor: const Color(0xFF2E7D32),
+                ),
         );
       },
     );
@@ -382,7 +423,10 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
               children: [
                 Text(
                   'Rekap Harian',
-                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -398,20 +442,29 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
             color: Colors.grey.shade100,
             child: const Text(
               'MENU REKAP',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black54, letterSpacing: 1),
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black54,
+                  letterSpacing: 1),
             ),
           ),
         for (int i = 0; i < menuItems.length; i++)
           ListTile(
             leading: Icon(
               menuItems[i]['icon'] as IconData,
-              color: _selectedSection == i ? const Color(0xFF2E7D32) : Colors.black54,
+              color: _selectedSection == i
+                  ? const Color(0xFF2E7D32)
+                  : Colors.black54,
             ),
             title: Text(
               menuItems[i]['label'] as String,
               style: TextStyle(
-                fontWeight: _selectedSection == i ? FontWeight.bold : FontWeight.normal,
-                color: _selectedSection == i ? const Color(0xFF2E7D32) : Colors.black87,
+                fontWeight:
+                    _selectedSection == i ? FontWeight.bold : FontWeight.normal,
+                color: _selectedSection == i
+                    ? const Color(0xFF2E7D32)
+                    : Colors.black87,
               ),
             ),
             selected: _selectedSection == i,
@@ -454,11 +507,13 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                     Row(
                       children: [
                         Expanded(
-                          child: _numField('Cash Awal', _cashAwalCtrl, enabled: !isClosed),
+                          child: _numField('Cash Awal', _cashAwalCtrl,
+                              enabled: !isClosed),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: _numField('ShopeeFood Awal', _saldoAwalAppCtrl, enabled: !isClosed),
+                          child: _numField('ShopeeFood Awal', _saldoAwalAppCtrl,
+                              enabled: !isClosed),
                         ),
                       ],
                     ),
@@ -466,11 +521,15 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                     Row(
                       children: [
                         Expanded(
-                          child: _numField('Grab Kredit Awal', _saldoAwalGrabKreditCtrl, enabled: !isClosed),
+                          child: _numField(
+                              'Grab Kredit Awal', _saldoAwalGrabKreditCtrl,
+                              enabled: !isClosed),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: _numField('Grab Tunai Awal', _saldoAwalGrabTunaiCtrl, enabled: !isClosed),
+                          child: _numField(
+                              'Grab Tunai Awal', _saldoAwalGrabTunaiCtrl,
+                              enabled: !isClosed),
                         ),
                       ],
                     ),
@@ -478,16 +537,21 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                     Row(
                       children: [
                         Expanded(
-                          child: _numField('Grab OVO Awal', _saldoAwalGrabOvoCtrl, enabled: !isClosed),
+                          child: _numField(
+                              'Grab OVO Awal', _saldoAwalGrabOvoCtrl,
+                              enabled: !isClosed),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: _numField('Mandiri Awal', _saldoAwalMandiriCtrl, enabled: !isClosed),
+                          child: _numField(
+                              'Mandiri Awal', _saldoAwalMandiriCtrl,
+                              enabled: !isClosed),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _numField('BCA Awal', _saldoAwalBcaCtrl, enabled: !isClosed),
+                    _numField('BCA Awal', _saldoAwalBcaCtrl,
+                        enabled: !isClosed),
                   ],
                 ),
               ),
@@ -497,11 +561,13 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
             Row(
               children: [
                 Expanded(
-                  child: _numField('Odometer Awal (KM)', _odoStartCtrl, enabled: !isClosed),
+                  child: _numField('Odometer Awal (KM)', _odoStartCtrl,
+                      enabled: !isClosed),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _numField('Odometer Akhir (KM)', _odoEndCtrl, enabled: !isClosed),
+                  child: _numField('Odometer Akhir (KM)', _odoEndCtrl,
+                      enabled: !isClosed),
                 ),
               ],
             ),
@@ -509,16 +575,18 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
             Row(
               children: [
                 Expanded(
-                  child: _numField('Harga BBM / L (Rp)', _fuelPriceCtrl, enabled: !isClosed),
+                  child: _numField('Harga BBM / L (Rp)', _fuelPriceCtrl,
+                      enabled: !isClosed),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _numField('Konsumsi (KM/L)', _kmlParamCtrl, enabled: !isClosed),
+                  child: _numField('Konsumsi (KM/L)', _kmlParamCtrl,
+                      enabled: !isClosed),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // --- PENGISIAN BBM SECTION ---
             _sectionTitle('Pengisian BBM (Fuel Fillings)'),
             Consumer(
@@ -531,7 +599,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          const Icon(Icons.info_outline_rounded, color: Colors.blue, size: 32),
+                          const Icon(Icons.info_outline_rounded,
+                              color: Colors.blue, size: 32),
                           const SizedBox(height: 8),
                           const Text(
                             'Simpan setup awal terlebih dahulu untuk mencatat pengisian BBM.',
@@ -543,36 +612,43 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                     ),
                   );
                 }
-                
-                final fuelFillingsAsync = ref.watch(fuelFillingsProvider(recapId));
-                
+
+                final fuelFillingsAsync =
+                    ref.watch(fuelFillingsProvider(recapId));
+
                 return Column(
                   children: [
                     // Add button
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: isClosed ? null : () => showFuelFillingSheet(context, recapId),
+                        onPressed: isClosed
+                            ? null
+                            : () => showFuelFillingSheet(context, recapId),
                         icon: const Icon(Icons.add_rounded, size: 18),
-                        label: const Text('Catat Isi BBM', style: TextStyle(fontWeight: FontWeight.w600)),
+                        label: const Text('Catat Isi BBM',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFFEF4444),
                           side: const BorderSide(color: Color(0xFFEF4444)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    
+
                     // List
                     fuelFillingsAsync.when(
-                      loading: () => const Center(child: CircularProgressIndicator()),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
                       error: (err, stack) => Card(
                         color: Colors.red.shade50,
                         child: Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Text('Gagal memuat: $err', style: TextStyle(color: Colors.red.shade700)),
+                          child: Text('Gagal memuat: $err',
+                              style: TextStyle(color: Colors.red.shade700)),
                         ),
                       ),
                       data: (fillings) {
@@ -586,21 +662,30 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                                   Container(
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFEF4444).withOpacity(0.1),
+                                      color: const Color(0xFFEF4444)
+                                          .withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
-                                    child: const Icon(Icons.local_gas_station_rounded, color: Color(0xFFEF4444), size: 32),
+                                    child: const Icon(
+                                        Icons.local_gas_station_rounded,
+                                        color: Color(0xFFEF4444),
+                                        size: 32),
                                   ),
                                   const SizedBox(height: 12),
                                   const Text(
                                     'Belum ada pengisian BBM dicatat',
-                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87),
                                     textAlign: TextAlign.center,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Tekan tombol "Catat Isi BBM" di atas untuk mulai tracking pengisian tangki.',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade500),
                                     textAlign: TextAlign.center,
                                   ),
                                 ],
@@ -608,7 +693,7 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                             ),
                           );
                         }
-                        
+
                         return Card(
                           elevation: 1,
                           child: Column(
@@ -617,57 +702,93 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: fillings.length,
-                                separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade100, indent: 16, endIndent: 16),
+                                separatorBuilder: (context, index) => Divider(
+                                    height: 1,
+                                    color: Colors.grey.shade100,
+                                    indent: 16,
+                                    endIndent: 16),
                                 itemBuilder: (context, index) {
                                   final f = fillings[index];
                                   return ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 4),
                                     leading: Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFEF4444).withOpacity(0.1),
+                                        color: const Color(0xFFEF4444)
+                                            .withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
-                                      child: const Icon(Icons.local_gas_station_rounded, color: Color(0xFFEF4444), size: 20),
+                                      child: const Icon(
+                                          Icons.local_gas_station_rounded,
+                                          color: Color(0xFFEF4444),
+                                          size: 20),
                                     ),
                                     title: Text(
                                       '${f.liter.toStringAsFixed(2)} L × Rp ${f.hargaPerLiter.toStringAsFixed(0)}/L',
-                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                      style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600),
                                     ),
                                     subtitle: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         const SizedBox(height: 2),
                                         Row(
                                           children: [
-                                            Icon(Icons.calendar_today_rounded, size: 10, color: Colors.grey.shade500),
+                                            Icon(Icons.calendar_today_rounded,
+                                                size: 10,
+                                                color: Colors.grey.shade500),
                                             const SizedBox(width: 4),
                                             Text(
-                                              DateFormat('dd MMM yy, HH:mm', 'id_ID').format(f.tanggal),
-                                              style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                                              DateFormat('dd MMM yy, HH:mm',
+                                                      'id_ID')
+                                                  .format(f.tanggal),
+                                              style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.grey.shade500),
                                             ),
                                             if (f.odometer != null) ...[
                                               const SizedBox(width: 12),
-                                              Icon(Icons.speed_rounded, size: 10, color: Colors.grey.shade500),
+                                              Icon(Icons.speed_rounded,
+                                                  size: 10,
+                                                  color: Colors.grey.shade500),
                                               const SizedBox(width: 4),
                                               Text(
                                                 '${f.odometer!.toStringAsFixed(0)} KM',
-                                                style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                                                style: TextStyle(
+                                                    fontSize: 10,
+                                                    color:
+                                                        Colors.grey.shade500),
                                               ),
                                             ],
                                           ],
                                         ),
-                                        if (f.catatan != null && f.catatan!.isNotEmpty) ...[
+                                        if (f.catatan != null &&
+                                            f.catatan!.isNotEmpty) ...[
                                           const SizedBox(height: 2),
-                                          Text(f.catatan!, style: TextStyle(fontSize: 10, color: Colors.grey.shade400), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                          Text(f.catatan!,
+                                              style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.grey.shade400),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis),
                                         ],
                                       ],
                                     ),
                                     trailing: Text(
                                       currency.format(f.totalBiaya),
-                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFFEF4444)),
+                                      style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFFEF4444)),
                                     ),
-                                    onTap: isClosed ? null : () => showFuelFillingSheet(context, recapId, existingFilling: f),
+                                    onTap: isClosed
+                                        ? null
+                                        : () => showFuelFillingSheet(
+                                            context, recapId,
+                                            existingFilling: f),
                                   );
                                 },
                               ),
@@ -680,7 +801,7 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                 );
               },
             ),
-            
+
             const SizedBox(height: 24),
             Center(
               child: Text(
@@ -709,9 +830,13 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                   children: [
                     Row(
                       children: [
-                        Expanded(child: _numField('Tip', _tipCtrl, enabled: !isClosed)),
+                        Expanded(
+                            child:
+                                _numField('Tip', _tipCtrl, enabled: !isClosed)),
                         const SizedBox(width: 12),
-                        Expanded(child: _numField('Insentif', _insentifCtrl, enabled: !isClosed)),
+                        Expanded(
+                            child: _numField('Insentif', _insentifCtrl,
+                                enabled: !isClosed)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -756,7 +881,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: _sectionTitle('Daftar Transaksi (Order, Pengeluaran, Top Up)'),
+                  child: _sectionTitle(
+                      'Daftar Transaksi (Order, Pengeluaran, Top Up)'),
                 ),
                 if (!isClosed)
                   ElevatedButton.icon(
@@ -812,18 +938,22 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
                           children: [
-                            SizedBox(width: 90, child: Text(currency.format(item.denom))),
+                            SizedBox(
+                                width: 90,
+                                child: Text(currency.format(item.denom))),
                             Expanded(
                               child: TextFormField(
                                 key: ValueKey('${item.denom}_$i'),
                                 initialValue: item.qty.toString(),
                                 keyboardType: TextInputType.number,
                                 enabled: !isClosed,
-                                decoration: const InputDecoration(labelText: 'Qty', isDense: true),
+                                decoration: const InputDecoration(
+                                    labelText: 'Qty', isDense: true),
                                 onChanged: (v) {
                                   final qty = int.tryParse(v) ?? 0;
                                   setState(() {
-                                    _localPettyCash[i] = item.copyWith(qty: qty);
+                                    _localPettyCash[i] =
+                                        item.copyWith(qty: qty);
                                   });
                                 },
                               ),
@@ -880,17 +1010,24 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
 
   Widget _sectionTitle(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Text(text, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        child: Text(text,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold)),
       );
 
-  Widget _numField(String label, TextEditingController ctrl, {bool enabled = true}) => TextFormField(
+  Widget _numField(String label, TextEditingController ctrl,
+          {bool enabled = true}) =>
+      TextFormField(
         controller: ctrl,
         enabled: enabled,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         onChanged: (_) {
           setState(() {});
         },
-        decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+        decoration: InputDecoration(
+            labelText: label, border: const OutlineInputBorder()),
       );
 
   Widget _orderTile(DailyOrder o, bool isClosed) {
@@ -929,14 +1066,16 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
       if (o.income > 0) 'Income: ${currency.format(o.income)}',
       if (o.expense > 0) 'Expense: ${currency.format(o.expense)}',
       if (o.saldoTopUp > 0) 'Top Up: ${currency.format(o.saldoTopUp)}',
-      if (o.deductCashApp > 0) 'Deduct Cash: ${currency.format(o.deductCashApp)}',
+      if (o.deductCashApp > 0)
+        'Deduct Cash: ${currency.format(o.deductCashApp)}',
       if (o.custPay > 0) 'Cust Pay: ${currency.format(o.custPay)}',
       if (o.custChange > 0) 'Cust Change: ${currency.format(o.custChange)}',
-      if (o.odometer != null && o.odometer! > 0) 'KM: ${o.odometer!.toStringAsFixed(0)}',
+      if (o.odometer != null && o.odometer! > 0)
+        'KM: ${o.odometer!.toStringAsFixed(0)}',
     ];
 
-    final subtitle = subtitleParts.isNotEmpty 
-        ? subtitleParts.join('  ·  ') 
+    final subtitle = subtitleParts.isNotEmpty
+        ? subtitleParts.join('  ·  ')
         : 'Tidak ada nominal';
 
     return Card(
@@ -944,7 +1083,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
       child: ListTile(
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(
-          subtitle + (o.remark != null && o.remark!.isNotEmpty ? '\n${o.remark}' : ''),
+          subtitle +
+              (o.remark != null && o.remark!.isNotEmpty ? '\n${o.remark}' : ''),
         ),
         isThreeLine: o.remark != null && o.remark!.isNotEmpty,
         onTap: () => _addOrEditOrder(o),
@@ -967,15 +1107,26 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Ringkasan Otomatis', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text('Ringkasan Otomatis',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            _summaryRow('Cash Akhir (Buku)', s.cashAkhir, walletType: 'cash', recap: s),
-            _summaryRow('Saldo ShopeeFood (Buku)', s.saldoAkhirApp, walletType: 'shopeefood', recap: s),
-            _summaryRow('Saldo Grab Kredit (Buku)', s.saldoAkhirGrabKredit, walletType: 'grab_kredit', recap: s),
-            _summaryRow('Saldo Grab Tunai (Buku)', s.saldoAkhirGrabTunai, walletType: 'grab_tunai', recap: s),
-            _summaryRow('Saldo Grab OVO (Buku)', s.saldoAkhirGrabOvo, walletType: 'grab_ovo', recap: s),
-            _summaryRow('Saldo Mandiri (Buku)', s.saldoAkhirMandiri, walletType: 'mandiri', recap: s),
-            _summaryRow('Saldo BCA (Buku)', s.saldoAkhirBca, walletType: 'bca', recap: s),
+            _summaryRow('Cash Akhir (Buku)', s.cashAkhir,
+                walletType: 'cash', recap: s),
+            _summaryRow('Saldo ShopeeFood (Buku)', s.saldoAkhirApp,
+                walletType: 'shopeefood', recap: s),
+            _summaryRow('Saldo Grab Kredit (Buku)', s.saldoAkhirGrabKredit,
+                walletType: 'grab_kredit', recap: s),
+            _summaryRow('Saldo Grab Tunai (Buku)', s.saldoAkhirGrabTunai,
+                walletType: 'grab_tunai', recap: s),
+            _summaryRow('Saldo Grab OVO (Buku)', s.saldoAkhirGrabOvo,
+                walletType: 'grab_ovo', recap: s),
+            _summaryRow('Saldo Mandiri (Buku)', s.saldoAkhirMandiri,
+                walletType: 'mandiri', recap: s),
+            _summaryRow('Saldo BCA (Buku)', s.saldoAkhirBca,
+                walletType: 'bca', recap: s),
             const Divider(),
             _summaryRow('Total Income', s.totalIncome),
             _summaryRow('Total Expense', s.totalExpense),
@@ -984,12 +1135,14 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Net Earning', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Net Earning',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   (positif ? '+' : '') + currency.format(s.netEarning),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: positif ? Colors.green.shade700 : Colors.red.shade700,
+                    color:
+                        positif ? Colors.green.shade700 : Colors.red.shade700,
                   ),
                 ),
               ],
@@ -1000,10 +1153,13 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     );
   }
 
-  Widget _summaryRow(String label, double value, {String? walletType, DailyRecap? recap}) {
+  Widget _summaryRow(String label, double value,
+      {String? walletType, DailyRecap? recap}) {
     final isClickable = walletType != null && recap != null;
     return InkWell(
-      onTap: isClickable ? () => _showWalletMutationDialog(label, walletType, recap) : null,
+      onTap: isClickable
+          ? () => _showWalletMutationDialog(label, walletType, recap)
+          : null,
       borderRadius: BorderRadius.circular(4),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
@@ -1015,7 +1171,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                 Text(label),
                 if (isClickable) ...[
                   const SizedBox(width: 4),
-                  Icon(Icons.info_outline, size: 14, color: Colors.blueGrey.shade400),
+                  Icon(Icons.info_outline,
+                      size: 14, color: Colors.blueGrey.shade400),
                 ],
               ],
             ),
@@ -1032,19 +1189,25 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     );
   }
 
-  void _showWalletMutationDialog(String walletName, String walletType, DailyRecap recap) async {
-    final dateStart = DateTime(recap.tanggal.year, recap.tanggal.month, recap.tanggal.day);
-    final dateEnd = DateTime(recap.tanggal.year, recap.tanggal.month, recap.tanggal.day);
-    
+  void _showWalletMutationDialog(
+      String walletName, String walletType, DailyRecap recap) async {
+    final dateStart =
+        DateTime(recap.tanggal.year, recap.tanggal.month, recap.tanggal.day);
+    final dateEnd =
+        DateTime(recap.tanggal.year, recap.tanggal.month, recap.tanggal.day);
+
     showDialog(
       context: context,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 450, maxHeight: 500),
             child: FutureBuilder<List<SaldoMutation>>(
-              future: ref.read(recapServiceProvider).getWalletMutations(walletType, dateStart, dateEnd),
+              future: ref
+                  .read(recapServiceProvider)
+                  .getWalletMutations(walletType, dateStart, dateEnd),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SizedBox(
@@ -1052,9 +1215,9 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
-                
+
                 final mutations = snapshot.data ?? [];
-                
+
                 return Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -1069,12 +1232,16 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                               children: [
                                 Text(
                                   walletName,
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
                                   dateFmt.format(recap.tanggal),
-                                  style: TextStyle(fontSize: 12, color: Colors.blueGrey.shade500),
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blueGrey.shade500),
                                 ),
                               ],
                             ),
@@ -1088,48 +1255,66 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                       const Divider(),
                       Expanded(
                         child: mutations.isEmpty
-                            ? const Center(child: Text('Tidak ada mutasi saldo hari ini.'))
+                            ? const Center(
+                                child: Text('Tidak ada mutasi saldo hari ini.'))
                             : ListView.separated(
                                 itemCount: mutations.length,
-                                separatorBuilder: (_, __) => const Divider(height: 1),
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 1),
                                 itemBuilder: (context, index) {
                                   final m = mutations[index];
                                   final isStart = m.keterangan == 'Saldo Awal';
-                                  
+
                                   Widget amountWidget;
                                   if (isStart) {
                                     amountWidget = Text(
                                       'Mulai',
-                                      style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey.shade500,
+                                          fontWeight: FontWeight.bold),
                                     );
                                   } else if (m.kredit > 0) {
                                     amountWidget = Text(
                                       '+${currency.format(m.kredit)}',
-                                      style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13),
+                                      style: const TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13),
                                     );
                                   } else {
                                     amountWidget = Text(
                                       '-${currency.format(m.debit)}',
-                                      style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 13),
+                                      style: TextStyle(
+                                          color: Colors.red.shade700,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13),
                                     );
                                   }
 
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 8),
                                     child: Row(
                                       children: [
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 m.keterangan,
-                                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                                style: const TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 13),
                                               ),
                                               const SizedBox(height: 2),
                                               Text(
                                                 'Saldo: ${currency.format(m.runningBalance)}',
-                                                style: TextStyle(fontSize: 11, color: Colors.blueGrey.shade500),
+                                                style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors
+                                                        .blueGrey.shade500),
                                               ),
                                             ],
                                           ),
@@ -1167,15 +1352,25 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
           children: [
             const Text(
               'Indikator Kendaraan & BBM',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14),
             ),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _statItem(Icons.speed, '${recap.jarakTempuh.toStringAsFixed(1)} KM', 'Jarak Tempuh'),
-                _statItem(Icons.local_gas_station, '+${recap.literMasuk.toStringAsFixed(1)} L', 'BBM Masuk'),
-                _statItem(Icons.whatshot, '-${recap.literTerpakai.toStringAsFixed(1)} L', 'BBM Terpakai'),
+                _statItem(
+                    Icons.speed,
+                    '${recap.jarakTempuh.toStringAsFixed(1)} KM',
+                    'Jarak Tempuh'),
+                _statItem(Icons.local_gas_station,
+                    '+${recap.literMasuk.toStringAsFixed(1)} L', 'BBM Masuk'),
+                _statItem(
+                    Icons.whatshot,
+                    '-${recap.literTerpakai.toStringAsFixed(1)} L',
+                    'BBM Terpakai'),
               ],
             ),
             const Divider(color: Colors.white10, height: 24),
@@ -1183,7 +1378,9 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _statItem(
-                  isPositive ? Icons.battery_charging_full : Icons.battery_alert,
+                  isPositive
+                      ? Icons.battery_charging_full
+                      : Icons.battery_alert,
                   '${isPositive ? '+' : ''}${surplus.toStringAsFixed(1)} L',
                   'Est. Sisa Tangki',
                   color: isPositive ? Colors.greenAccent : Colors.redAccent,
@@ -1194,7 +1391,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                       ? '${(recap.jarakTempuh / recap.literMasuk).toStringAsFixed(1)} KM/L'
                       : 'N/A',
                   'KM/L Aktual',
-                  color: recap.literMasuk > 0 ? Colors.cyanAccent : Colors.white70,
+                  color:
+                      recap.literMasuk > 0 ? Colors.cyanAccent : Colors.white70,
                 ),
               ],
             ),
@@ -1204,7 +1402,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     );
   }
 
-  Widget _statItem(IconData icon, String value, String label, {Color color = Colors.white70}) {
+  Widget _statItem(IconData icon, String value, String label,
+      {Color color = Colors.white70}) {
     return Column(
       children: [
         Icon(icon, color: color, size: 24),
@@ -1231,7 +1430,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     if (s == null) return const SizedBox();
 
     final actualAppVal = double.tryParse(_actualAppBalanceCtrl.text) ?? 0;
-    final actualGrabKreditVal = double.tryParse(_actualGrabKreditCtrl.text) ?? 0;
+    final actualGrabKreditVal =
+        double.tryParse(_actualGrabKreditCtrl.text) ?? 0;
     final actualGrabTunaiVal = double.tryParse(_actualGrabTunaiCtrl.text) ?? 0;
     final actualGrabOvoVal = double.tryParse(_actualGrabOvoCtrl.text) ?? 0;
     final actualMandiriVal = double.tryParse(_actualMandiriCtrl.text) ?? 0;
@@ -1263,20 +1463,28 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
           children: [
             Text(
               'Rekonsiliasi Daily Closing & EOD',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-
-            const Text('Saldo E-Wallet / Bank HP Aktual saat Closing:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+            const Text('Saldo E-Wallet / Bank HP Aktual saat Closing:',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: Colors.grey)),
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: _numField('ShopeeFood HP', _actualAppBalanceCtrl, enabled: state.status != 'closed'),
+                  child: _numField('ShopeeFood HP', _actualAppBalanceCtrl,
+                      enabled: state.status != 'closed'),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _numField('Grab Kredit HP', _actualGrabKreditCtrl, enabled: state.status != 'closed'),
+                  child: _numField('Grab Kredit HP', _actualGrabKreditCtrl,
+                      enabled: state.status != 'closed'),
                 ),
               ],
             ),
@@ -1284,11 +1492,13 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
             Row(
               children: [
                 Expanded(
-                  child: _numField('Grab Tunai HP', _actualGrabTunaiCtrl, enabled: state.status != 'closed'),
+                  child: _numField('Grab Tunai HP', _actualGrabTunaiCtrl,
+                      enabled: state.status != 'closed'),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _numField('Grab OVO HP', _actualGrabOvoCtrl, enabled: state.status != 'closed'),
+                  child: _numField('Grab OVO HP', _actualGrabOvoCtrl,
+                      enabled: state.status != 'closed'),
                 ),
               ],
             ),
@@ -1296,16 +1506,17 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
             Row(
               children: [
                 Expanded(
-                  child: _numField('Mandiri HP', _actualMandiriCtrl, enabled: state.status != 'closed'),
+                  child: _numField('Mandiri HP', _actualMandiriCtrl,
+                      enabled: state.status != 'closed'),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _numField('BCA HP', _actualBcaCtrl, enabled: state.status != 'closed'),
+                  child: _numField('BCA HP', _actualBcaCtrl,
+                      enabled: state.status != 'closed'),
                 ),
               ],
             ),
             const SizedBox(height: 20),
-
             _discrepancyRow(
               'Selisih Kas Tunai (Drawer vs Buku)',
               cashDiscrepancy,
@@ -1348,7 +1559,6 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
               bcaCorrect,
             ),
             const SizedBox(height: 20),
-            
             SizedBox(
               width: double.infinity,
               child: state.status == 'open'
@@ -1411,7 +1621,7 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     final actualGrabOvo = double.tryParse(_actualGrabOvoCtrl.text) ?? 0;
     final actualMandiri = double.tryParse(_actualMandiriCtrl.text) ?? 0;
     final actualBca = double.tryParse(_actualBcaCtrl.text) ?? 0;
-    
+
     // 1. Simpan header/telemetri saat ini dulu
     await _saveHeader();
 
@@ -1440,7 +1650,9 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     );
 
     if (confirm == true) {
-      await ref.read(recapDetailNotifierProvider(widget.recapId).notifier).closeRecap(
+      await ref
+          .read(recapDetailNotifierProvider(widget.recapId).notifier)
+          .closeRecap(
             actualSf: actualSf,
             actualGrabKredit: actualGrabKredit,
             actualGrabTunai: actualGrabTunai,
@@ -1449,7 +1661,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
             actualBca: actualBca,
           );
       if (!mounted) return;
-      _showClosingReportDialog(ref.read(recapDetailNotifierProvider(widget.recapId)).summary!);
+      _showClosingReportDialog(
+          ref.read(recapDetailNotifierProvider(widget.recapId)).summary!);
     }
   }
 
@@ -1475,7 +1688,9 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     );
 
     if (confirm == true) {
-      await ref.read(recapDetailNotifierProvider(widget.recapId).notifier).reopenRecap();
+      await ref
+          .read(recapDetailNotifierProvider(widget.recapId).notifier)
+          .reopenRecap();
     }
   }
 
@@ -1499,11 +1714,14 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                 _reportRow('Tanggal', dateFmt.format(s.tanggal)),
                 const Divider(),
                 _reportRow('Net Earnings', currency.format(s.netEarning)),
-                _reportRow('Jarak Tempuh', '${s.jarakTempuh.toStringAsFixed(1)} KM'),
+                _reportRow(
+                    'Jarak Tempuh', '${s.jarakTempuh.toStringAsFixed(1)} KM'),
                 const Divider(),
                 _reportRow('Uang Kas Awal', currency.format(s.cashAwal)),
-                _reportRow('Uang Kas Akhir (Buku)', currency.format(s.cashAkhir)),
-                _reportRow('Petty Cash Aktual', currency.format(s.pettyCashTotal)),
+                _reportRow(
+                    'Uang Kas Akhir (Buku)', currency.format(s.cashAkhir)),
+                _reportRow(
+                    'Petty Cash Aktual', currency.format(s.pettyCashTotal)),
                 _reportRow(
                   'Selisih Kas Tunai',
                   currency.format(s.cashDiscrepancy),
@@ -1512,43 +1730,58 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
                 const Divider(),
                 const Text(
                   'Detail Saldo Aplikasi & Rekening (Buku vs HP)',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
-                _reportRow('ShopeeFood (Buku)', currency.format(s.saldoAkhirApp)),
-                _reportRow('ShopeeFood (HP)', currency.format(s.saldoAkhirAppAktual)),
+                _reportRow(
+                    'ShopeeFood (Buku)', currency.format(s.saldoAkhirApp)),
+                _reportRow(
+                    'ShopeeFood (HP)', currency.format(s.saldoAkhirAppAktual)),
                 _reportRow(
                   'Selisih ShopeeFood',
                   currency.format(s.appDiscrepancy),
                   color: s.appDiscrepancy == 0 ? Colors.green : Colors.red,
                 ),
                 const Divider(),
-                _reportRow('Grab Kredit (Buku)', currency.format(s.saldoAkhirGrabKredit)),
-                _reportRow('Grab Kredit (HP)', currency.format(s.saldoAkhirGrabKreditAktual)),
+                _reportRow('Grab Kredit (Buku)',
+                    currency.format(s.saldoAkhirGrabKredit)),
+                _reportRow('Grab Kredit (HP)',
+                    currency.format(s.saldoAkhirGrabKreditAktual)),
                 _reportRow(
                   'Selisih Grab Kredit',
                   currency.format(s.grabKreditDiscrepancy),
-                  color: s.grabKreditDiscrepancy == 0 ? Colors.green : Colors.red,
+                  color:
+                      s.grabKreditDiscrepancy == 0 ? Colors.green : Colors.red,
                 ),
                 const Divider(),
-                _reportRow('Grab Tunai (Buku)', currency.format(s.saldoAkhirGrabTunai)),
-                _reportRow('Grab Tunai (HP)', currency.format(s.saldoAkhirGrabTunaiAktual)),
+                _reportRow('Grab Tunai (Buku)',
+                    currency.format(s.saldoAkhirGrabTunai)),
+                _reportRow('Grab Tunai (HP)',
+                    currency.format(s.saldoAkhirGrabTunaiAktual)),
                 _reportRow(
                   'Selisih Grab Tunai',
                   currency.format(s.grabTunaiDiscrepancy),
-                  color: s.grabTunaiDiscrepancy == 0 ? Colors.green : Colors.red,
+                  color:
+                      s.grabTunaiDiscrepancy == 0 ? Colors.green : Colors.red,
                 ),
                 const Divider(),
-                _reportRow('Grab OVO (Buku)', currency.format(s.saldoAkhirGrabOvo)),
-                _reportRow('Grab OVO (HP)', currency.format(s.saldoAkhirGrabOvoAktual)),
+                _reportRow(
+                    'Grab OVO (Buku)', currency.format(s.saldoAkhirGrabOvo)),
+                _reportRow('Grab OVO (HP)',
+                    currency.format(s.saldoAkhirGrabOvoAktual)),
                 _reportRow(
                   'Selisih Grab OVO',
                   currency.format(s.grabOvoDiscrepancy),
                   color: s.grabOvoDiscrepancy == 0 ? Colors.green : Colors.red,
                 ),
                 const Divider(),
-                _reportRow('Mandiri (Buku)', currency.format(s.saldoAkhirMandiri)),
-                _reportRow('Mandiri (HP)', currency.format(s.saldoAkhirMandiriAktual)),
+                _reportRow(
+                    'Mandiri (Buku)', currency.format(s.saldoAkhirMandiri)),
+                _reportRow(
+                    'Mandiri (HP)', currency.format(s.saldoAkhirMandiriAktual)),
                 _reportRow(
                   'Selisih Mandiri',
                   currency.format(s.mandiriDiscrepancy),
@@ -1596,7 +1829,8 @@ class _DailyRecapDetailScreenState extends ConsumerState<DailyRecapDetailScreen>
     );
   }
 
-  Widget _walletDropdown(String label, String? value, bool isClosed, ValueChanged<String?> onChanged) {
+  Widget _walletDropdown(String label, String? value, bool isClosed,
+      ValueChanged<String?> onChanged) {
     return DropdownButtonFormField<String>(
       value: value,
       decoration: InputDecoration(

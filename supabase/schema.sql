@@ -9,6 +9,7 @@ create type denom_value as enum ('100000','50000','20000','10000','5000','2000',
 -- 1. Rekap harian (satu baris per hari)
 create table if not exists daily_recap (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   tanggal date not null unique,
   cash_awal numeric(14,2) not null default 0,
   saldo_awal_app numeric(14,2) not null default 0, -- ShopeeFood
@@ -36,6 +37,7 @@ create table if not exists daily_recap (
 -- 2. Order / transaksi dalam satu hari
 create table if not exists daily_order (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   daily_recap_id uuid not null references daily_recap(id) on delete cascade,
   urutan int not null default 1,           -- Order 1, Order 2, dst
   platform text,                            -- Tokopedia, TikTok Shop, Etsy, GoFood, dll (opsional)
@@ -57,6 +59,7 @@ create table if not exists daily_order (
 -- 3. Breakdown petty cash per hari
 create table if not exists petty_cash_item (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   daily_recap_id uuid not null references daily_recap(id) on delete cascade,
   denom denom_value not null,
   qty int not null default 0,
@@ -66,16 +69,33 @@ create table if not exists petty_cash_item (
 -- 4. Tip & insentif per hari (angka tunggal, dari file contoh #2)
 create table if not exists daily_extra (
   daily_recap_id uuid primary key references daily_recap(id) on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   tip numeric(14,2) not null default 0,
   insentif numeric(14,2) not null default 0,
   tip_wallet_type text,
   insentif_wallet_type text
 );
 
+-- 5. Pengisian BBM (Fuel Fillings)
+create table if not exists fuel_fillings (
+  id uuid primary key,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  daily_recap_id uuid not null references daily_recap(id) on delete cascade,
+  tanggal date not null,
+  liter numeric(10,2) not null,
+  harga_per_liter numeric(14,2) not null default 0,
+  total_biaya numeric(14,2) not null default 0,
+  odometer numeric(14,2),
+  catatan text,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_fuel_fillings_recap on fuel_fillings(daily_recap_id);
+create index if not exists idx_fuel_fillings_tanggal on fuel_fillings(tanggal);
+
 -- =========================================================
 -- View rekap otomatis: saldo akhir, net earning, dsb
 -- =========================================================
-create or replace view daily_recap_summary as
+create or replace view daily_recap_summary with (security_invoker = true) as
 select
   dr.id,
   dr.tanggal,
@@ -204,22 +224,37 @@ left join (
 left join daily_extra de on de.daily_recap_id = dr.id;
 
 -- =========================================================
--- Row Level Security — personal single-user app.
--- Simplest: allow all for authenticated user (adjust if you add multi-user later)
+-- Row Level Security — personal single-user app (owner_only, non-anonymous).
 -- =========================================================
 alter table daily_recap enable row level security;
 alter table daily_order enable row level security;
 alter table petty_cash_item enable row level security;
 alter table daily_extra enable row level security;
+alter table fuel_fillings enable row level security;
 
-create policy "allow all for authenticated" on daily_recap
-  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "allow all for authenticated" on daily_order
-  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "allow all for authenticated" on petty_cash_item
-  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
-create policy "allow all for authenticated" on daily_extra
-  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy owner_only on daily_recap for all to authenticated
+  using ((select auth.uid()) = user_id and coalesce((select auth.jwt() ->> 'is_anonymous')::boolean, false) = false)
+  with check ((select auth.uid()) = user_id and coalesce((select auth.jwt() ->> 'is_anonymous')::boolean, false) = false);
+
+create policy owner_only on daily_order for all to authenticated
+  using ((select auth.uid()) = user_id and coalesce((select auth.jwt() ->> 'is_anonymous')::boolean, false) = false)
+  with check ((select auth.uid()) = user_id and coalesce((select auth.jwt() ->> 'is_anonymous')::boolean, false) = false);
+
+create policy owner_only on petty_cash_item for all to authenticated
+  using ((select auth.uid()) = user_id and coalesce((select auth.jwt() ->> 'is_anonymous')::boolean, false) = false)
+  with check ((select auth.uid()) = user_id and coalesce((select auth.jwt() ->> 'is_anonymous')::boolean, false) = false);
+
+create policy owner_only on daily_extra for all to authenticated
+  using ((select auth.uid()) = user_id and coalesce((select auth.jwt() ->> 'is_anonymous')::boolean, false) = false)
+  with check ((select auth.uid()) = user_id and coalesce((select auth.jwt() ->> 'is_anonymous')::boolean, false) = false);
+
+create policy owner_only on fuel_fillings for all to authenticated
+  using ((select auth.uid()) = user_id and coalesce((select auth.jwt() ->> 'is_anonymous')::boolean, false) = false)
+  with check ((select auth.uid()) = user_id and coalesce((select auth.jwt() ->> 'is_anonymous')::boolean, false) = false);
+
+-- PENTING: setiap create or replace view menghapus opsi security_invoker;
+-- selalu akhiri dengan alter view ... set (security_invoker = true);
+alter view daily_recap_summary set (security_invoker = true);
 
 -- Trigger untuk update `updated_at` otomatis
 create or replace function set_updated_at() returns trigger as $$

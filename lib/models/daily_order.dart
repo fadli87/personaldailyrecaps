@@ -37,7 +37,7 @@ class DailyOrder {
 
   factory DailyOrder.fromMap(Map<String, dynamic> map) {
     double d(dynamic v) => (v as num?)?.toDouble() ?? 0;
-    
+
     final rawFuel = map['is_fuel_expense'];
     bool isFuel = false;
     if (rawFuel is bool) {

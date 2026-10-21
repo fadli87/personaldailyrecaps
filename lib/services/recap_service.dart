@@ -235,7 +235,8 @@ class RecapService {
     }).toList();
   }
 
-  Future<void> savePettyCash(String dailyRecapId, List<PettyCashItem> items) async {
+  Future<void> savePettyCash(
+      String dailyRecapId, List<PettyCashItem> items) async {
     final db = await LocalDb.instance.database;
 
     for (final item in items) {
@@ -245,7 +246,9 @@ class RecapService {
         where: 'daily_recap_id = ? AND denom = ?',
         whereArgs: [dailyRecapId, item.denom.toString()],
       );
-      final id = existing.isNotEmpty ? existing.first['id'] as String : const Uuid().v4();
+      final id = existing.isNotEmpty
+          ? existing.first['id'] as String
+          : const Uuid().v4();
 
       final data = item.toInsertMap(dailyRecapId)
         ..['id'] = id
@@ -299,7 +302,7 @@ class RecapService {
       GROUP BY platform
       ORDER BY total_income DESC
     ''');
-    
+
     final result = <String, double>{};
     for (final row in data) {
       final platform = row['platform'] as String;
@@ -318,7 +321,8 @@ class RecapService {
 
   // ---------- Periodic Queries for Reports & Exports ----------
 
-  Future<List<DailyRecap>> getRecapsInPeriod(DateTime start, DateTime end) async {
+  Future<List<DailyRecap>> getRecapsInPeriod(
+      DateTime start, DateTime end) async {
     final startStr = start.toIso8601String().split('T').first;
     final endStr = end.toIso8601String().split('T').first;
     final db = await LocalDb.instance.database;
@@ -331,7 +335,8 @@ class RecapService {
     return data.map((e) => DailyRecap.fromSummaryMap(e)).toList();
   }
 
-  Future<Map<String, double>> getPlatformIncomeDistributionInPeriod(DateTime start, DateTime end) async {
+  Future<Map<String, double>> getPlatformIncomeDistributionInPeriod(
+      DateTime start, DateTime end) async {
     final startStr = start.toIso8601String().split('T').first;
     final endStr = end.toIso8601String().split('T').first;
     final db = await LocalDb.instance.database;
@@ -346,7 +351,7 @@ class RecapService {
       GROUP BY o.platform
       ORDER BY total_income DESC
     ''', [startStr, endStr]);
-    
+
     final result = <String, double>{};
     for (final row in data) {
       final platform = row['platform'] as String;
@@ -356,7 +361,8 @@ class RecapService {
     return result;
   }
 
-  Future<List<Map<String, dynamic>>> getRawOrdersInPeriod(DateTime start, DateTime end) async {
+  Future<List<Map<String, dynamic>>> getRawOrdersInPeriod(
+      DateTime start, DateTime end) async {
     final startStr = start.toIso8601String().split('T').first;
     final endStr = end.toIso8601String().split('T').first;
     final db = await LocalDb.instance.database;
@@ -369,7 +375,8 @@ class RecapService {
     ''', [startStr, endStr]);
   }
 
-  Future<List<SaldoMutation>> getWalletMutations(String walletType, DateTime start, DateTime end) async {
+  Future<List<SaldoMutation>> getWalletMutations(
+      String walletType, DateTime start, DateTime end) async {
     final startStr = start.toIso8601String().split('T').first;
     final endStr = end.toIso8601String().split('T').first;
     final db = await LocalDb.instance.database;
@@ -396,7 +403,7 @@ class RecapService {
 
     final firstRecap = recaps.first;
     double currentBalance = 0;
-    
+
     if (walletType == 'cash') {
       currentBalance = firstRecap.cashAwal;
     } else if (walletType == 'shopeefood') {
@@ -431,13 +438,17 @@ class RecapService {
         } else if (walletType == 'bca') {
           dayStartBalance = recap.saldoAwalBca;
         }
-        
+
         if (currentBalance != dayStartBalance) {
           mutations.add(SaldoMutation(
             tanggal: recap.tanggal,
             keterangan: 'Penyesuaian Saldo Awal Hari',
-            debit: currentBalance > dayStartBalance ? (currentBalance - dayStartBalance) : 0,
-            kredit: dayStartBalance > currentBalance ? (dayStartBalance - currentBalance) : 0,
+            debit: currentBalance > dayStartBalance
+                ? (currentBalance - dayStartBalance)
+                : 0,
+            kredit: dayStartBalance > currentBalance
+                ? (dayStartBalance - currentBalance)
+                : 0,
             runningBalance: dayStartBalance,
           ));
           currentBalance = dayStartBalance;
@@ -452,7 +463,8 @@ class RecapService {
         ));
       }
 
-      final dayOrders = orders.where((o) => o.dailyRecapId == recap.id).toList();
+      final dayOrders =
+          orders.where((o) => o.dailyRecapId == recap.id).toList();
 
       for (final o in dayOrders) {
         double credit = 0;
@@ -460,7 +472,9 @@ class RecapService {
 
         if (walletType == 'cash') {
           credit = o.custPay + (o.walletType == 'cash' ? o.income : 0);
-          debit = o.custChange + (o.topupSource == 'cash' ? o.saldoTopUp : 0) + (o.walletType == 'cash' ? o.expense : 0);
+          debit = o.custChange +
+              (o.topupSource == 'cash' ? o.saldoTopUp : 0) +
+              (o.walletType == 'cash' ? o.expense : 0);
         } else {
           if (o.walletType == walletType) {
             credit = o.income + o.saldoTopUp;
@@ -473,7 +487,7 @@ class RecapService {
 
         if (credit > 0 || debit > 0) {
           currentBalance += credit - debit;
-          
+
           String ket = '';
           if (o.platform != null && o.platform!.isNotEmpty) {
             ket = '${o.platform} (Order ${o.urutan})';
@@ -592,10 +606,11 @@ class RecapService {
   Future<double> getEstimatedFuelRemaining(String dailyRecapId) async {
     final recap = await getRecapById(dailyRecapId);
     if (recap == null) return 0.0;
-    
+
     final totalLiterMasuk = await getTotalFuelLiterForRecap(dailyRecapId);
-    final literTerpakai = recap.literTerpakai; // Sudah dihitung di view (jarak / KML)
-    
+    final literTerpakai =
+        recap.literTerpakai; // Sudah dihitung di view (jarak / KML)
+
     return totalLiterMasuk - literTerpakai;
   }
 

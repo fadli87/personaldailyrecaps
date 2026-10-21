@@ -62,7 +62,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     await prefs.setString('bank_mandiri_name', _mandiriNameCtrl.text.trim());
     await prefs.setString('bank_bca_acc', _bcaAccCtrl.text.trim());
     await prefs.setString('bank_bca_name', _bcaNameCtrl.text.trim());
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -137,7 +137,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _changePin() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // 1. Verifikasi PIN lama
     if (!mounted) return;
     final verified = await Navigator.push<bool>(
@@ -146,7 +146,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         builder: (_) => const PinLockScreen(mode: PinMode.verify),
       ),
     );
-    
+
     if (verified == true) {
       // 2. Set PIN baru
       if (!mounted) return;
@@ -202,7 +202,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Card(
             color: Colors.white,
             elevation: 1,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -213,15 +214,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const CircleAvatar(
                         backgroundColor: Color(0xFFE2F1E8),
                         radius: 24,
-                        child: Icon(Icons.person, color: Color(0xFF2E7D32), size: 28),
+                        child: Icon(Icons.person,
+                            color: Color(0xFF2E7D32), size: 28),
                       ),
                       const SizedBox(width: 16),
                       Text(
                         'Profil Pengemudi',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF0F172A),
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF0F172A),
+                                ),
                       ),
                     ],
                   ),
@@ -263,7 +266,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E7D32),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
@@ -278,7 +282,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Card(
             color: Colors.white,
             elevation: 1,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -289,15 +294,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const CircleAvatar(
                         backgroundColor: Color(0xFFFEE2E2),
                         radius: 24,
-                        child: Icon(Icons.security, color: Colors.red, size: 24),
+                        child:
+                            Icon(Icons.security, color: Colors.red, size: 24),
                       ),
                       const SizedBox(width: 16),
                       Text(
                         'Keamanan Aplikasi',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF0F172A),
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF0F172A),
+                                ),
                       ),
                     ],
                   ),
@@ -308,7 +315,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       'Kunci PIN Aplikasi',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: const Text('Minta kode PIN keamanan setiap kali aplikasi dibuka.'),
+                    subtitle: const Text(
+                        'Minta kode PIN keamanan setiap kali aplikasi dibuka.'),
                     value: _isPinEnabled,
                     onChanged: _togglePinLock,
                     contentPadding: EdgeInsets.zero,
@@ -316,12 +324,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   if (_isPinEnabled) ...[
                     const Divider(height: 16),
                     ListTile(
-                      leading: const Icon(Icons.lock_reset, color: Color(0xFF2E7D32)),
+                      leading: const Icon(Icons.lock_reset,
+                          color: Color(0xFF2E7D32)),
                       title: const Text(
                         'Ubah PIN Keamanan',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      subtitle: const Text('Ganti kode akses PIN 4-digit Anda.'),
+                      subtitle:
+                          const Text('Ganti kode akses PIN 4-digit Anda.'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: _changePin,
                       contentPadding: EdgeInsets.zero,
@@ -337,7 +347,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Card(
             color: Colors.white,
             elevation: 1,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -348,22 +359,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       const CircleAvatar(
                         backgroundColor: Color(0xFFEFF6FF),
                         radius: 24,
-                        child: Icon(Icons.account_balance, color: Colors.blue, size: 24),
+                        child: Icon(Icons.account_balance,
+                            color: Colors.blue, size: 24),
                       ),
                       const SizedBox(width: 16),
                       Text(
                         'Informasi Rekening Bank',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF0F172A),
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF0F172A),
+                                ),
                       ),
                     ],
                   ),
                   const Divider(height: 24),
                   const Text(
                     'Bank Mandiri',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.teal),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -387,7 +401,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const Divider(height: 32),
                   const Text(
                     'Bank BCA',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.indigo),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -418,7 +433,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Card(
             color: Colors.white,
             elevation: 1,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -432,12 +448,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           const CircleAvatar(
                             backgroundColor: Color(0xFFEFF6FF),
                             radius: 24,
-                            child: Icon(Icons.cloud_sync, color: Colors.blue, size: 24),
+                            child: Icon(Icons.cloud_sync,
+                                color: Colors.blue, size: 24),
                           ),
                           const SizedBox(width: 16),
                           Text(
                             'Supabase Cloud Sync',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: const Color(0xFF0F172A),
                                 ),
@@ -445,23 +465,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.sync_outlined, color: Colors.blue),
+                        icon:
+                            const Icon(Icons.sync_outlined, color: Colors.blue),
                         onPressed: () async {
                           final messenger = ScaffoldMessenger.of(context);
-                          final nowStr = DateFormat('HH:mm:ss').format(DateTime.now());
-                          ref.read(syncLogsProvider.notifier).addLog('$nowStr: Memulai sinkronisasi Supabase...');
+                          final nowStr =
+                              DateFormat('HH:mm:ss').format(DateTime.now());
+                          ref.read(syncLogsProvider.notifier).addLog(
+                              '$nowStr: Memulai sinkronisasi Supabase...');
                           try {
                             await SyncService.sync();
-                            final successStr = DateFormat('HH:mm:ss').format(DateTime.now());
-                            ref.read(syncLogsProvider.notifier).addLog('$successStr: Sinkronisasi data sukses (Supabase synced).');
+                            final successStr =
+                                DateFormat('HH:mm:ss').format(DateTime.now());
+                            ref.read(syncLogsProvider.notifier).addLog(
+                                '$successStr: Sinkronisasi data sukses (Supabase synced).');
                             ref.invalidate(recapsProvider);
                             ref.invalidate(platformDistributionProvider);
                             messenger.showSnackBar(
-                              const SnackBar(content: Text('Sinkronisasi selesai dipicu')),
+                              const SnackBar(
+                                  content: Text('Sinkronisasi selesai dipicu')),
                             );
                           } catch (e) {
-                            final failStr = DateFormat('HH:mm:ss').format(DateTime.now());
-                            ref.read(syncLogsProvider.notifier).addLog('$failStr: Sinkronisasi gagal: $e');
+                            final failStr =
+                                DateFormat('HH:mm:ss').format(DateTime.now());
+                            ref
+                                .read(syncLogsProvider.notifier)
+                                .addLog('$failStr: Sinkronisasi gagal: $e');
                             messenger.showSnackBar(
                               SnackBar(content: Text('Sinkronisasi gagal: $e')),
                             );
@@ -474,17 +503,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        (supabaseUser?.isAnonymous ?? true) ? 'ID Sesi Anonim:' : 'Email Akun:',
-                        style: const TextStyle(color: Colors.black54, fontSize: 13),
+                      const Text(
+                        'Email Akun:',
+                        style: TextStyle(color: Colors.black54, fontSize: 13),
                       ),
                       Expanded(
                         child: Text(
-                          (supabaseUser?.isAnonymous ?? true)
-                              ? (supabaseUser?.id ?? 'Tidak Terdeteksi')
-                              : (supabaseUser?.email ?? 'Tidak Terdeteksi'),
+                          supabaseUser?.email ?? 'Tidak Terdeteksi',
                           textAlign: TextAlign.end,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 12),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -499,7 +527,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           context: context,
                           builder: (ctx) => AlertDialog(
                             title: const Text('Keluar Akun'),
-                            content: const Text('Apakah Anda yakin ingin keluar dari akun Anda?'),
+                            content: const Text(
+                                'Apakah Anda yakin ingin keluar dari akun Anda?'),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(ctx, false),
@@ -507,14 +536,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               ),
                               TextButton(
                                 onPressed: () => Navigator.pop(ctx, true),
-                                child: const Text('Keluar', style: TextStyle(color: Colors.red)),
+                                child: const Text('Keluar',
+                                    style: TextStyle(color: Colors.red)),
                               ),
                             ],
                           ),
                         );
                         if (confirm == true) {
                           await Supabase.instance.client.auth.signOut();
-                          
+
                           // Hapus pin keamanan lokal demi keamanan
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.remove('app_pin');
@@ -524,20 +554,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             final messenger = ScaffoldMessenger.of(context);
                             Navigator.pushAndRemoveUntil(
                               context,
-                              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                              MaterialPageRoute(
+                                  builder: (_) => const LoginScreen()),
                               (route) => false,
                             );
                             messenger.showSnackBar(
-                              const SnackBar(content: Text('Anda telah keluar dari akun')),
+                              const SnackBar(
+                                  content: Text('Anda telah keluar dari akun')),
                             );
                           }
                         }
                       },
                       icon: const Icon(Icons.logout, color: Colors.redAccent),
-                      label: const Text('KELUAR DARI AKUN', style: TextStyle(color: Colors.redAccent)),
+                      label: const Text('KELUAR DARI AKUN',
+                          style: TextStyle(color: Colors.redAccent)),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.redAccent),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
@@ -562,8 +596,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 2.0),
                           child: Text(
-                            syncLogs[syncLogs.length - 1 - idx], // logs terbaru di atas
-                            style: TextStyle(fontSize: 11, color: Colors.grey.shade700, fontFamily: 'monospace'),
+                            syncLogs[syncLogs.length -
+                                1 -
+                                idx], // logs terbaru di atas
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade700,
+                                fontFamily: 'monospace'),
                           ),
                         );
                       },

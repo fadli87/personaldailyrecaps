@@ -19,7 +19,7 @@ class ReportScreen extends ConsumerStatefulWidget {
 class _ReportScreenState extends ConsumerState<ReportScreen> {
   late DateTime _startDate;
   late DateTime _endDate;
-  
+
   bool _isLoading = true;
   List<DailyRecap> _recaps = [];
   Map<String, double> _platformData = {};
@@ -33,7 +33,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     final now = DateTime.now();
     _startDate = DateTime(now.year, now.month, 1);
     _endDate = DateTime(now.year, now.month + 1, 0);
-    
+
     Future.microtask(() => _loadData());
   }
 
@@ -45,9 +45,11 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     try {
       final service = ref.read(recapServiceProvider);
       final recaps = await service.getRecapsInPeriod(_startDate, _endDate);
-      final platform = await service.getPlatformIncomeDistributionInPeriod(_startDate, _endDate);
+      final platform = await service.getPlatformIncomeDistributionInPeriod(
+          _startDate, _endDate);
       final selectedAcc = ref.read(selectedAccountProvider);
-      final mutations = await service.getWalletMutations(selectedAcc, _startDate, _endDate);
+      final mutations =
+          await service.getWalletMutations(selectedAcc, _startDate, _endDate);
       setState(() {
         _recaps = recaps;
         _platformData = platform;
@@ -113,26 +115,30 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   Future<void> _exportToCSV() async {
     try {
       final service = ref.read(recapServiceProvider);
-      
+
       // 1. Generate CSV Data
       final csv = StringBuffer();
-      
+
       // Section 1: Ringkasan Harian
       csv.writeln('"LAPORAN RINGKASAN HARIAN"');
-      csv.writeln('"Tanggal","Cash Awal","Saldo Awal","Total Pemasukan","Total Pengeluaran","Laba Bersih","Jarak Tempuh (KM)","BBM Terpakai (L)","Status"');
+      csv.writeln(
+          '"Tanggal","Cash Awal","Saldo Awal","Total Pemasukan","Total Pengeluaran","Laba Bersih","Jarak Tempuh (KM)","BBM Terpakai (L)","Status"');
       for (var r in _recaps) {
         final dateStr = DateFormat('yyyy-MM-dd').format(r.tanggal);
-        csv.writeln('"$dateStr","${r.cashAwal}","${r.saldoAwalApp}","${r.totalIncome}","${r.totalExpense}","${r.netEarning}","${r.jarakTempuh}","${r.literTerpakai}","${r.status}"');
+        csv.writeln(
+            '"$dateStr","${r.cashAwal}","${r.saldoAwalApp}","${r.totalIncome}","${r.totalExpense}","${r.netEarning}","${r.jarakTempuh}","${r.literTerpakai}","${r.status}"');
       }
-      
+
       csv.writeln();
       csv.writeln();
-      
+
       // Section 2: Detail Transaksi
       csv.writeln('"LAPORAN DETAIL TRANSAKSI"');
-      csv.writeln('"Tanggal","Urutan","Platform/Keterangan","Tipe","Income","Expense","Cust Pay","Cust Change","Deduct Cash App","Saldo Top Up","Remark"');
-      
-      final rawOrders = await service.getRawOrdersInPeriod(_startDate, _endDate);
+      csv.writeln(
+          '"Tanggal","Urutan","Platform/Keterangan","Tipe","Income","Expense","Cust Pay","Cust Change","Deduct Cash App","Saldo Top Up","Remark"');
+
+      final rawOrders =
+          await service.getRawOrdersInPeriod(_startDate, _endDate);
       for (var o in rawOrders) {
         final dateStr = o['recap_tanggal'] ?? '';
         final urutan = o['urutan'] ?? '';
@@ -145,9 +151,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         final deductCashApp = o['deduct_cash_app'] ?? 0;
         final saldoTopUp = o['saldo_top_up'] ?? 0;
         final remark = o['remark'] ?? '';
-        csv.writeln('"$dateStr","$urutan","$platform","$type","$income","$expense","$custPay","$custChange","$deductCashApp","$saldoTopUp","$remark"');
+        csv.writeln(
+            '"$dateStr","$urutan","$platform","$type","$income","$expense","$custPay","$custChange","$deductCashApp","$saldoTopUp","$remark"');
       }
-      
+
       // 2. Save file to Downloads folder
       final dir = await getDownloadsDirectory();
       if (dir == null) {
@@ -156,18 +163,18 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       final startStr = DateFormat('yyyyMMdd').format(_startDate);
       final endStr = DateFormat('yyyyMMdd').format(_endDate);
       final filePath = '${dir.path}/sf_daily_recap_${startStr}_$endStr.csv';
-      
+
       final file = File(filePath);
       await file.writeAsString(csv.toString());
-      
+
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Laporan CSV berhasil disimpan di:\n$filePath'),
-                duration: const Duration(seconds: 4),
-              ),
-            );
+        SnackBar(
+          content: Text('Laporan CSV berhasil disimpan di:\n$filePath'),
+          duration: const Duration(seconds: 4),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -176,10 +183,11 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     }
   }
 
-  void _copyToClipboard(double net, double income, double expense, double totalKm, double totalLiter, double efisiensi) {
+  void _copyToClipboard(double net, double income, double expense,
+      double totalKm, double totalLiter, double efisiensi) {
     final startStr = DateFormat('dd/MM/yyyy').format(_startDate);
     final endStr = DateFormat('dd/MM/yyyy').format(_endDate);
-    
+
     final buffer = StringBuffer();
     buffer.writeln('📊 LAPORAN KINERJA SF DAILY RECAP');
     buffer.writeln('Periode: $startStr s/d $endStr');
@@ -194,11 +202,12 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     buffer.writeln('Efisiensi Rata2  : ${efisiensi.toStringAsFixed(1)} KM/L');
     buffer.writeln('----------------------------------');
     buffer.writeln('Kontribusi Pendapatan Platform/Rekening:');
-    
+
     final totalSales = _platformData.values.fold(0.0, (a, b) => a + b);
     _platformData.forEach((platform, amount) {
       final pct = totalSales > 0 ? (amount / totalSales * 100) : 0.0;
-      buffer.writeln('- $platform: ${currency.format(amount)} (${pct.toStringAsFixed(0)}%)');
+      buffer.writeln(
+          '- $platform: ${currency.format(amount)} (${pct.toStringAsFixed(0)}%)');
     });
 
     Clipboard.setData(ClipboardData(text: buffer.toString()));
@@ -220,7 +229,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
     final activeTab = ref.watch(reportTabProvider);
     final selectedAccount = ref.watch(selectedAccountProvider);
-    
+
     final startStr = DateFormat('dd MMM yyyy', 'id_ID').format(_startDate);
     final endStr = DateFormat('dd MMM yyyy', 'id_ID').format(_endDate);
 
@@ -247,7 +256,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                       totalKm += r.jarakTempuh;
                       totalLiter += r.literTerpakai;
                     }
-                    double efisiensi = totalLiter > 0 ? (totalKm / totalLiter) : 0.0;
+                    double efisiensi =
+                        totalLiter > 0 ? (totalKm / totalLiter) : 0.0;
 
                     return ListView(
                       padding: const EdgeInsets.all(16),
@@ -255,7 +265,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                         // --- PRESET BUTTONS & DATE RANGE SELECTOR ---
                         Card(
                           elevation: 2,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Column(
@@ -263,7 +274,9 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                               children: [
                                 const Text(
                                   'Filter Periode Laporan',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14),
                                 ),
                                 const SizedBox(height: 12),
                                 Wrap(
@@ -273,9 +286,11 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                                     _presetButton('Bulan Ini', 'bulan_ini'),
                                     _presetButton('Bulan Lalu', 'bulan_lalu'),
                                     _presetButton('7 Hari Terakhir', '7_hari'),
-                                    _presetButton('30 Hari Terakhir', '30_hari'),
+                                    _presetButton(
+                                        '30 Hari Terakhir', '30_hari'),
                                     OutlinedButton.icon(
-                                      icon: const Icon(Icons.date_range, size: 16),
+                                      icon: const Icon(Icons.date_range,
+                                          size: 16),
                                       onPressed: _selectCustomRange,
                                       label: const Text('Kustom Range'),
                                     ),
@@ -284,11 +299,15 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                                 const Divider(height: 24),
                                 Row(
                                   children: [
-                                    const Icon(Icons.calendar_today_outlined, size: 18, color: Colors.black54),
+                                    const Icon(Icons.calendar_today_outlined,
+                                        size: 18, color: Colors.black54),
                                     const SizedBox(width: 8),
                                     Text(
                                       '$startStr - $endStr',
-                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                          color: Colors.black87),
                                     ),
                                     const Spacer(),
                                     IconButton(
@@ -321,7 +340,9 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                             ],
                             selected: {activeTab},
                             onSelectionChanged: (set) {
-                              ref.read(reportTabProvider.notifier).change(set.first);
+                              ref
+                                  .read(reportTabProvider.notifier)
+                                  .change(set.first);
                             },
                           ),
                         ),
@@ -329,7 +350,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
                         if (activeTab == 0) ...[
                           // --- FINANCIAL KPI SUMMARY ---
-                          _buildFinancialGrid(isDesktop, totalNet, totalIncome, totalExpense),
+                          _buildFinancialGrid(
+                              isDesktop, totalNet, totalIncome, totalExpense),
                           const SizedBox(height: 20),
 
                           // --- VEHICLE FUEL METRICS ---
@@ -343,7 +365,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                           // --- REPORT ACTIONS ---
                           Card(
                             elevation: 2,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
                             child: Padding(
                               padding: const EdgeInsets.all(16),
                               child: Column(
@@ -351,7 +374,9 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                                 children: [
                                   const Text(
                                     'Ekspor & Bagikan Laporan',
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14),
                                   ),
                                   const SizedBox(height: 16),
                                   Row(
@@ -359,27 +384,44 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                                       Expanded(
                                         child: ElevatedButton.icon(
                                           icon: const Icon(Icons.copy),
-                                          onPressed: () => _copyToClipboard(totalNet, totalIncome, totalExpense, totalKm, totalLiter, efisiensi),
-                                          label: const Text('Salin Ringkasan WA'),
+                                          onPressed: () => _copyToClipboard(
+                                              totalNet,
+                                              totalIncome,
+                                              totalExpense,
+                                              totalKm,
+                                              totalLiter,
+                                              efisiensi),
+                                          label:
+                                              const Text('Salin Ringkasan WA'),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.green.shade700,
+                                            backgroundColor:
+                                                Colors.green.shade700,
                                             foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(vertical: 14),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 14),
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12)),
                                           ),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: ElevatedButton.icon(
-                                          icon: const Icon(Icons.table_view_outlined),
+                                          icon: const Icon(
+                                              Icons.table_view_outlined),
                                           onPressed: _exportToCSV,
-                                          label: const Text('Ekspor CSV (Excel)'),
+                                          label:
+                                              const Text('Ekspor CSV (Excel)'),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.blue.shade700,
+                                            backgroundColor:
+                                                Colors.blue.shade700,
                                             foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(vertical: 14),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 14),
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12)),
                                           ),
                                         ),
                                       ),
@@ -433,7 +475,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         orElse: () => _mutations.first,
       );
       saldoAwal = first.runningBalance;
-      
+
       for (final m in _mutations) {
         if (m.keterangan != 'Saldo Awal') {
           totalMasuk += m.kredit;
@@ -448,7 +490,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       children: [
         Card(
           elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -463,7 +506,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                     value: selectedAccount,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     items: accountOptions.map((opt) {
                       return DropdownMenuItem<String>(
@@ -484,10 +528,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
           ),
         ),
         const SizedBox(height: 16),
-
         LayoutBuilder(
           builder: (context, constraints) {
-            final double cardWidth = isDesktop ? 200 : (constraints.maxWidth - 12) / 2;
+            final double cardWidth =
+                isDesktop ? 200 : (constraints.maxWidth - 12) / 2;
             Widget itemBox(String label, double val, Color col) {
               return Container(
                 width: cardWidth,
@@ -502,14 +546,20 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                   children: [
                     Text(
                       label,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black54),
+                      style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54),
                     ),
                     const SizedBox(height: 6),
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       child: Text(
                         currency.format(val),
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: col),
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: col),
                       ),
                     ),
                   ],
@@ -522,18 +572,21 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               runSpacing: 12,
               children: [
                 itemBox('Saldo Awal Periode', saldoAwal, Colors.black87),
-                itemBox('Total Mutasi Masuk', totalMasuk, Colors.green.shade700),
-                itemBox('Total Mutasi Keluar', totalKeluar, Colors.red.shade700),
-                itemBox('Saldo Akhir Periode', saldoAkhir, const Color(0xFF2E7D32)),
+                itemBox(
+                    'Total Mutasi Masuk', totalMasuk, Colors.green.shade700),
+                itemBox(
+                    'Total Mutasi Keluar', totalKeluar, Colors.red.shade700),
+                itemBox(
+                    'Saldo Akhir Periode', saldoAkhir, const Color(0xFF2E7D32)),
               ],
             );
           },
         ),
         const SizedBox(height: 20),
-
         Card(
           elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -544,7 +597,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                   children: [
                     const Text(
                       'Riwayat Mutasi Saldo',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                     IconButton(
                       icon: const Icon(Icons.copy_all_outlined),
@@ -552,15 +606,22 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                       onPressed: () {
                         final buffer = StringBuffer();
                         buffer.writeln('MUTASI REKENING - $selectedAccount');
-                        buffer.writeln('Periode: ${DateFormat('yyyy-MM-dd').format(_startDate)} s.d. ${DateFormat('yyyy-MM-dd').format(_endDate)}');
-                        buffer.writeln('--------------------------------------------------');
-                        buffer.writeln('Tanggal\tKeterangan\tKeluar (Debit)\tMasuk (Kredit)\tSaldo');
+                        buffer.writeln(
+                            'Periode: ${DateFormat('yyyy-MM-dd').format(_startDate)} s.d. ${DateFormat('yyyy-MM-dd').format(_endDate)}');
+                        buffer.writeln(
+                            '--------------------------------------------------');
+                        buffer.writeln(
+                            'Tanggal\tKeterangan\tKeluar (Debit)\tMasuk (Kredit)\tSaldo');
                         for (final m in _mutations) {
-                          buffer.writeln('${DateFormat('yyyy-MM-dd').format(m.tanggal)}\t${m.keterangan}\t${m.debit}\t${m.kredit}\t${m.runningBalance}');
+                          buffer.writeln(
+                              '${DateFormat('yyyy-MM-dd').format(m.tanggal)}\t${m.keterangan}\t${m.debit}\t${m.kredit}\t${m.runningBalance}');
                         }
-                        Clipboard.setData(ClipboardData(text: buffer.toString()));
+                        Clipboard.setData(
+                            ClipboardData(text: buffer.toString()));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Mutasi rekening disalin ke clipboard!')),
+                          const SnackBar(
+                              content: Text(
+                                  'Mutasi rekening disalin ke clipboard!')),
                         );
                       },
                     ),
@@ -578,30 +639,53 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(minWidth: isDesktop ? 800 : 500),
+                      constraints:
+                          BoxConstraints(minWidth: isDesktop ? 800 : 500),
                       child: DataTable(
                         columnSpacing: 16,
                         columns: const [
-                          DataColumn(label: Text('Tanggal', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Keterangan', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Debit (Keluar)', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Kredit (Masuk)', style: TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text('Saldo Berjalan', style: TextStyle(fontWeight: FontWeight.bold))),
+                          DataColumn(
+                              label: Text('Tanggal',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold))),
+                          DataColumn(
+                              label: Text('Keterangan',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold))),
+                          DataColumn(
+                              label: Text('Debit (Keluar)',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold))),
+                          DataColumn(
+                              label: Text('Kredit (Masuk)',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold))),
+                          DataColumn(
+                              label: Text('Saldo Berjalan',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold))),
                         ],
                         rows: _mutations.map((m) {
                           final isStart = m.keterangan == 'Saldo Awal';
                           return DataRow(
                             cells: [
-                              DataCell(Text(DateFormat('dd MMM yyyy', 'id_ID').format(m.tanggal))),
+                              DataCell(Text(DateFormat('dd MMM yyyy', 'id_ID')
+                                  .format(m.tanggal))),
                               DataCell(Text(m.keterangan)),
                               DataCell(
                                 isStart
                                     ? const Text('-')
                                     : Text(
-                                        m.debit > 0 ? currency.format(m.debit) : '-',
+                                        m.debit > 0
+                                            ? currency.format(m.debit)
+                                            : '-',
                                         style: TextStyle(
-                                          color: m.debit > 0 ? Colors.red.shade700 : null,
-                                          fontWeight: m.debit > 0 ? FontWeight.bold : null,
+                                          color: m.debit > 0
+                                              ? Colors.red.shade700
+                                              : null,
+                                          fontWeight: m.debit > 0
+                                              ? FontWeight.bold
+                                              : null,
                                         ),
                                       ),
                               ),
@@ -609,17 +693,24 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                                 isStart
                                     ? const Text('-')
                                     : Text(
-                                        m.kredit > 0 ? currency.format(m.kredit) : '-',
+                                        m.kredit > 0
+                                            ? currency.format(m.kredit)
+                                            : '-',
                                         style: TextStyle(
-                                          color: m.kredit > 0 ? Colors.green.shade700 : null,
-                                          fontWeight: m.kredit > 0 ? FontWeight.bold : null,
+                                          color: m.kredit > 0
+                                              ? Colors.green.shade700
+                                              : null,
+                                          fontWeight: m.kredit > 0
+                                              ? FontWeight.bold
+                                              : null,
                                         ),
                                       ),
                               ),
                               DataCell(
                                 Text(
                                   currency.format(m.runningBalance),
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],
@@ -645,11 +736,14 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     );
   }
 
-  Widget _buildFinancialGrid(bool isDesktop, double net, double income, double expense) {
+  Widget _buildFinancialGrid(
+      bool isDesktop, double net, double income, double expense) {
     final items = [
       _KpiItem('Laba Bersih', net, Icons.payments, const Color(0xFF2E7D32)),
-      _KpiItem('Total Pemasukan', income, Icons.arrow_upward, const Color(0xFF4CAF50)),
-      _KpiItem('Total Pengeluaran', expense, Icons.arrow_downward, const Color(0xFFD32F2F)),
+      _KpiItem('Total Pemasukan', income, Icons.arrow_upward,
+          const Color(0xFF4CAF50)),
+      _KpiItem('Total Pengeluaran', expense, Icons.arrow_downward,
+          const Color(0xFFD32F2F)),
     ];
 
     return GridView.builder(
@@ -672,7 +766,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 2)),
+          BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2)),
         ],
       ),
       padding: const EdgeInsets.all(16),
@@ -684,13 +781,19 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: kpi.color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                    color: kpi.color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8)),
                 child: Icon(kpi.icon, color: kpi.color, size: 18),
               ),
               const SizedBox(width: 12),
               Text(
                 kpi.label.toUpperCase(),
-                style: const TextStyle(color: Colors.black54, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                style: const TextStyle(
+                    color: Colors.black54,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5),
               ),
             ],
           ),
@@ -699,7 +802,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
             fit: BoxFit.scaleDown,
             child: Text(
               currency.format(kpi.value),
-              style: const TextStyle(color: Colors.black87, fontSize: 24, fontWeight: FontWeight.w900),
+              style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900),
             ),
           ),
         ],
@@ -707,7 +813,8 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     );
   }
 
-  Widget _buildVehicleCard(double totalKm, double totalLiter, double efisiensi) {
+  Widget _buildVehicleCard(
+      double totalKm, double totalLiter, double efisiensi) {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -717,7 +824,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 2)),
+          BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 2)),
         ],
       ),
       padding: const EdgeInsets.all(20),
@@ -726,15 +836,23 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         children: [
           const Text(
             'PERFORMA KENDARAAN PERIODE',
-            style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+            style: TextStyle(
+                color: Colors.white54,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1),
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _vehicleItem(Icons.speed, '${totalKm.toStringAsFixed(1)} KM', 'Jarak Tempuh'),
-              _vehicleItem(Icons.local_gas_station, '${totalLiter.toStringAsFixed(1)} L', 'BBM Terpakai'),
-              _vehicleItem(Icons.eco, '${efisiensi.toStringAsFixed(1)} KM/L', 'Efisiensi Rata2', color: Colors.greenAccent),
+              _vehicleItem(Icons.speed, '${totalKm.toStringAsFixed(1)} KM',
+                  'Jarak Tempuh'),
+              _vehicleItem(Icons.local_gas_station,
+                  '${totalLiter.toStringAsFixed(1)} L', 'BBM Terpakai'),
+              _vehicleItem(Icons.eco, '${efisiensi.toStringAsFixed(1)} KM/L',
+                  'Efisiensi Rata2',
+                  color: Colors.greenAccent),
             ],
           ),
         ],
@@ -742,15 +860,19 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     );
   }
 
-  Widget _vehicleItem(IconData icon, String value, String label, {Color color = Colors.white}) {
+  Widget _vehicleItem(IconData icon, String value, String label,
+      {Color color = Colors.white}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, color: color.withOpacity(0.8), size: 22),
         const SizedBox(height: 6),
-        Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(value,
+            style: TextStyle(
+                color: color, fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+        Text(label,
+            style: const TextStyle(color: Colors.white54, fontSize: 10)),
       ],
     );
   }
@@ -779,14 +901,18 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
           children: [
             const Text(
               'Kontribusi Pendapatan per Platform / Rekening',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87),
             ),
             const SizedBox(height: 16),
             if (_platformData.isEmpty)
               const Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Text('Tidak ada pendapatan platform pada periode ini.'),
+                  child:
+                      Text('Tidak ada pendapatan platform pada periode ini.'),
                 ),
               )
             else
@@ -794,7 +920,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                 final color = colors[colorIdx % colors.length];
                 colorIdx++;
                 final pct = totalSales > 0 ? (entry.value / totalSales) : 0.0;
-                
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10.0),
                   child: Column(
@@ -805,14 +931,22 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                         children: [
                           Row(
                             children: [
-                              Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                              Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                      color: color, shape: BoxShape.circle)),
                               const SizedBox(width: 8),
-                              Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                              Text(entry.key,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13)),
                             ],
                           ),
                           Text(
                             '${currency.format(entry.value)} (${(pct * 100).toStringAsFixed(0)}%)',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                         ],
                       ),

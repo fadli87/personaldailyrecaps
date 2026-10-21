@@ -16,8 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  
-  bool _isSignUp = false; // Toggle between Login and Register
+
   bool _isLoading = false;
   bool _obscurePassword = true;
 
@@ -32,32 +31,16 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordCtrl.text.trim();
 
     try {
-      if (_isSignUp) {
-        // Register new user
-        await Supabase.instance.client.auth.signUp(
-          email: email,
-          password: password,
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Pendaftaran berhasil! Silakan periksa email untuk konfirmasi jika diperlukan.'),
-              backgroundColor: Color(0xFF2E7D32),
-            ),
-          );
-        }
-      } else {
-        // Login existing user
-        await Supabase.instance.client.auth.signInWithPassword(
-          email: email,
-          password: password,
-        );
-      }
+      // Login existing user
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
 
       // Sinkronisasi data dari cloud Supabase setelah login sukses
       await SyncService.sync();
 
-      // Setelah sukses login/register, cek PIN lock status
+      // Setelah sukses login, cek PIN lock status
       await _navigateNext();
     } on AuthException catch (e) {
       if (mounted) {
@@ -75,36 +58,6 @@ class _LoginScreenState extends State<LoginScreen> {
             content: Text('Terjadi kesalahan: $e'),
             backgroundColor: Colors.redAccent,
           ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _handleAnonymousLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await Supabase.instance.client.auth.signInAnonymously();
-      await SyncService.sync();
-      await _navigateNext();
-    } on AuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: Colors.redAccent),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal masuk offline: $e'), backgroundColor: Colors.redAccent),
         );
       }
     } finally {
@@ -207,9 +160,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           letterSpacing: 0.5,
                         ),
                       ),
-                      Text(
-                        _isSignUp ? 'Buat akun Supabase baru' : 'Masuk untuk sinkronisasi cloud',
-                        style: const TextStyle(
+                      const Text(
+                        'Masuk untuk sinkronisasi cloud',
+                        style: TextStyle(
                           fontSize: 12,
                           color: Colors.white60,
                         ),
@@ -224,15 +177,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Alamat Email',
                           labelStyle: TextStyle(color: Colors.white70),
-                          prefixIcon: Icon(Icons.email_outlined, color: Colors.white70),
+                          prefixIcon:
+                              Icon(Icons.email_outlined, color: Colors.white70),
                           border: OutlineInputBorder(),
-                          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                          enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.white30)),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Email tidak boleh kosong';
                           }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                              .hasMatch(value.trim())) {
                             return 'Format email tidak valid';
                           }
                           return null;
@@ -248,10 +204,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: InputDecoration(
                           labelText: 'Password',
                           labelStyle: const TextStyle(color: Colors.white70),
-                          prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
+                          prefixIcon: const Icon(Icons.lock_outline,
+                              color: Colors.white70),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                               color: Colors.white70,
                             ),
                             onPressed: () {
@@ -261,7 +220,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                           ),
                           border: const OutlineInputBorder(),
-                          enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                          enabledBorder: const OutlineInputBorder(
+                              borderSide: BorderSide(color: Colors.white30)),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -284,66 +244,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF2E7D32),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             elevation: 2,
                           ),
                           child: _isLoading
                               ? const SizedBox(
                                   width: 24,
                                   height: 24,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2.5),
                                 )
-                              : Text(
-                                  _isSignUp ? 'DAFTAR AKUN' : 'MASUK SEKARANG',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                              : const Text(
+                                  'MASUK SEKARANG',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15),
                                 ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-
-                      // Switch mode Login/SignUp
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _isSignUp = !_isSignUp;
-                          });
-                        },
-                        child: Text(
-                          _isSignUp ? 'Sudah punya akun? Masuk' : 'Belum punya akun? Daftar Baru',
-                          style: const TextStyle(color: Color(0xFF4CAF50), fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          children: [
-                            Expanded(child: Divider(color: Colors.white24)),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16.0),
-                              child: Text('ATAU', style: TextStyle(color: Colors.white38, fontSize: 11)),
-                            ),
-                            Expanded(child: Divider(color: Colors.white24)),
-                          ],
-                        ),
-                      ),
-
-                      // Tombol Masuk Anonim
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: OutlinedButton.icon(
-                          onPressed: _isLoading ? null : _handleAnonymousLogin,
-                          icon: const Icon(Icons.cloud_off_outlined),
-                          label: const Text('MASUK TANPA AKUN (OFFLINE)'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white30),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                      ),
-
                       const SizedBox(height: 40),
                     ],
                   ),

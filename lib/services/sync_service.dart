@@ -1,151 +1,172 @@
+import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:sqflite/sqflite.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'local_db.dart';
 
+/// Sinkronisasi SQLite <-> Supabase (REFERENSI IMPLEMENTASI — ganti isi lib/services/sync_service.dart).
+/// Perilaku yang dipertahankan: baris lokal is_synced = 0 tidak ditimpa oleh pull.
+/// Perbaikan: filter kolom pull, paginasi, isolasi error per tabel, antrean hapus tidak dibuang saat gagal.
 class SyncService {
   static final SupabaseClient _client = Supabase.instance.client;
 
+  /// Urutan push/pull: tabel induk dulu (foreign key).
+  static const List<String> _order = <String>[
+    'accounts',
+    'vehicles',
+    'daily_recap',
+    'daily_order',
+    'petty_cash_item',
+    'daily_extra',
+    'fuel_fillings',
+    'vehicle_logs',
+    'service_items',
+    'transactions',
+    'service_records',
+  ];
+
+  /// Kunci utama selain 'id'.
+  static const Map<String, String> _pk = <String, String>{
+    'daily_extra': 'daily_recap_id',
+  };
+
+  /// Boolean di Supabase, INTEGER 0/1 di SQLite.
+  static const Map<String, List<String>> _boolCols = <String, List<String>>{
+    'daily_order': <String>['is_fuel_expense'],
+    'accounts': <String>['is_active'],
+    'vehicles': <String>['is_active'],
+  };
+
+  static final Map<String, Set<String>> _colCache = <String, Set<String>>{};
+
   static Future<void> sync() async {
-    // 1. Sync deletions first to avoid recreating deleted records
-    await _syncDeletions();
+    final errors = <String>[];
 
-    // 2. Sync local changes (Push)
-    await _syncPush();
+    Future<void> guard(String label, Future<void> Function() fn) async {
+      try {
+        await fn();
+      } catch (e) {
+        debugPrint('Sync $label gagal: $e');
+        errors.add('$label: $e');
+      }
+    }
 
-    // 3. Sync remote changes (Pull)
-    await _syncPull();
+    // 1. Penghapusan dulu agar data yang dihapus tidak dibuat ulang.
+    await guard('hapus', _syncDeletions);
+    // 2. Push perubahan lokal.
+    for (final t in _order) {
+      await guard('push $t', () => _pushTable(t));
+    }
+    // 3. Pull perubahan remote.
+    for (final t in _order) {
+      await guard('pull $t', () => _pullTable(t));
+    }
+
+    if (errors.isNotEmpty) {
+      throw StateError(
+          'Sinkronisasi sebagian gagal (${errors.length}): ${errors.first}');
+    }
   }
 
   static Future<void> _syncDeletions() async {
     final db = await LocalDb.instance.database;
     final deletions = await db.query('pending_deletions');
-    if (deletions.isEmpty) return;
-
     for (final del in deletions) {
-      final id = del['id'] as int;
-      final tableName = del['table_name'] as String;
+      final queueId = del['id'] as int;
+      final table = del['table_name'] as String;
       final recordId = del['record_id'] as String;
-
       try {
-        await _client.from(tableName).delete().eq('id', recordId);
-        // Delete from local queue
-        await db.delete('pending_deletions', where: 'id = ?', whereArgs: [id]);
+        await _client.from(table).delete().eq('id', recordId);
+        await db
+            .delete('pending_deletions', where: 'id = ?', whereArgs: [queueId]);
       } catch (e) {
-        // If record is not found or already deleted on server, we can remove it from queue
-        await db.delete('pending_deletions', where: 'id = ?', whereArgs: [id]);
+        // JANGAN buang antrean saat gagal (mis. offline): kalau dibuang, baris remote
+        // masih ada dan akan "hidup lagi" saat pull. Coba lagi pada sync berikutnya.
+        debugPrint('Hapus remote gagal ($table): $e');
       }
     }
   }
 
-  static Future<void> _syncPush() async {
-    final db = await LocalDb.instance.database;
+  static Future<Set<String>> _localCols(Database db, String table) async {
+    final cached = _colCache[table];
+    if (cached != null) return cached;
+    final info = await db.rawQuery('PRAGMA table_info($table)');
+    final cols = info.map((r) => r['name'] as String).toSet();
+    _colCache[table] = cols;
+    return cols;
+  }
 
-    // --- 1. daily_recap ---
-    final recaps = await db.query('daily_recap', where: 'is_synced = 0');
-    for (final r in recaps) {
+  static Future<void> _pushTable(String table) async {
+    final db = await LocalDb.instance.database;
+    final pk = _pk[table] ?? 'id';
+    final boolCols = _boolCols[table] ?? const <String>[];
+
+    final rows = await db.query(table, where: 'is_synced = 0');
+    for (final r in rows) {
       final data = Map<String, dynamic>.from(r)..remove('is_synced');
-      await _client.from('daily_recap').upsert(data);
-      await db.update('daily_recap', {'is_synced': 1}, where: 'id = ?', whereArgs: [r['id']]);
-    }
-
-    // --- 2. daily_order ---
-    final orders = await db.query('daily_order', where: 'is_synced = 0');
-    for (final o in orders) {
-      final data = Map<String, dynamic>.from(o)..remove('is_synced');
-      if (data['is_fuel_expense'] != null) {
-        data['is_fuel_expense'] = data['is_fuel_expense'] == 1;
+      for (final c in boolCols) {
+        if (data[c] != null) data[c] = data[c] == 1;
       }
-      await _client.from('daily_order').upsert(data);
-      await db.update('daily_order', {'is_synced': 1}, where: 'id = ?', whereArgs: [o['id']]);
-    }
-
-    // --- 3. petty_cash_item ---
-    final pettyItems = await db.query('petty_cash_item', where: 'is_synced = 0');
-    for (final pi in pettyItems) {
-      final data = Map<String, dynamic>.from(pi)..remove('is_synced');
-      await _client.from('petty_cash_item').upsert(data);
-      await db.update('petty_cash_item', {'is_synced': 1}, where: 'id = ?', whereArgs: [pi['id']]);
-    }
-
-    // --- 4. daily_extra ---
-    final extras = await db.query('daily_extra', where: 'is_synced = 0');
-    for (final ex in extras) {
-      final data = Map<String, dynamic>.from(ex)..remove('is_synced');
-      await _client.from('daily_extra').upsert(data);
-      await db.update('daily_extra', {'is_synced': 1}, where: 'daily_recap_id = ?', whereArgs: [ex['daily_recap_id']]);
+      // user_id tidak ada di SQLite: server mengisinya lewat default auth.uid().
+      await _client.from(table).upsert(data);
+      await db.update(table, {'is_synced': 1},
+          where: '$pk = ?', whereArgs: [r[pk]]);
     }
   }
 
-  static Future<void> _syncPull() async {
+  static Future<void> _pullTable(String table) async {
     final db = await LocalDb.instance.database;
+    final pk = _pk[table] ?? 'id';
+    final cols = await _localCols(db, table);
+    final boolCols = _boolCols[table] ?? const <String>[];
 
-    // 1. Pull daily_recap
-    final remoteRecaps = await _client.from('daily_recap').select();
-    for (final rr in remoteRecaps) {
-      final local = await db.query('daily_recap', where: 'id = ?', whereArgs: [rr['id']]);
-      if (local.isEmpty) {
-        final data = Map<String, dynamic>.from(rr)..['is_synced'] = 1;
-        await db.insert('daily_recap', data);
-      } else {
-        final localIsSynced = local.first['is_synced'] as int;
-        if (localIsSynced == 1) {
-          final data = Map<String, dynamic>.from(rr)..['is_synced'] = 1;
-          await db.update('daily_recap', data, where: 'id = ?', whereArgs: [rr['id']]);
+    // Baris yang menunggu dihapus (mis. sedang offline) tidak boleh dihidupkan lagi oleh pull.
+    final pending = (await db.query(
+      'pending_deletions',
+      columns: ['record_id'],
+      where: 'table_name = ?',
+      whereArgs: [table],
+    ))
+        .map((r) => r['record_id'] as String)
+        .toSet();
+
+    const pageSize = 1000; // batas default PostgREST
+    var from = 0;
+    while (true) {
+      final chunk = await _client
+          .from(table)
+          .select()
+          .order(pk)
+          .range(from, from + pageSize - 1);
+
+      for (final rr in chunk) {
+        final id = rr[pk].toString();
+        if (pending.contains(id)) continue;
+
+        // Buang kolom yang tidak ada di SQLite (mis. user_id), konversi boolean.
+        final data = <String, dynamic>{};
+        rr.forEach((k, v) {
+          if (cols.contains(k)) data[k] = v;
+        });
+        for (final c in boolCols) {
+          if (data[c] is bool) data[c] = (data[c] as bool) ? 1 : 0;
+        }
+        data['is_synced'] = 1;
+
+        final local = await db.query(
+          table,
+          columns: ['is_synced'],
+          where: '$pk = ?',
+          whereArgs: [id],
+        );
+        if (local.isEmpty) {
+          await db.insert(table, data);
+        } else if ((local.first['is_synced'] as int) == 1) {
+          await db.update(table, data, where: '$pk = ?', whereArgs: [id]);
         }
       }
-    }
 
-    // 2. Pull daily_order
-    final remoteOrders = await _client.from('daily_order').select();
-    for (final ro in remoteOrders) {
-      final local = await db.query('daily_order', where: 'id = ?', whereArgs: [ro['id']]);
-      if (local.isEmpty) {
-        final data = Map<String, dynamic>.from(ro)..['is_synced'] = 1;
-        if (data['is_fuel_expense'] != null) {
-          data['is_fuel_expense'] = (data['is_fuel_expense'] as bool) ? 1 : 0;
-        }
-        await db.insert('daily_order', data);
-      } else {
-        final localIsSynced = local.first['is_synced'] as int;
-        if (localIsSynced == 1) {
-          final data = Map<String, dynamic>.from(ro)..['is_synced'] = 1;
-          if (data['is_fuel_expense'] != null) {
-            data['is_fuel_expense'] = (data['is_fuel_expense'] as bool) ? 1 : 0;
-          }
-          await db.update('daily_order', data, where: 'id = ?', whereArgs: [ro['id']]);
-        }
-      }
-    }
-
-    // 3. Pull petty_cash_item
-    final remotePetty = await _client.from('petty_cash_item').select();
-    for (final rp in remotePetty) {
-      final local = await db.query('petty_cash_item', where: 'id = ?', whereArgs: [rp['id']]);
-      if (local.isEmpty) {
-        final data = Map<String, dynamic>.from(rp)..['is_synced'] = 1;
-        await db.insert('petty_cash_item', data);
-      } else {
-        final localIsSynced = local.first['is_synced'] as int;
-        if (localIsSynced == 1) {
-          final data = Map<String, dynamic>.from(rp)..['is_synced'] = 1;
-          await db.update('petty_cash_item', data, where: 'id = ?', whereArgs: [rp['id']]);
-        }
-      }
-    }
-
-    // 4. Pull daily_extra
-    final remoteExtras = await _client.from('daily_extra').select();
-    for (final re in remoteExtras) {
-      final local = await db.query('daily_extra', where: 'daily_recap_id = ?', whereArgs: [re['daily_recap_id']]);
-      if (local.isEmpty) {
-        final data = Map<String, dynamic>.from(re)..['is_synced'] = 1;
-        await db.insert('daily_extra', data);
-      } else {
-        final localIsSynced = local.first['is_synced'] as int;
-        if (localIsSynced == 1) {
-          final data = Map<String, dynamic>.from(re)..['is_synced'] = 1;
-          await db.update('daily_extra', data, where: 'daily_recap_id = ?', whereArgs: [re['daily_recap_id']]);
-        }
-      }
+      if (chunk.length < pageSize) break;
+      from += pageSize;
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/fuel_filling.dart';
 import '../providers/recap_providers.dart';
 
@@ -15,7 +16,8 @@ class FuelFillingFormSheet extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<FuelFillingFormSheet> createState() => _FuelFillingFormSheetState();
+  ConsumerState<FuelFillingFormSheet> createState() =>
+      _FuelFillingFormSheetState();
 }
 
 class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
@@ -25,7 +27,7 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
   final _totalController = TextEditingController();
   final _odometerController = TextEditingController();
   final _catatanController = TextEditingController();
-  
+
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
 
@@ -41,8 +43,17 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
       _catatanController.text = f.catatan ?? '';
       _selectedDate = f.tanggal;
     } else {
-      // Default harga BBM saat ini
-      _hargaController.text = '13500'; // Harga Pertamax sekitar 13.500
+      _loadLastFuelPrice();
+    }
+  }
+
+  Future<void> _loadLastFuelPrice() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastPrice = prefs.getString('last_fuel_price');
+    if (lastPrice != null && lastPrice.isNotEmpty && mounted) {
+      setState(() {
+        _hargaController.text = lastPrice;
+      });
     }
   }
 
@@ -97,17 +108,17 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       final liter = double.parse(_literController.text);
       final hargaPerLiter = double.parse(_hargaController.text);
       final totalBiaya = double.parse(_totalController.text);
-      final odometer = _odometerController.text.isNotEmpty 
-          ? double.parse(_odometerController.text) 
+      final odometer = _odometerController.text.isNotEmpty
+          ? double.parse(_odometerController.text)
           : null;
-      
+
       if (widget.existingFilling != null) {
         final updated = widget.existingFilling!.copyWith(
           tanggal: _selectedDate,
@@ -115,9 +126,12 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
           hargaPerLiter: hargaPerLiter,
           totalBiaya: totalBiaya,
           odometer: odometer,
-          catatan: _catatanController.text.isEmpty ? null : _catatanController.text,
+          catatan:
+              _catatanController.text.isEmpty ? null : _catatanController.text,
         );
-        await ref.read(recapDetailNotifierProvider(widget.dailyRecapId).notifier).updateFuelFilling(updated);
+        await ref
+            .read(recapDetailNotifierProvider(widget.dailyRecapId).notifier)
+            .updateFuelFilling(updated);
       } else {
         final newFilling = FuelFilling.create(
           dailyRecapId: widget.dailyRecapId,
@@ -126,17 +140,23 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
           hargaPerLiter: hargaPerLiter,
           totalBiaya: totalBiaya,
           odometer: odometer,
-          catatan: _catatanController.text.isEmpty ? null : _catatanController.text,
+          catatan:
+              _catatanController.text.isEmpty ? null : _catatanController.text,
         );
-        await ref.read(recapDetailNotifierProvider(widget.dailyRecapId).notifier).addFuelFilling(newFilling);
+        await ref
+            .read(recapDetailNotifierProvider(widget.dailyRecapId).notifier)
+            .addFuelFilling(newFilling);
       }
-      
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('last_fuel_price', _hargaController.text.trim());
+
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.existingFilling != null 
-                ? 'Pengisian BBM diperbarui' 
+            content: Text(widget.existingFilling != null
+                ? 'Pengisian BBM diperbarui'
                 : 'Pengisian BBM ditambahkan'),
             backgroundColor: const Color(0xFF2E7D32),
             behavior: SnackBarBehavior.floating,
@@ -161,7 +181,7 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.existingFilling != null;
-    
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -188,7 +208,7 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               // Title
               Row(
                 children: [
@@ -200,7 +220,8 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.local_gas_station_rounded, color: Colors.white, size: 24),
+                    child: const Icon(Icons.local_gas_station_rounded,
+                        color: Colors.white, size: 24),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -208,7 +229,9 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isEdit ? 'Edit Pengisian BBM' : 'Tambah Pengisian BBM',
+                          isEdit
+                              ? 'Edit Pengisian BBM'
+                              : 'Tambah Pengisian BBM',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -217,7 +240,8 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                         ),
                         Text(
                           'Catat kapan & berapa liter isi tangki',
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade600),
                         ),
                       ],
                     ),
@@ -225,26 +249,29 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                 ],
               ),
               const SizedBox(height: 24),
-              
+
               // Tanggal
               InkWell(
                 onTap: _pickDate,
                 child: InputDecorator(
                   decoration: InputDecoration(
                     labelText: 'Tanggal Pengisian',
-                    prefixIcon: const Icon(Icons.calendar_today_rounded, color: Color(0xFF2E7D32)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.calendar_today_rounded,
+                        color: Color(0xFF2E7D32)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     filled: true,
                     fillColor: Colors.grey.shade50,
                   ),
                   child: Text(
                     DateFormat('dd MMM yyyy', 'id_ID').format(_selectedDate),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Liter & Harga per Liter (Row)
               Row(
                 children: [
@@ -254,16 +281,20 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                       decoration: InputDecoration(
                         labelText: 'Liter',
                         suffixText: 'L',
-                        prefixIcon: const Icon(Icons.opacity_rounded, color: Color(0xFF2E7D32)),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.opacity_rounded,
+                            color: Color(0xFF2E7D32)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         filled: true,
                         fillColor: Colors.grey.shade50,
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Wajib diisi';
                         final val = double.tryParse(v);
-                        if (val == null || val <= 0) return 'Masukkan angka valid';
+                        if (val == null || val <= 0)
+                          return 'Masukkan angka valid';
                         return null;
                       },
                       onChanged: (_) => _calculateTotal(),
@@ -276,8 +307,10 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                       decoration: InputDecoration(
                         labelText: 'Harga/Liter',
                         prefixText: 'Rp ',
-                        prefixIcon: const Icon(Icons.attach_money_rounded, color: Color(0xFF2E7D32)),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(Icons.attach_money_rounded,
+                            color: Color(0xFF2E7D32)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         filled: true,
                         fillColor: Colors.grey.shade50,
                       ),
@@ -285,7 +318,8 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Wajib diisi';
                         final val = double.tryParse(v);
-                        if (val == null || val <= 0) return 'Masukkan angka valid';
+                        if (val == null || val <= 0)
+                          return 'Masukkan angka valid';
                         return null;
                       },
                       onChanged: (_) => _calculateTotal(),
@@ -294,15 +328,17 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               // Total Biaya
               TextFormField(
                 controller: _totalController,
                 decoration: InputDecoration(
                   labelText: 'Total Biaya (Otomatis)',
                   prefixText: 'Rp ',
-                  prefixIcon: const Icon(Icons.receipt_long_rounded, color: Color(0xFF2E7D32)),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.receipt_long_rounded,
+                      color: Color(0xFF2E7D32)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   filled: true,
                   fillColor: Colors.grey.shade100,
                   helperText: 'Otomatis terhitung: Liter × Harga/Liter',
@@ -311,30 +347,35 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                 onChanged: (_) => _calculateLiter(),
               ),
               const SizedBox(height: 16),
-              
+
               // Odometer (Opsional)
               TextFormField(
                 controller: _odometerController,
                 decoration: InputDecoration(
                   labelText: 'Kilometer (Opsional)',
                   suffixText: 'KM',
-                  prefixIcon: const Icon(Icons.speed_rounded, color: Colors.grey),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon:
+                      const Icon(Icons.speed_rounded, color: Colors.grey),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   filled: true,
                   fillColor: Colors.grey.shade50,
                   helperText: 'Untuk tracking konsumsi per KM',
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
               ),
               const SizedBox(height: 16),
-              
+
               // Catatan
               TextFormField(
                 controller: _catatanController,
                 decoration: InputDecoration(
                   labelText: 'Catatan (Opsional)',
-                  prefixIcon: const Icon(Icons.note_alt_rounded, color: Colors.grey),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon:
+                      const Icon(Icons.note_alt_rounded, color: Colors.grey),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   filled: true,
                   fillColor: Colors.grey.shade50,
                   hintText: 'Contoh: Isi full di SPBU Pertamina Jalan Sudirman',
@@ -342,19 +383,23 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                 maxLines: 2,
               ),
               const SizedBox(height: 24),
-              
+
               // Buttons
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _isLoading ? null : () => Navigator.pop(context),
+                      onPressed:
+                          _isLoading ? null : () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         side: BorderSide(color: Colors.grey.shade300),
                       ),
-                      child: const Text('Batal', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                      child: const Text('Batal',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 16)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -365,18 +410,21 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
                         backgroundColor: const Color(0xFFEF4444),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         elevation: 2,
                       ),
                       child: _isLoading
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
                             )
                           : Text(
                               isEdit ? 'Simpan Perubahan' : 'Tambah Pengisian',
-                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w600, fontSize: 16),
                             ),
                     ),
                   ),
@@ -392,7 +440,8 @@ class _FuelFillingFormSheetState extends ConsumerState<FuelFillingFormSheet> {
 }
 
 // Helper function to show the bottom sheet
-void showFuelFillingSheet(BuildContext context, String dailyRecapId, {FuelFilling? existingFilling}) {
+void showFuelFillingSheet(BuildContext context, String dailyRecapId,
+    {FuelFilling? existingFilling}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,

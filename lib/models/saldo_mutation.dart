@@ -1,7 +1,7 @@
 class SaldoMutation {
   final DateTime tanggal;
   final String keterangan;
-  final double debit;  // Uang Keluar
+  final double debit; // Uang Keluar
   final double kredit; // Uang Masuk
   final double runningBalance; // Saldo Berjalan
 

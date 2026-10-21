@@ -15,7 +15,8 @@ final recapsProvider = FutureProvider<List<DailyRecap>>((ref) async {
 });
 
 // --- Fuel Filling Providers ---
-final fuelFillingsProvider = FutureProvider.family<List<FuelFilling>, String>((ref, dailyRecapId) async {
+final fuelFillingsProvider =
+    FutureProvider.family<List<FuelFilling>, String>((ref, dailyRecapId) async {
   final service = ref.watch(recapServiceProvider);
   return service.getFuelFillings(dailyRecapId);
 });
@@ -26,7 +27,8 @@ final allFuelFillingsProvider = FutureProvider<List<FuelFilling>>((ref) async {
 });
 
 // Provider untuk estimasi sisa BBM (untuk alert 0.5L)
-final estimatedFuelRemainingProvider = FutureProvider.family<double, String>((ref, dailyRecapId) async {
+final estimatedFuelRemainingProvider =
+    FutureProvider.family<double, String>((ref, dailyRecapId) async {
   final service = ref.watch(recapServiceProvider);
   return service.getEstimatedFuelRemaining(dailyRecapId);
 });
@@ -138,10 +140,14 @@ class RecapDetailState {
       kmlParameter: kmlParameter ?? this.kmlParameter,
       status: status ?? this.status,
       saldoAkhirAppAktual: saldoAkhirAppAktual ?? this.saldoAkhirAppAktual,
-      saldoAkhirGrabKreditAktual: saldoAkhirGrabKreditAktual ?? this.saldoAkhirGrabKreditAktual,
-      saldoAkhirGrabTunaiAktual: saldoAkhirGrabTunaiAktual ?? this.saldoAkhirGrabTunaiAktual,
-      saldoAkhirGrabOvoAktual: saldoAkhirGrabOvoAktual ?? this.saldoAkhirGrabOvoAktual,
-      saldoAkhirMandiriAktual: saldoAkhirMandiriAktual ?? this.saldoAkhirMandiriAktual,
+      saldoAkhirGrabKreditAktual:
+          saldoAkhirGrabKreditAktual ?? this.saldoAkhirGrabKreditAktual,
+      saldoAkhirGrabTunaiAktual:
+          saldoAkhirGrabTunaiAktual ?? this.saldoAkhirGrabTunaiAktual,
+      saldoAkhirGrabOvoAktual:
+          saldoAkhirGrabOvoAktual ?? this.saldoAkhirGrabOvoAktual,
+      saldoAkhirMandiriAktual:
+          saldoAkhirMandiriAktual ?? this.saldoAkhirMandiriAktual,
       saldoAkhirBcaAktual: saldoAkhirBcaAktual ?? this.saldoAkhirBcaAktual,
       tip: tip ?? this.tip,
       insentif: insentif ?? this.insentif,
@@ -258,7 +264,9 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
         );
       } else {
         state = state.copyWith(
-          pettyCash: pettyCashDenoms.map((d) => PettyCashItem(denom: d, qty: 0)).toList(),
+          pettyCash: pettyCashDenoms
+              .map((d) => PettyCashItem(denom: d, qty: 0))
+              .toList(),
           isLoading: false,
         );
       }
@@ -350,7 +358,7 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
   }) async {
     final id = state.recapId;
     if (id == null) return;
-    
+
     await _service.updateRecapHeader(
       id: id,
       cashAwal: state.cashAwal,
@@ -389,7 +397,7 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
   Future<void> reopenRecap() async {
     final id = state.recapId;
     if (id == null) return;
-    
+
     await _service.updateRecapHeader(
       id: id,
       cashAwal: state.cashAwal,
@@ -430,14 +438,15 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
       orders: orders,
       pettyCash: petty,
       tipWalletType: matchRecap?.tipWalletType ?? state.tipWalletType,
-      insentifWalletType: matchRecap?.insentifWalletType ?? state.insentifWalletType,
+      insentifWalletType:
+          matchRecap?.insentifWalletType ?? state.insentifWalletType,
     );
     ref.invalidate(recapsProvider);
   }
 
   Future<void> upsertOrder(DailyOrder order) async {
     await _service.upsertOrder(order);
-    
+
     final id = state.recapId;
     if (id != null) {
       final orders = await _service.getOrders(id);
@@ -452,7 +461,8 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
       if (maxOdo > state.odoEnd) {
         shouldUpdate = true;
       } else if (order.id != null) {
-        final previousOrder = state.orders.firstWhere((o) => o.id == order.id, orElse: () => order);
+        final previousOrder = state.orders
+            .firstWhere((o) => o.id == order.id, orElse: () => order);
         if (previousOrder.odometer == state.odoEnd && maxOdo < state.odoEnd) {
           shouldUpdate = true;
         }
@@ -490,7 +500,7 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
   Future<void> deleteOrder(DailyOrder o) async {
     if (o.id == null) return;
     await _service.deleteOrder(o.id!);
-    
+
     final id = state.recapId;
     if (id != null) {
       final orders = await _service.getOrders(id);
@@ -544,7 +554,7 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
   }
 
   // --- Fuel Filling Methods ---
-  
+
   Future<void> addFuelFilling(FuelFilling filling) async {
     final id = state.recapId;
     if (id == null) return;
@@ -578,11 +588,13 @@ class RecapDetailNotifier extends Notifier<RecapDetailState> {
 }
 
 final recapDetailNotifierProvider =
-    NotifierProvider.family<RecapDetailNotifier, RecapDetailState, String?>((recapId) {
+    NotifierProvider.family<RecapDetailNotifier, RecapDetailState, String?>(
+        (recapId) {
   return RecapDetailNotifier(recapId);
 });
 
-final platformDistributionProvider = FutureProvider<Map<String, double>>((ref) async {
+final platformDistributionProvider =
+    FutureProvider<Map<String, double>>((ref) async {
   final service = ref.watch(recapServiceProvider);
   return service.getPlatformIncomeDistribution();
 });
@@ -592,25 +604,34 @@ class HomeTabNotifier extends Notifier<int> {
   int build() => 0;
   void change(int val) => state = val;
 }
-final homeTabProvider = NotifierProvider<HomeTabNotifier, int>(HomeTabNotifier.new);
+
+final homeTabProvider =
+    NotifierProvider<HomeTabNotifier, int>(HomeTabNotifier.new);
 
 class ReportTabNotifier extends Notifier<int> {
   @override
   int build() => 0;
   void change(int val) => state = val;
 }
-final reportTabProvider = NotifierProvider<ReportTabNotifier, int>(ReportTabNotifier.new);
+
+final reportTabProvider =
+    NotifierProvider<ReportTabNotifier, int>(ReportTabNotifier.new);
 
 class SelectedAccountNotifier extends Notifier<String> {
   @override
   String build() => 'cash';
   void change(String val) => state = val;
 }
-final selectedAccountProvider = NotifierProvider<SelectedAccountNotifier, String>(SelectedAccountNotifier.new);
+
+final selectedAccountProvider =
+    NotifierProvider<SelectedAccountNotifier, String>(
+        SelectedAccountNotifier.new);
 
 class SyncLogsNotifier extends Notifier<List<String>> {
   @override
   List<String> build() => ['Aplikasi diinisialisasi.'];
   void addLog(String log) => state = [...state, log];
 }
-final syncLogsProvider = NotifierProvider<SyncLogsNotifier, List<String>>(SyncLogsNotifier.new);
+
+final syncLogsProvider =
+    NotifierProvider<SyncLogsNotifier, List<String>>(SyncLogsNotifier.new);

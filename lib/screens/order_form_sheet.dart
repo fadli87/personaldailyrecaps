@@ -41,19 +41,23 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
   void initState() {
     super.initState();
     final e = widget.existing;
-    
+
     // Infer tipe transaksi dari data yang ada
     if (e != null) {
       _isFuelExpense = e.isFuelExpense;
       _walletTypeSelected = e.walletType;
       _topupSourceSelected = e.topupSource;
-      if (e.walletType.startsWith('grab_') || (e.platform?.toLowerCase().contains('grab') ?? false)) {
+      if (e.walletType.startsWith('grab_') ||
+          (e.platform?.toLowerCase().contains('grab') ?? false)) {
         _platformSelected = 'Grab';
-      } else if (e.walletType == 'mandiri' || (e.platform?.toLowerCase().contains('mandiri') ?? false)) {
+      } else if (e.walletType == 'mandiri' ||
+          (e.platform?.toLowerCase().contains('mandiri') ?? false)) {
         _platformSelected = 'Mandiri';
-      } else if (e.walletType == 'bca' || (e.platform?.toLowerCase().contains('bca') ?? false)) {
+      } else if (e.walletType == 'bca' ||
+          (e.platform?.toLowerCase().contains('bca') ?? false)) {
         _platformSelected = 'BCA';
-      } else if (e.walletType == 'cash' || (e.platform?.toLowerCase().contains('cash') ?? false)) {
+      } else if (e.walletType == 'cash' ||
+          (e.platform?.toLowerCase().contains('cash') ?? false)) {
         _platformSelected = 'Cash';
       } else {
         _platformSelected = 'ShopeeFood';
@@ -76,15 +80,23 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
 
     _keterangan = TextEditingController(text: e?.keterangan ?? '');
     _income = TextEditingController(text: (e?.income ?? 0).toStringAsFixed(0));
-    _deductCashApp = TextEditingController(text: (e?.deductCashApp ?? 0).toStringAsFixed(0));
-    _custPay = TextEditingController(text: (e?.custPay ?? 0).toStringAsFixed(0));
-    _custChange = TextEditingController(text: (e?.custChange ?? 0).toStringAsFixed(0));
-    _saldoTopUp = TextEditingController(text: (e?.saldoTopUp ?? 0).toStringAsFixed(0));
-    _expense = TextEditingController(text: (e?.expense ?? 0).toStringAsFixed(0));
+    _deductCashApp =
+        TextEditingController(text: (e?.deductCashApp ?? 0).toStringAsFixed(0));
+    _custPay =
+        TextEditingController(text: (e?.custPay ?? 0).toStringAsFixed(0));
+    _custChange =
+        TextEditingController(text: (e?.custChange ?? 0).toStringAsFixed(0));
+    _saldoTopUp =
+        TextEditingController(text: (e?.saldoTopUp ?? 0).toStringAsFixed(0));
+    _expense =
+        TextEditingController(text: (e?.expense ?? 0).toStringAsFixed(0));
     _remark = TextEditingController(text: e?.remark ?? '');
 
-    final initialOdometer = e?.odometer ?? (widget.lastOdometer > 0 ? widget.lastOdometer : null);
-    _odometer = TextEditingController(text: initialOdometer != null ? initialOdometer.toStringAsFixed(0) : '');
+    final initialOdometer =
+        e?.odometer ?? (widget.lastOdometer > 0 ? widget.lastOdometer : null);
+    _odometer = TextEditingController(
+        text:
+            initialOdometer != null ? initialOdometer.toStringAsFixed(0) : '');
   }
 
   @override
@@ -119,24 +131,29 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
       final odoText = _odometer.text.trim();
       if (odoText.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Wajib mengisi Odometer (KM) saat pengantaran berakhir!')),
+          const SnackBar(
+              content: Text(
+                  'Wajib mengisi Odometer (KM) saat pengantaran berakhir!')),
         );
         return;
       }
       final odoVal = double.tryParse(odoText) ?? 0;
       if (odoVal <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Odometer (KM) harus lebih besar dari 0!')),
+          const SnackBar(
+              content: Text('Odometer (KM) harus lebih besar dari 0!')),
         );
         return;
       }
       if (odoVal < widget.lastOdometer) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Odometer (KM) tidak boleh lebih kecil dari KM sebelumnya (${widget.lastOdometer.toStringAsFixed(0)} KM)!')),
+          SnackBar(
+              content: Text(
+                  'Odometer (KM) tidak boleh lebih kecil dari KM sebelumnya (${widget.lastOdometer.toStringAsFixed(0)} KM)!')),
         );
         return;
       }
-      
+
       income = _n(_income);
       expense = _n(_expense);
       custPay = _n(_custPay);
@@ -145,31 +162,38 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
       isFuel = _isFuelExpense;
       odometer = odoVal;
     } else if (_type == 'topup') {
-      keterangan = _keterangan.text.trim().isEmpty ? null : _keterangan.text.trim();
+      keterangan =
+          _keterangan.text.trim().isEmpty ? null : _keterangan.text.trim();
       saldoTopUp = _n(_saldoTopUp);
       deductCashApp = _n(_deductCashApp);
     } else if (_type == 'expense') {
-      keterangan = _keterangan.text.trim().isEmpty ? null : _keterangan.text.trim();
+      keterangan =
+          _keterangan.text.trim().isEmpty ? null : _keterangan.text.trim();
       expense = _n(_expense);
       isFuel = _isFuelExpense;
       if (isFuel) {
         final odoText = _odometer.text.trim();
         if (odoText.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Wajib mengisi Odometer (KM) saat pengisian bensin!')),
+            const SnackBar(
+                content:
+                    Text('Wajib mengisi Odometer (KM) saat pengisian bensin!')),
           );
           return;
         }
         final odoVal = double.tryParse(odoText) ?? 0;
         if (odoVal <= 0) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Odometer (KM) harus lebih besar dari 0!')),
+            const SnackBar(
+                content: Text('Odometer (KM) harus lebih besar dari 0!')),
           );
           return;
         }
         if (odoVal < widget.lastOdometer) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Odometer (KM) tidak boleh lebih kecil dari KM sebelumnya (${widget.lastOdometer.toStringAsFixed(0)} KM)!')),
+            SnackBar(
+                content: Text(
+                    'Odometer (KM) tidak boleh lebih kecil dari KM sebelumnya (${widget.lastOdometer.toStringAsFixed(0)} KM)!')),
           );
           return;
         }
@@ -213,8 +237,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.existing == null 
-                  ? 'Tambah Transaksi Baru' 
+              widget.existing == null
+                  ? 'Tambah Transaksi Baru'
                   : 'Edit Transaksi ${widget.existing!.urutan}',
               style: Theme.of(context).textTheme.titleLarge,
             ),
@@ -223,7 +247,10 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
             // Dropdown Pilihan Platform Utama (ShopeeFood, Grab, Mandiri, BCA)
             const Text(
               'Layanan / Platform / Rekening',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black54),
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Colors.black54),
             ),
             const SizedBox(height: 6),
             DropdownButtonFormField<String>(
@@ -238,7 +265,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                   value: 'ShopeeFood',
                   child: Row(
                     children: [
-                      Icon(Icons.fastfood_outlined, color: Colors.orange, size: 20),
+                      Icon(Icons.fastfood_outlined,
+                          color: Colors.orange, size: 20),
                       SizedBox(width: 8),
                       Text('ShopeeFood'),
                     ],
@@ -248,7 +276,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                   value: 'Grab',
                   child: Row(
                     children: [
-                      Icon(Icons.local_taxi_outlined, color: Colors.green, size: 20),
+                      Icon(Icons.local_taxi_outlined,
+                          color: Colors.green, size: 20),
                       SizedBox(width: 8),
                       Text('Grab'),
                     ],
@@ -258,7 +287,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                   value: 'Mandiri',
                   child: Row(
                     children: [
-                      Icon(Icons.account_balance_wallet_outlined, color: Colors.blue, size: 20),
+                      Icon(Icons.account_balance_wallet_outlined,
+                          color: Colors.blue, size: 20),
                       SizedBox(width: 8),
                       Text('Bank Mandiri'),
                     ],
@@ -268,7 +298,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                   value: 'BCA',
                   child: Row(
                     children: [
-                      Icon(Icons.account_balance_outlined, color: Colors.indigo, size: 20),
+                      Icon(Icons.account_balance_outlined,
+                          color: Colors.indigo, size: 20),
                       SizedBox(width: 8),
                       Text('Bank BCA'),
                     ],
@@ -306,7 +337,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                       }
                     },
             ),
-            
+
             // Dropdown Pilihan Wallet Grab jika Grab terpilih
             if (_platformSelected == 'Grab') ...[
               const SizedBox(height: 12),
@@ -318,23 +349,31 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                   isDense: true,
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'grab_kredit', child: Text('Grab Kredit (Komisi/Potongan)')),
-                  DropdownMenuItem(value: 'grab_tunai', child: Text('Grab Tunai (E-Wallet Driver)')),
-                  DropdownMenuItem(value: 'grab_ovo', child: Text('OVO (Wallet Penumpang/Tip)')),
+                  DropdownMenuItem(
+                      value: 'grab_kredit',
+                      child: Text('Grab Kredit (Komisi/Potongan)')),
+                  DropdownMenuItem(
+                      value: 'grab_tunai',
+                      child: Text('Grab Tunai (E-Wallet Driver)')),
+                  DropdownMenuItem(
+                      value: 'grab_ovo',
+                      child: Text('OVO (Wallet Penumpang/Tip)')),
                 ],
-                onChanged: widget.isClosed ? null : (val) {
-                  if (val != null) {
-                    setState(() {
-                      _walletTypeSelected = val;
-                    });
-                  }
-                },
+                onChanged: widget.isClosed
+                    ? null
+                    : (val) {
+                        if (val != null) {
+                          setState(() {
+                            _walletTypeSelected = val;
+                          });
+                        }
+                      },
               ),
             ],
-            
+
             const SizedBox(height: 20),
-            
-             // Selector Tipe Transaksi
+
+            // Selector Tipe Transaksi
             SizedBox(
               width: double.infinity,
               child: SegmentedButton<String>(
@@ -392,6 +431,10 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Ada biaya bensin dalam order ini'),
+                subtitle: const Text(
+                  'Untuk isi bensin, gunakan Catat BBM di tab Keuangan agar tidak tercatat ganda.',
+                  style: TextStyle(fontSize: 11, color: Colors.orange),
+                ),
                 value: _isFuelExpense,
                 onChanged: widget.isClosed
                     ? null
@@ -424,7 +467,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                     value: 'cash',
                     child: Row(
                       children: [
-                        Icon(Icons.money_outlined, color: Colors.green, size: 20),
+                        Icon(Icons.money_outlined,
+                            color: Colors.green, size: 20),
                         SizedBox(width: 8),
                         Text('Uang Tunai / Alfamart / Indomaret'),
                       ],
@@ -434,7 +478,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                     value: 'mandiri',
                     child: Row(
                       children: [
-                        Icon(Icons.account_balance_wallet_outlined, color: Colors.blue, size: 20),
+                        Icon(Icons.account_balance_wallet_outlined,
+                            color: Colors.blue, size: 20),
                         SizedBox(width: 8),
                         Text('Bank Mandiri (M-Banking/Transfer)'),
                       ],
@@ -444,7 +489,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                     value: 'bca',
                     child: Row(
                       children: [
-                        Icon(Icons.account_balance_outlined, color: Colors.indigo, size: 20),
+                        Icon(Icons.account_balance_outlined,
+                            color: Colors.indigo, size: 20),
                         SizedBox(width: 8),
                         Text('Bank BCA (M-Banking/Transfer)'),
                       ],
@@ -466,7 +512,9 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                 children: [
                   Expanded(child: _num('Nominal Top Up', _saldoTopUp)),
                   const SizedBox(width: 12),
-                  Expanded(child: _num('Potong dari Saldo App (Deduct)', _deductCashApp)),
+                  Expanded(
+                      child: _num(
+                          'Potong dari Saldo App (Deduct)', _deductCashApp)),
                 ],
               ),
             ] else if (_type == 'expense') ...[
@@ -474,7 +522,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                 controller: _keterangan,
                 enabled: !widget.isClosed,
                 decoration: const InputDecoration(
-                  labelText: 'Keterangan Pengeluaran (misal: Beli Bensin, Makan)',
+                  labelText:
+                      'Keterangan Pengeluaran (misal: Beli Bensin, Makan)',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -484,6 +533,10 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Pengeluaran ini untuk beli bensin (BBM)'),
+                subtitle: const Text(
+                  'Untuk isi bensin, gunakan Catat BBM di tab Keuangan agar tidak tercatat ganda.',
+                  style: TextStyle(fontSize: 11, color: Colors.orange),
+                ),
                 value: _isFuelExpense,
                 onChanged: widget.isClosed
                     ? null
@@ -499,7 +552,7 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
                 _num('Odometer Saat Pengisian (KM) *', _odometer),
               ],
             ],
-            
+
             const SizedBox(height: 12),
             TextField(
               controller: _remark,
@@ -510,12 +563,14 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             SizedBox(
               width: double.infinity,
               child: FilledButton(
                 onPressed: widget.isClosed ? null : _submit,
-                child: Text(widget.isClosed ? 'Transaksi Terkunci (Closed)' : 'Simpan Transaksi'),
+                child: Text(widget.isClosed
+                    ? 'Transaksi Terkunci (Closed)'
+                    : 'Simpan Transaksi'),
               ),
             ),
           ],
@@ -527,7 +582,8 @@ class _OrderFormSheetState extends State<OrderFormSheet> {
   Widget _num(String label, TextEditingController ctrl) => TextField(
         controller: ctrl,
         enabled: !widget.isClosed,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+        keyboardType:
+            const TextInputType.numberWithOptions(decimal: true, signed: true),
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),

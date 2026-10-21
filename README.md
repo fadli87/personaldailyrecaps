@@ -38,17 +38,15 @@ flutter pub get
 flutter run
 ```
 
-## Catatan tentang login
+## Autentikasi & Akun Pribadi
 
-Schema ini pakai RLS policy `auth.role() = 'authenticated'` — artinya kamu perlu login
-(walau cuma untuk diri sendiri) sebelum bisa baca/tulis data. `main.dart` sudah otomatis
-memanggil `signInAnonymously()` saat app start, jadi tidak perlu form login sama sekali.
-
-**Wajib:** aktifkan **Authentication → Sign In / Providers → Allow anonymous sign-ins** di
-dashboard Supabase, atau app akan gagal sign-in saat pertama dibuka.
-
-Kalau nanti mau proteksi lebih (misal HP dipakai orang lain juga), tinggal ganti jadi
-email+password dan tambahkan `LoginScreen` sebelum `HomeScreen`.
+Aplikasi ini menggunakan Supabase Auth dengan isolasi data berbasis `user_id` (`owner_only`).
+1. Buat akun email pribadi kamu di **Dashboard Supabase → Authentication → Users → Add user**.
+2. Di **Authentication → Sign In / Providers**:
+   - **Matikan "Allow anonymous sign-ins"**
+   - **Matikan "Allow new users to sign up"** (karena aplikasi ini khusus pribadi).
+3. Jalankan migrasi SQL di folder `supabase/migrations/` secara berurutan.
+4. Buka aplikasi dan login menggunakan email & password akun yang telah kamu buat.
 
 ## Struktur project
 
