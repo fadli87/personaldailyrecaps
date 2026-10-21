@@ -326,10 +326,13 @@ class _VehicleLogSheetState extends ConsumerState<VehicleLogSheet> {
                       ),
                       onChanged: (_) => setState(() {}),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty)
+                        if (val == null || val.trim().isEmpty) {
                           return 'Wajib diisi';
+                        }
                         final n = double.tryParse(val);
-                        if (n == null || n < 0) return 'Angka tidak valid';
+                        if (n == null || n < 0) {
+                          return 'Angka tidak valid';
+                        }
                         return null;
                       },
                     ),

@@ -225,8 +225,9 @@ class _ServiceItemSheetState extends ConsumerState<ServiceItemSheet> {
                       borderRadius: BorderRadius.circular(12)),
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty)
+                  if (val == null || val.trim().isEmpty) {
                     return 'Nama item servis wajib diisi';
+                  }
                   return null;
                 },
               ),

@@ -62,11 +62,7 @@ class FinanceSummaryTab extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
                   onPressed: () {
-                    ref.read(financeMonthProvider.notifier).state = DateTime(
-                      selectedMonth.year,
-                      selectedMonth.month - 1,
-                      1,
-                    );
+                    ref.read(financeMonthProvider.notifier).previousMonth();
                   },
                 ),
                 Text(
@@ -80,11 +76,7 @@ class FinanceSummaryTab extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
                   onPressed: () {
-                    ref.read(financeMonthProvider.notifier).state = DateTime(
-                      selectedMonth.year,
-                      selectedMonth.month + 1,
-                      1,
-                    );
+                    ref.read(financeMonthProvider.notifier).nextMonth();
                   },
                 ),
               ],

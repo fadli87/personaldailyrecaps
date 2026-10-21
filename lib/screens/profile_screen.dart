@@ -1,8 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:sqflite/sqflite.dart';
+import '../providers/finance_providers.dart';
 import '../providers/recap_providers.dart';
 import '../services/sync_service.dart';
 import 'pin_lock_screen.dart';
@@ -310,7 +316,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   const Divider(height: 24),
                   SwitchListTile(
-                    activeColor: const Color(0xFF2E7D32),
+                    activeThumbColor: const Color(0xFF2E7D32),
                     title: const Text(
                       'Kunci PIN Aplikasi',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -421,6 +427,108 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       labelText: 'Nama Pemilik Rekening',
                       prefixIcon: Icon(Icons.badge_outlined),
                       border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // CARD CADANGAN & EKSPOR DATA
+          Card(
+            color: Colors.white,
+            elevation: 1,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const CircleAvatar(
+                        backgroundColor: Color(0xFFE8F5E9),
+                        radius: 24,
+                        child: Icon(Icons.storage_outlined,
+                            color: Color(0xFF2E7D32), size: 24),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Cadangan Data & Ekspor',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF0F172A),
+                                ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Database lokal SQLite & laporan CSV',
+                            style:
+                                TextStyle(color: Colors.black54, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFEFF6FF),
+                      child: Icon(Icons.backup_outlined, color: Colors.blue),
+                    ),
+                    title: const Text(
+                      'Cadangkan Database (.db)',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    subtitle: const Text(
+                      'Salin dan bagikan file sf_daily_recap.db (berisi semua tabel & data lokal)',
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                    trailing: OutlinedButton(
+                      onPressed: _backupDatabase,
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Cadangkan'),
+                    ),
+                  ),
+                  const Divider(height: 16),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFF0FDF4),
+                      child: Icon(Icons.table_chart_outlined,
+                          color: Color(0xFF2E7D32)),
+                    ),
+                    title: const Text(
+                      'Ekspor CSV Transaksi',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    subtitle: const Text(
+                      'Unduh data transaksi bulanan (bisa dibuka di Excel / Google Sheets)',
+                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                    ),
+                    trailing: OutlinedButton(
+                      onPressed: _exportMonthlyTransactionsCsv,
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Ekspor'),
                     ),
                   ),
                 ],
@@ -624,5 +732,288 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _backupDatabase() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final dbPath = await getDatabasesPath();
+      final originalFile = File(p.join(dbPath, 'sf_daily_recap.db'));
+      if (!await originalFile.exists()) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+                'File database sf_daily_recap.db belum ditemukan di perangkat'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final tempDir = await getTemporaryDirectory();
+      final backupPath =
+          p.join(tempDir.path, 'sf_daily_recap_backup_$timestamp.db');
+      await originalFile.copy(backupPath);
+
+      await Share.shareXFiles(
+        [
+          XFile(backupPath,
+              mimeType: 'application/x-sqlite3',
+              name: 'sf_daily_recap_$timestamp.db')
+        ],
+        subject: 'Cadangan Database SF Daily Recap ($timestamp)',
+        text: 'File cadangan database lokal SF Daily Recap (sf_daily_recap.db)',
+      );
+
+      if (mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('File cadangan database siap dibagikan/disimpan'),
+            backgroundColor: Color(0xFF2E7D32),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Gagal mencadangkan database: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportMonthlyTransactionsCsv() async {
+    DateTime selectedMonth =
+        DateTime(DateTime.now().year, DateTime.now().month, 1);
+
+    await showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final monthFormat = DateFormat('MMMM yyyy', 'id_ID');
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Icon(Icons.table_chart_outlined,
+                          color: Color(0xFF2E7D32)),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Ekspor CSV Transaksi',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: const Color(0xFF0F172A),
+                                ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Pilih bulan transaksi yang ingin diekspor ke file CSV:',
+                    style: TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.chevron_left),
+                          onPressed: () {
+                            setSheetState(() {
+                              selectedMonth = DateTime(
+                                selectedMonth.year,
+                                selectedMonth.month - 1,
+                                1,
+                              );
+                            });
+                          },
+                        ),
+                        Text(
+                          monthFormat.format(selectedMonth),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.chevron_right),
+                          onPressed: () {
+                            setSheetState(() {
+                              selectedMonth = DateTime(
+                                selectedMonth.year,
+                                selectedMonth.month + 1,
+                                1,
+                              );
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        await _generateAndShareCsv(selectedMonth);
+                      },
+                      icon: const Icon(Icons.download, color: Colors.white),
+                      label: const Text(
+                        'EKSPOR & BAGIKAN CSV',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E7D32),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _generateAndShareCsv(DateTime month) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final ledgerService = ref.read(ledgerServiceProvider);
+      final startDate = DateTime(month.year, month.month, 1);
+      final endDate = DateTime(month.year, month.month + 1, 0);
+
+      final txs = await ledgerService.getTransactions(
+        startDate: startDate,
+        endDate: endDate,
+      );
+
+      if (txs.isEmpty) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Tidak ada transaksi pada ${DateFormat("MMMM yyyy", "id_ID").format(month)}',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      final accounts = await ledgerService.getAccounts();
+      final accountsMap = {for (var a in accounts) a.id: a.name};
+
+      final buffer = StringBuffer();
+      // CSV Header
+      buffer.writeln(
+        'Tanggal,Jenis,Nominal,Rekening Sumber,Kas Sumber,Rekening Tujuan,Kas Tujuan,Aktivitas,Kategori,Status,Catatan',
+      );
+
+      for (final tx in txs) {
+        final dateStr = tx.tanggal.toIso8601String().split('T').first;
+        final kindStr = tx.kind == 'income'
+            ? 'Pemasukan'
+            : (tx.kind == 'expense' ? 'Pengeluaran' : 'Transfer');
+        final amountStr = tx.amount.toString();
+        final fromAcc = _escapeCsv(accountsMap[tx.accountId] ?? tx.accountId);
+        final fromPool = tx.pool == 'utama' ? 'Kas Utama' : 'Kas Tambahan';
+        final toAcc = tx.toAccountId != null
+            ? _escapeCsv(accountsMap[tx.toAccountId] ?? tx.toAccountId!)
+            : '';
+        final toPool = tx.toPool != null
+            ? (tx.toPool == 'utama' ? 'Kas Utama' : 'Kas Tambahan')
+            : '';
+        final activityStr = tx.activity;
+        final categoryStr = _escapeCsv(tx.category ?? '');
+        final statusStr = tx.status == 'cleared' ? 'Cair' : 'Pending';
+        final noteStr = _escapeCsv(tx.note ?? '');
+
+        buffer.writeln(
+          '$dateStr,$kindStr,$amountStr,$fromAcc,$fromPool,$toAcc,$toPool,$activityStr,$categoryStr,$statusStr,$noteStr',
+        );
+      }
+
+      final tempDir = await getTemporaryDirectory();
+      final monthLabel = DateFormat('yyyy_MM').format(month);
+      final csvPath = p.join(tempDir.path, 'transaksi_sf_$monthLabel.csv');
+      final csvFile = File(csvPath);
+      await csvFile.writeAsString(buffer.toString());
+
+      await Share.shareXFiles(
+        [
+          XFile(csvPath,
+              mimeType: 'text/csv', name: 'transaksi_sf_$monthLabel.csv')
+        ],
+        subject:
+            'Ekspor Transaksi SF Daily Recap (${DateFormat("MMMM yyyy", "id_ID").format(month)})',
+        text:
+            'File CSV Transaksi Keuangan SF Daily Recap bulan ${DateFormat("MMMM yyyy", "id_ID").format(month)}',
+      );
+
+      if (mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content:
+                Text('File CSV berhasil dibuat dan siap dibagikan/disimpan'),
+            backgroundColor: Color(0xFF2E7D32),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengekspor CSV: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  String _escapeCsv(String value) {
+    if (value.contains(',') || value.contains('"') || value.contains('\n')) {
+      return '"${value.replaceAll('"', '""')}"';
+    }
+    return value;
   }
 }

@@ -217,12 +217,14 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
 
       // Simpan preferensi terakhir
       final prefs = await SharedPreferences.getInstance();
-      if (_accountId != null)
+      if (_accountId != null) {
         await prefs.setString('last_ledger_account_id', _accountId!);
+      }
       await prefs.setString('last_ledger_pool', _pool);
       await prefs.setString('last_ledger_activity', _activity);
-      if (_vehicleId != null)
+      if (_vehicleId != null) {
         await prefs.setString('last_ledger_vehicle_id', _vehicleId!);
+      }
 
       // Segarkan provider terkait
       ref.invalidate(accountBalancesProvider);
@@ -390,10 +392,13 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                             borderRadius: BorderRadius.circular(12)),
                       ),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty)
+                        if (val == null || val.trim().isEmpty) {
                           return 'Wajib diisi';
+                        }
                         final n = int.tryParse(val.replaceAll('.', ''));
-                        if (n == null || n <= 0) return 'Nominal > 0';
+                        if (n == null || n <= 0) {
+                          return 'Nominal > 0';
+                        }
                         return null;
                       },
                     ),

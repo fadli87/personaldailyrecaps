@@ -183,8 +183,9 @@ class _AccountFormSheetState extends ConsumerState<AccountFormSheet> {
                       borderRadius: BorderRadius.circular(12)),
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty)
+                  if (val == null || val.trim().isEmpty) {
                     return 'Nama rekening wajib diisi';
+                  }
                   return null;
                 },
               ),
@@ -235,11 +236,13 @@ class _AccountFormSheetState extends ConsumerState<AccountFormSheet> {
                       borderRadius: BorderRadius.circular(12)),
                 ),
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty)
+                  if (val == null || val.trim().isEmpty) {
                     return 'Saldo awal wajib diisi';
+                  }
                   final n = int.tryParse(val.replaceAll('.', ''));
-                  if (n == null || n < 0)
+                  if (n == null || n < 0) {
                     return 'Saldo awal tidak boleh negatif';
+                  }
                   return null;
                 },
               ),
