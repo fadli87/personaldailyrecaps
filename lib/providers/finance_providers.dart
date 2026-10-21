@@ -56,6 +56,12 @@ final vehicleOdometerProvider =
 });
 
 final serviceDueProvider =
+    FutureProvider<List<ServiceItemEvaluation>>((ref) async {
+  final service = ref.watch(ledgerServiceProvider);
+  return service.serviceDueList();
+});
+
+final vehicleServiceDueProvider =
     FutureProvider.family<List<ServiceItemEvaluation>, String>(
         (ref, vehicleId) async {
   final service = ref.watch(ledgerServiceProvider);

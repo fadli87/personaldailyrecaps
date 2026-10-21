@@ -7,6 +7,8 @@ import '../models/daily_recap.dart';
 import '../models/fuel_filling.dart';
 import '../services/sync_service.dart';
 import '../screens/fuel_filling_sheet.dart';
+import '../providers/finance_providers.dart';
+import '../logic/ledger_math.dart';
 import 'home_screen.dart' show currency;
 
 class DashboardScreen extends ConsumerWidget {
@@ -135,6 +137,10 @@ class DashboardScreen extends ConsumerWidget {
 
                         // --- SECTION 1B: STATUS SALDO AKUN & REKENING ---
                         _buildAccountBalances(context, recaps.first, ref),
+                        const SizedBox(height: 24),
+
+                        // --- SECTION 1C: KARTU KAS & REMINDER SERVIS MOTOR ---
+                        _buildFinanceAndServiceQuickCards(context, ref),
                         const SizedBox(height: 24),
 
                         // --- SECTION 2: VEHICLE TELEMETRY CARD (MODERN GLASSMORPHISM EFFECT) ---
@@ -2005,6 +2011,186 @@ class DashboardScreen extends ConsumerWidget {
         'Gagal memuat riwayat: $error',
         style: TextStyle(fontSize: 13, color: Colors.red.shade700),
       ),
+    );
+  }
+
+  Widget _buildFinanceAndServiceQuickCards(BuildContext context, WidgetRef ref) {
+    final poolBalancesAsync = ref.watch(poolBalancesProvider);
+    final serviceDueAsync = ref.watch(serviceDueProvider);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 600;
+
+        final cashCard = InkWell(
+          onTap: () => ref.read(homeTabProvider.notifier).change(3),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.account_balance_wallet,
+                            size: 18, color: const Color(0xFF2E7D32)),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Saldo Kas',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                    const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                poolBalancesAsync.when(
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, __) => const Text('Gagal memuat kas', style: TextStyle(fontSize: 12)),
+                  data: (pools) {
+                    final utama = pools['utama'] ?? 0;
+                    final tambahan = pools['tambahan'] ?? 0;
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Kas Utama', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                            Text(currency.format(utama),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('Kas Tambahan', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                            Text(currency.format(tambahan),
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+
+        final serviceCard = InkWell(
+          onTap: () => ref.read(homeTabProvider.notifier).change(3),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.two_wheeler, size: 18, color: Colors.blue.shade700),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Servis Motor',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                    const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.grey),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                serviceDueAsync.when(
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, __) => const Text('Gagal memuat servis', style: TextStyle(fontSize: 12)),
+                  data: (dueList) {
+                    final urgent = dueList.where((d) => d.isUrgent).toList();
+                    if (urgent.isNotEmpty) {
+                      return Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, size: 16, color: Colors.red.shade700),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '${urgent.length} segera: ${urgent.map((u) => u.item.name).join(', ')}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.red.shade700,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Icon(Icons.check_circle_outline, size: 16, color: Colors.green.shade700),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Semua jadwal servis aman',
+                          style: TextStyle(fontSize: 12, color: Colors.green.shade700, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+
+        if (isNarrow) {
+          return Column(
+            children: [
+              cashCard,
+              const SizedBox(height: 12),
+              serviceCard,
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: cashCard),
+            const SizedBox(width: 16),
+            Expanded(child: serviceCard),
+          ],
+        );
+      },
     );
   }
 }

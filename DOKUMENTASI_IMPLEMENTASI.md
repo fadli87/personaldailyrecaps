@@ -14,8 +14,8 @@ Dokumentasi ini mencatat progres, keputusan teknis, daftar perubahan file, dan v
 | **Fase 1** | **Fondasi & Keamanan (Sync, LocalDb v11, Auth Lockdown, Migrasi SQL 1A-1C)** | **SELESAI (CLEAR)** | Kode app diperbarui; Semua 16 test lulus; Menunggu user menjalankan SQL 1B & 1C di Supabase |
 | **Fase 2** | **Skema Baru (Ledger, Kendaraan, Servis, View Saldo)** | **SELESAI (CLEAR)** | Skema SQLite v11 teruji in-memory; file SQL Fase 2 siap |
 | **Fase 3** | **Model, Service, Provider (Riverpod 3, LedgerService, ReportService)** | **SELESAI (CLEAR)** | Model, Service, Provider & Test `ledger_service_test.dart` lulus (18/18 tests total) |
-| **Fase 4** | **Antarmuka (Tab Keuangan: Ringkasan, Transaksi, Rekening, Motor)** | Siap Dikerjakan | Menyiapkan `finance_home_screen.dart` dkk |
-| **Fase 5** | **Integrasi BBM ke Ledger** | Menunggu Fase 4 | Dropdown motor & link transaksi otomatis |
+| **Fase 4** | **Antarmuka (Tab Keuangan: Ringkasan, Transaksi, Rekening, Motor + Sheets)** | **SELESAI (CLEAR)** | Tab Keuangan di BottomNav, 4 sub-tab, 5 modal sheets, quick cards dashboard, & End-to-End scenario test Bagian 8 lulus (19/19 tests) |
+| **Fase 5** | **Integrasi BBM ke Ledger** | Siap Dikerjakan | Dropdown motor & link transaksi otomatis di `fuel_filling_sheet.dart` |
 | **Fase 6** | **Penutup (Backup DB, Cleanup CI/CD)** | Menunggu Fase 5 | |
 
 ---
@@ -95,30 +95,122 @@ Dokumentasi ini mencatat progres, keputusan teknis, daftar perubahan file, dan v
   - Riverpod providers: `ledgerServiceProvider`, `financeReportServiceProvider`, `accountsProvider`, `accountBalancesProvider`, `poolBalancesProvider`, `vehiclesProvider`, `serviceDueProvider`, `financeMonthProvider`, `monthSummaryProvider`, `transactionsProvider.family`.
 - [x] **Pengujian Unit & Integrasi (`test/ledger_service_test.dart`)**:
   - Validasi error input berbahasa Indonesia teruji.
-  - Skenario saldo rekening & kas, transaksi pending tidak dihitung, dan soft delete teruji.
+  - Skenario saldo rekening & kas, transaksi pending tidak dihitung, dan soft dele---
+
+### FASE 4 — Antarmuka (UI Tab Keuangan, Sub-Tab, Sheets & Skenario Section 8)
+**Status:** **CLEAR (SELESAI, TERINTEGRASI & 19/19 TEST LULUS)**
+
+#### 1. Perubahan Navigasi & Dashboard
+- [x] **`lib/screens/home_screen.dart`**:
+  - Menambahkan item **"Keuangan"** pada BottomNavigationBar di indeks `3` (ikon `account_balance_wallet_outlined` / `account_balance_wallet`).
+  - Menggeser menu **"Profil"** ke indeks `4`.
+  - Judul AppBar dinamis: *"Keuangan"* saat berada di tab keuangan, dengan tombol refresh yang meng-invalidate provider finansial (`poolBalancesProvider`, `accountBalancesProvider`, `monthSummaryProvider`, `transactionsProvider`).
+- [x] **`lib/screens/dashboard_screen.dart`**:
+  - Menambahkan kartu ringkasan cepat keuangan (`_buildFinanceAndServiceQuickCards`):
+    - Saldo Kas Utama & Kas Tambahan.
+    - Banner peringatan dinamis servis mendesak (*urgent service alert*) jika ada item motor yang `overdue` atau `soon`.
+    - Tombol aksi cepat *"Buka Tab Keuangan"* yang langsung mengarahkan user ke tab Keuangan (`homeTabProvider.notifier.change(3)`).
+
+#### 2. Layar Utama Keuangan (`lib/screens/finance/finance_home_screen.dart`)
+- [x] **TabBar 4 Sub-Tab**:
+  1. **Ringkasan** (`FinanceSummaryTab`)
+  2. **Transaksi** (`FinanceTransactionsTab`)
+  3. **Rekening** (`FinanceAccountsTab`)
+  4. **Motor** (`FinanceVehiclesTab`)
+- [x] **FloatingActionButton Kontekstual**:
+  - Tab Transaksi: Tombol **"Tambah Transaksi"** -> membuka `TransactionFormSheet`.
+  - Tab Rekening: Tombol **"Tambah Rekening"** -> membuka `AccountFormSheet`.
+  - Tab Motor: Tombol **"Catat Km"** -> membuka `VehicleLogSheet`.
+
+#### 3. Sub-Tab Detail
+- [x] **Ringkasan (`lib/screens/finance/finance_summary_tab.dart`)**:
+  - Pemilih bulan interaktif (Mundur / Bulan Ini / Maju) terikat ke `financeMonthProvider`.
+  - Banner peringatan servis kendaraan jika ada item jatuh tempo / segera diservis.
+  - Kartu Saldo Kas Pool (Utama & Tambahan).
+  - Kartu Rincian Profit Aktivitas: Kanvasing, Ojol, Pribadi (menampilkan Income, Pengeluaran Langsung, dan Alokasi Biaya Motor via metode Hamilton-Hare).
+  - Kartu Pemasukan Belum Cair (Komisi Pending) dengan aksi langsung: tombol **"Tandai Cair"** atau buka daftar transaksi pending.
+  - Kartu Efisiensi Ojol (Pendapatan/km, Pendapatan/jam, Biaya motor/km).
+  - Kartu Rekap Ojol Lama (*Legacy Ojol Net Earning*) dari view `daily_recap_summary` yang disajikan terpisah tanpa pencampuran ganda.
+- [x] **Transaksi (`lib/screens/finance/finance_transactions_tab.dart`)**:
+  - Pengelompokan riwayat per tanggal.
+  - Filter interaktif: Kas (Semua/Utama/Tambahan), Aktivitas (Semua/Kanvasing/Ojol/Pribadi/Kendaraan), Jenis (Semua/Pemasukan/Pengeluaran/Transfer), Status (Semua/Cair/Pending).
+  - Geser untuk hapus (*swipe-to-delete*) dengan dialog konfirmasi dan `SnackBar` "Urungkan".
+  - Aksi langsung pada item pending: tombol *"Tandai Cair"*.
+- [x] **Rekening (`lib/screens/finance/finance_accounts_tab.dart`)**:
+  - Pengelompokan akun: Tunai, Bank, E-Wallet.
+  - Saldo riil dari SQLite view `v_account_balance`.
+  - Notifikasi privasi data finansial: *"Hanya catat nama rekening umum. Jangan pernah masukkan nomor rekening atau PIN."*
+  - Fitur Cek Saldo & Penyesuaian Saldo (*Reconcile*) otomatis ke transaksi penyesuaian.
+  - Pengarsipan & aktivasi kembali rekening.
+- [x] **Motor (`lib/screens/finance/finance_vehicles_tab.dart`)**:
+  - Kartu motor hero (Jupiter Z, Aerox, dll).
+  - Odometer saat ini, jarak tempuh bulan berjalan.
+  - Riwayat servis motor lengkap dengan nama bengkel, odometer, biaya, dan catatan.
+  - Tombol aksi *"Catat Km"* dan *"Catat Servis"*.
+  - Dialog inisialisasi cepat 1-klik untuk mendaftarkan Jupiter Z & Aerox jika belum ada data motor.
+
+#### 4. Lembar Formulir Modal (*Sheets*)
+- [x] **`transaction_form_sheet.dart`**:
+  - Pemasukan, Pengeluaran, Transfer.
+  - Pilihan Akun, Kas Pool (Utama / Tambahan), Aktivitas, Status (Cair / Belum Cair).
+  - Dropdown Motor otomatis muncul jika aktivitas adalah Kendaraan.
+  - Mengingat preferensi input terakhir via `shared_preferences`.
+- [x] **`account_form_sheet.dart`**: Tambah & ubah akun rekening tunai, bank, atau e-wallet.
+- [x] **`vehicle_log_sheet.dart`**:
+  - Pencatatan odometer akhir harian.
+  - Pembagian km: Kanvasing, Ojol, Pribadi.
+  - Asistensi cerdas selisih km: Tombol cepat *"Masukkan sisa X km ke Pribadi"*.
+  - Input jam online ojol untuk metrik efisiensi per jam.
+- [x] **`service_form_sheet.dart`**:
+  - Pencatatan servis motor.
+  - Toggle otomatis *"Catat biaya di Keuangan"* (membuat transaksi pengeluaran kendaraan secara atomik dalam 1 transaksi DB).
+  - Multi-select item servis yang diganti/diservis (Oli Mesin, Oli Gardan, Kampas Rem, dll).
+- [x] **`service_item_sheet.dart`**:
+  - Konfigurasi item servis berkala.
+  - Interval km dan hari wajib ditentukan oleh user (tidak ada asumsi/tebakan interval bawaan).
+
+#### 5. Pengujian Skenario Lengkap Bagian 8 (`test/finance_scenario_test.dart`)
+- [x] Menguji alur lengkap sesuai Panduan Bagian 8:
+  - Saldo awal: Tunai 100k, BCA 500k, Dana 0.
+  - Transaksi 1: Pemasukan 300k (BCA, Utama, Kanvasing, Cleared).
+  - Transaksi 2: Pemasukan 200k (BCA, Utama, Kanvasing, Pending).
+  - Transaksi 3: Pengeluaran 20k (Tunai, Utama, Kendaraan BBM, Cleared).
+  - Transaksi 4: Pemasukan 150k (Dana, Tambahan, Ojol, Cleared).
+  - Transaksi 5: Transfer 100k (Dana Tambahan -> BCA Utama).
+  - Servis: 60k di Yamaha Surya pada Jupiter Z.
+  - Log km: 60 km Kanvasing, 30 km Ojol, 10 km Pribadi, 3.0 jam online ojol.
+  - Verifikasi saldo Tunai (80k), BCA (900k), Dana (50k).
+  - Verifikasi saldo kas Utama (380k), Tambahan (50k).
+  - Verifikasi komisi pending (200k).
+  - Verifikasi soft delete mengembalikan saldo BCA ke 600k.
+  - Verifikasi alokasi biaya motor 80k: Kanvasing 48k, Ojol 24k, Pribadi 8k.
+  - Verifikasi profit bersih: Kanvasing 252k, Ojol 126k, Pribadi -8k.
+  - Verifikasi efisiensi Ojol: Rp 5.000/km, Rp 50.000/jam, biaya motor Rp 800/km.
+  - **Hasil Pengujian:** **LULUS (100% Passed)**.
 
 ---
 
 ### Hasil Pengujian Otomatis Saat Ini
 ```text
 flutter test
-00:00 +0: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: saldo rekening dan saldo kas
-00:00 +1: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: soft delete mengurangi saldo; pending tidak dihitung
-00:00 +2: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: constraint menolak data yang salah bentuk
-00:00 +3: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: item servis wajib punya minimal satu interval
-00:01 +4: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost proporsional km, jumlah tepat
-00:01 +5: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sepertiga: sisa 1 rupiah ke kanvasing (urutan seri)
-00:01 +6: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sisa terbesar ke pecahan terbesar
-00:01 +7: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost km nol di satu aktivitas
-00:01 +8: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost total km nol atau biaya nol -> semua 0 (tidak error)
-00:01 +9: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: computeActivityProfits profit per pekerjaan (komisi pending tidak dihitung)
-00:01 +10: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: perUnit pembagian aman
-00:01 +11: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan km
-00:01 +12: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan hari
-00:01 +13: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem km dan hari: yang terburuk menang
-00:01 +14: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem belum ada data servis terakhir -> unknown
-00:02 +15: C:/DevApp/personalDailyRecaps/test/ledger_service_test.dart: validasi transaksi salah bentuk ditolak service dengan pesan Indonesia
-00:03 +16: C:/DevApp/personalDailyRecaps/test/ledger_service_test.dart: transaksi valid, pending tidak masuk saldo, soft delete mengurangi saldo
-00:13 +17: C:/DevApp/personalDailyRecaps/test/widget_test.dart: App smoke test
-00:16 +18: All tests passed!
+00:00 +0: C:/DevApp/personalDailyRecaps/test/finance_scenario_test.dart: Skenario Lengkap Bagian 8 Panduan Agy (End-to-End)
+00:00 +1: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: saldo rekening dan saldo kas
+00:01 +2: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: soft delete mengurangi saldo; pending tidak dihitung
+00:01 +3: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: constraint menolak data yang salah bentuk
+00:01 +4: C:/DevApp/personalDailyRecaps/test/ledger_db_test.dart: item servis wajib punya minimal satu interval
+00:01 +5: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost proporsional km, jumlah tepat
+00:01 +6: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sepertiga: sisa 1 rupiah ke kanvasing (urutan seri)
+00:01 +7: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost sisa terbesar ke pecahan terbesar
+00:01 +8: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost km nol di satu aktivitas
+00:01 +9: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: allocateVehicleCost total km nol atau biaya nol -> semua 0 (tidak error)
+00:02 +10: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: computeActivityProfits profit per pekerjaan (komisi pending tidak dihitung)
+00:02 +11: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: perUnit pembagian aman
+00:02 +12: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan km
+00:02 +13: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem berdasarkan hari
+00:02 +14: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem km dan hari: yang terburuk menang
+00:02 +15: C:/DevApp/personalDailyRecaps/test/ledger_math_test.dart: evaluateServiceItem belum ada data servis terakhir -> unknown
+00:03 +16: C:/DevApp/personalDailyRecaps/test/ledger_service_test.dart: validasi transaksi salah bentuk ditolak service dengan pesan Indonesia
+00:03 +17: C:/DevApp/personalDailyRecaps/test/ledger_service_test.dart: transaksi valid, pending tidak masuk saldo, soft delete mengurangi saldo
+00:11 +18: C:/DevApp/personalDailyRecaps/test/widget_test.dart: App smoke test
+00:13 +19: All tests passed!
 ```

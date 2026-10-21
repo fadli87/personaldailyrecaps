@@ -9,6 +9,8 @@ import 'dashboard_screen.dart';
 import 'report_screen.dart';
 import 'profile_screen.dart';
 import 'pin_lock_screen.dart';
+import 'finance/finance_home_screen.dart';
+import '../providers/finance_providers.dart';
 
 final currency =
     NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
@@ -150,7 +152,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
       // Halaman 2: Laporan Periodik & Ekspor
       const ReportScreen(),
-      // Halaman 3: Profil & Keamanan
+      // Halaman 3: Modul Keuangan & Motor
+      const FinanceHomeScreen(),
+      // Halaman 4: Profil & Keamanan
       const ProfileScreen(),
     ];
 
@@ -163,12 +167,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   ? 'Personal Finance & Recap'
                   : (currentIndex == 2
                       ? 'Laporan Bulanan & Ekspor'
-                      : 'Profil & Keamanan')),
+                      : (currentIndex == 3
+                          ? 'Keuangan & Kendaraan'
+                          : 'Profil & Keamanan'))),
         ),
-        actions: currentIndex == 0
+        actions: (currentIndex == 0 || currentIndex == 3)
             ? [
                 IconButton(
                   icon: const Icon(Icons.refresh),
+                  tooltip: 'Sinkronisasi Data',
                   onPressed: () async {
                     if (!context.mounted) return;
                     final scaffold = ScaffoldMessenger.of(context);
@@ -181,6 +188,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       await SyncService.sync();
                       ref.invalidate(recapsProvider);
                       ref.invalidate(platformDistributionProvider);
+                      ref.invalidate(monthSummaryProvider);
+                      ref.invalidate(poolBalancesProvider);
+                      ref.invalidate(accountBalancesProvider);
+                      ref.invalidate(serviceDueProvider);
+                      ref.invalidate(vehiclesProvider);
                       scaffold.showSnackBar(
                         const SnackBar(
                             content: Text('Sinkronisasi data sukses!')),
@@ -201,9 +213,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         currentIndex: currentIndex,
         onTap: (index) {
           ref.read(homeTabProvider.notifier).change(index);
-          // Segarkan data saat ganti tab agar dashboard selalu up-to-date
+          // Segarkan data saat ganti tab agar dashboard & finance selalu up-to-date
           ref.invalidate(recapsProvider);
           ref.invalidate(platformDistributionProvider);
+          if (index == 3) {
+            ref.invalidate(monthSummaryProvider);
+            ref.invalidate(poolBalancesProvider);
+            ref.invalidate(accountBalancesProvider);
+            ref.invalidate(serviceDueProvider);
+            ref.invalidate(vehiclesProvider);
+          }
         },
         items: const [
           BottomNavigationBarItem(
@@ -220,6 +239,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             icon: Icon(Icons.assessment_outlined),
             activeIcon: Icon(Icons.assessment),
             label: 'Laporan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            activeIcon: Icon(Icons.account_balance_wallet),
+            label: 'Keuangan',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

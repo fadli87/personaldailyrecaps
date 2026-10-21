@@ -1,4 +1,3 @@
-import 'package:sqflite/sqflite.dart';
 import '../logic/ledger_math.dart';
 import 'ledger_service.dart';
 import 'local_db.dart';
@@ -41,6 +40,9 @@ class FinanceReportService {
   final LedgerService ledgerService;
 
   FinanceReportService({required this.ledgerService});
+
+  Future<FinanceMonthSummary> monthSummary(DateTime month, {String? vehicleId}) =>
+      getMonthSummary(month, vehicleId: vehicleId);
 
   Future<FinanceMonthSummary> getMonthSummary(DateTime month,
       {String? vehicleId}) async {
@@ -114,16 +116,21 @@ class FinanceReportService {
     // 6. Legacy Ojol Net Earning dari daily_recap_summary
     final startStr = startDate.toIso8601String().split('T').first;
     final endStr = endDate.toIso8601String().split('T').first;
-    final legacyRows = await db.rawQuery(
-      '''
-      SELECT COALESCE(SUM(net_earning), 0) as total_legacy
-      FROM daily_recap_summary
-      WHERE tanggal >= ? AND tanggal <= ?
-      ''',
-      [startStr, endStr],
-    );
-    final legacyOjolNetEarning =
-        (legacyRows.first['total_legacy'] as num?)?.toInt() ?? 0;
+    int legacyOjolNetEarning = 0;
+    try {
+      final legacyRows = await db.rawQuery(
+        '''
+        SELECT COALESCE(SUM(net_earning), 0) as total_legacy
+        FROM daily_recap_summary
+        WHERE tanggal >= ? AND tanggal <= ?
+        ''',
+        [startStr, endStr],
+      );
+      legacyOjolNetEarning =
+          (legacyRows.first['total_legacy'] as num?)?.toInt() ?? 0;
+    } catch (_) {
+      legacyOjolNetEarning = 0;
+    }
 
     return FinanceMonthSummary(
       month: month,

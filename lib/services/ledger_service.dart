@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import '../logic/ledger_math.dart';
 import '../models/account.dart';
@@ -45,6 +44,13 @@ class ServiceItemEvaluation {
     required this.item,
     required this.due,
   });
+
+  bool get isUrgent =>
+      due.status == ServiceStatus.overdue || due.status == ServiceStatus.soon;
+
+  ServiceStatus get status => due.status;
+  double? get remainingKm => due.remainingKm;
+  int? get remainingDays => due.remainingDays;
 }
 
 class LedgerService {
@@ -318,7 +324,7 @@ class LedgerService {
     final bookBalance = found.isNotEmpty ? found.first.balance : 0;
     final diff = actualBalance - bookBalance;
 
-    if (diff != null && diff != 0) {
+    if (diff != 0) {
       final now = DateTime.now();
       final kind = diff > 0 ? 'income' : 'expense';
       final amount = diff.abs();
@@ -509,22 +515,32 @@ class LedgerService {
     Future.microtask(() => SyncService.sync());
   }
 
-  Future<List<ServiceItemEvaluation>> serviceDueList(String vehicleId) async {
-    final items = await getServiceItems(vehicleId);
-    final curOdo = await currentOdometer(vehicleId);
-    final today = DateTime.now();
+  Future<List<ServiceItemEvaluation>> serviceDueList([String? vehicleId]) async {
+    final List<Vehicle> vehicles;
+    if (vehicleId != null) {
+      final all = await getVehicles();
+      vehicles = all.where((v) => v.id == vehicleId).toList();
+    } else {
+      vehicles = await getVehicles(activeOnly: true);
+    }
 
+    final today = DateTime.now();
     final result = <ServiceItemEvaluation>[];
-    for (final item in items) {
-      final due = evaluateServiceItem(
-        intervalKm: item.intervalKm,
-        intervalDays: item.intervalDays,
-        lastDate: item.lastServiceDate,
-        lastOdo: item.lastServiceOdo,
-        currentOdo: curOdo,
-        today: today,
-      );
-      result.add(ServiceItemEvaluation(item: item, due: due));
+
+    for (final v in vehicles) {
+      final items = await getServiceItems(v.id);
+      final curOdo = await currentOdometer(v.id);
+      for (final item in items) {
+        final due = evaluateServiceItem(
+          intervalKm: item.intervalKm,
+          intervalDays: item.intervalDays,
+          lastDate: item.lastServiceDate,
+          lastOdo: item.lastServiceOdo,
+          currentOdo: curOdo,
+          today: today,
+        );
+        result.add(ServiceItemEvaluation(item: item, due: due));
+      }
     }
 
     int priority(ServiceStatus s) {
@@ -554,6 +570,7 @@ class LedgerService {
     String? shop,
     String? note,
     String? accountId,
+    String pool = 'utama',
   }) async {
     final db = await LocalDb.instance.database;
     await db.transaction((txn) async {
@@ -566,7 +583,7 @@ class LedgerService {
           kind: 'expense',
           amount: cost,
           accountId: accountId,
-          pool: 'utama',
+          pool: pool,
           activity: 'kendaraan',
           category: 'servis',
           vehicleId: vehicleId,

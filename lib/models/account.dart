@@ -25,6 +25,19 @@ class Account {
     this.isSynced = 0,
   });
 
+  String get kindText {
+    switch (kind) {
+      case 'cash':
+        return 'Tunai';
+      case 'bank':
+        return 'Bank';
+      case 'ewallet':
+        return 'E-Wallet';
+      default:
+        return kind;
+    }
+  }
+
   factory Account.fromMap(Map<String, dynamic> map) {
     int i(dynamic v) => (v as num?)?.toInt() ?? 0;
 
